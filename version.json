@@ -1,0 +1,18 @@
+{
+  "latest": "1.11.1",
+  "released": "2026-10-06",
+  "download_url": "https://homearvin.github.io/DTR.CONVERTER/#get",
+  "changes": [
+    "In-Charge title: print the title (e.g. Principal I) under the In-Charge name — Settings → General.",
+    "Help guide: how to use DTR Converter, step by step (menu → Help guide).",
+    "Updates install with one click from now on (Home → Update now).",
+    "Files without a year in the name: DTR Converter now asks for the year.",
+    "Reads the \"Attendance Record Report\" file from more biometric machines."
+  ],
+  "package": {
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.11.1/DTR-Converter-1.11.1-portable.zip",
+    "sha256": "209456a86c4f8fa0f6a1b4afcb1b68dc972f7a4170f8f13b2949a06aac47bdbc",
+    "size": 12090651,
+    "signature": "y0ilWfVmJ9u1dQM+70j1i5v0k6WR8HKHPpcUFtISIlPkBpnFq6CTyMych0WmP3tpw1sq+C2vW/3W6wU/gf3iDw=="
+  }
+}
