@@ -1,8 +1,9 @@
 {
-  "latest": "1.11.2",
+  "latest": "1.11.3",
   "released": "2026-10-06",
   "download_url": "https://homearvin.github.io/DTR.CONVERTER/#get",
   "changes": [
+    "Checked with more Timecard Report files from biometric machines.",
     "Update now restarts DTR Converter reliably (a fix for the first one-click update).",
     "In-Charge title: print the title (e.g. Principal I) under the In-Charge name — Settings → General.",
     "Help guide: how to use DTR Converter, step by step (menu → Help guide).",
@@ -11,9 +12,9 @@
     "Reads the \"Attendance Record Report\" file from more biometric machines."
   ],
   "package": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.11.2/DTR-Converter-1.11.2-portable.zip",
-    "sha256": "c7ca8429f39bebe631611c9adb1f3de42761c1aaae6ff08ff3bf3fe7d851dd91",
-    "size": 12091549,
-    "signature": "3Z+/NEHqyw0EqF9MGLER9hYGYjWhFglmOlJ2xWIQuxM6oW5nR7d2mvii1+X58HEVVOdXAXCeCNlOKKcRdic5Bg=="
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.11.3/DTR-Converter-1.11.3-portable.zip",
+    "sha256": "5f4ded6c0287a1361b97755785142d202c9018e0072a37770def8c04d63e51c1",
+    "size": 13130333,
+    "signature": "/YvoiZ+5xkkwYMFXR0QHoBz9/7OUMqznRm+LQs2PlZ/7TZuXHazmupyGmpborsfEx7h18MI2iteT+XP20SfXAQ=="
   }
 }
