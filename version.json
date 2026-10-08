@@ -1,20 +1,17 @@
 {
-  "latest": "1.11.3",
-  "released": "2026-10-06",
+  "latest": "1.12.0",
+  "released": "2026-10-08",
   "download_url": "https://homearvin.github.io/DTR.CONVERTER/#get",
   "changes": [
-    "Checked with more Timecard Report files from biometric machines.",
-    "Update now restarts DTR Converter reliably (a fix for the first one-click update).",
-    "In-Charge title: print the title (e.g. Principal I) under the In-Charge name — Settings → General.",
-    "Help guide: how to use DTR Converter, step by step (menu → Help guide).",
-    "Updates install with one click from now on (Home → Update now).",
-    "Files without a year in the name: DTR Converter now asks for the year.",
-    "Reads the \"Attendance Record Report\" file from more biometric machines."
+    "Taps are now placed by time of day: morning taps in the A.M. boxes, afternoon taps in the P.M. boxes (e.g. 7:00 and 5:00 → A.M. Arrival and P.M. Departure).",
+    "Double taps within 5 minutes are counted once; one tap is treated as a time in.",
+    "Reads more biometric files: Monthly Punch Report, Monthly Statement Report, Employee Attendance Table and more device logs.",
+    "Prefer the old way? Settings → General → How taps fill the time boxes."
   ],
   "package": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.11.3/DTR-Converter-1.11.3-portable.zip",
-    "sha256": "5f4ded6c0287a1361b97755785142d202c9018e0072a37770def8c04d63e51c1",
-    "size": 13130333,
-    "signature": "/YvoiZ+5xkkwYMFXR0QHoBz9/7OUMqznRm+LQs2PlZ/7TZuXHazmupyGmpborsfEx7h18MI2iteT+XP20SfXAQ=="
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.12.0/DTR-Converter-1.12.0-portable.zip",
+    "sha256": "03ce9e9e4a61933c20b5f560cdf4bdcbbb817c74dded8fce639ee16bc9bb52b1",
+    "size": 12099506,
+    "signature": "FWLXUlcrbHvyoUtQaXYq7rX/QzpU8EbzJ/by+fbNcr0DggbSLSQ4qYQcwz/bVIi7hCewOMaedoxUsUfi9UULCQ=="
   }
 }
