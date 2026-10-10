@@ -7,7 +7,8 @@ An offline Windows app for Admin Officers of schools and offices, by **AZ Digita
 
 - **Download:** see [Releases](https://github.com/homearvin/DTR.CONVERTER/releases/latest).
 - A license key is needed to use the app — see the website for Standard and Pro.
-- Also from AZ Digital Marketing: [QuickCheck](https://homearvin.github.io/QUICK.CHECK/).
+- Also from AZ Digital Marketing: [QuickCheck](https://homearvin.github.io/QUICK.CHECK/) ·
+  [Car Rental Booking Management](https://homearvin.github.io/CAR.RENTAL.BOOKING.MANAGEMENT/).
 
 This repository holds the website and the release downloads. `version.json` tells installed copies
 when an update is available (signed by the owner).
