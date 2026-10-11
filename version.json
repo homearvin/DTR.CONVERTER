@@ -1,17 +1,17 @@
 {
-  "latest": "1.12.0",
-  "released": "2026-10-08",
+  "latest": "1.13.1",
+  "released": "2026-10-11",
   "download_url": "https://homearvin.github.io/DTR.CONVERTER/#get",
   "changes": [
-    "Taps are now placed by time of day: morning taps in the A.M. boxes, afternoon taps in the P.M. boxes (e.g. 7:00 and 5:00 → A.M. Arrival and P.M. Departure).",
-    "Double taps within 5 minutes are counted once; one tap is treated as a time in.",
-    "Reads more biometric files: Monthly Punch Report, Monthly Statement Report, Employee Attendance Table and more device logs.",
-    "Prefer the old way? Settings → General → How taps fill the time boxes."
+    "Reads Attendance Records exports with dated In/Out entries, including the device heading Attandence Records. Names, report dates and recorded taps are preserved.",
+    "Download PDF from the Print window: save the selected, checked or all employee DTRs in one file.",
+    "Includes the existing time-of-day tap placement and all previously supported biometric formats.",
+    "Your saved DTRs, settings and activation are retained when updating."
   ],
   "package": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.12.0/DTR-Converter-1.12.0-portable.zip",
-    "sha256": "03ce9e9e4a61933c20b5f560cdf4bdcbbb817c74dded8fce639ee16bc9bb52b1",
-    "size": 12099506,
-    "signature": "FWLXUlcrbHvyoUtQaXYq7rX/QzpU8EbzJ/by+fbNcr0DggbSLSQ4qYQcwz/bVIi7hCewOMaedoxUsUfi9UULCQ=="
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.13.1/DTR-Converter-1.13.1-portable.zip",
+    "sha256": "fc4a692e40a48106ec47a996ae1a817c0ba04f40368d91e0549732860561e335",
+    "size": 13148616,
+    "signature": "DNPIDpIsH0Mooo1yUfB4VcRCB4EKMh7CrCtw1d7nS8yIhvUNMMK43GZzQuXm6TxpXRtrNX+zKyloLeVtZt5jAg=="
   }
 }
