@@ -1,17 +1,17 @@
 {
-  "latest": "1.13.1",
-  "released": "2026-10-11",
+  "latest": "1.14.0",
+  "released": "2026-10-12",
   "download_url": "https://homearvin.github.io/DTR.CONVERTER/#get",
   "changes": [
-    "Reads Attendance Records exports with dated In/Out entries, including the device heading Attandence Records. Names, report dates and recorded taps are preserved.",
-    "Download PDF from the Print window: save the selected, checked or all employee DTRs in one file.",
-    "Includes the existing time-of-day tap placement and all previously supported biometric formats.",
-    "Your saved DTRs, settings and activation are retained when updating."
+    "Files for the same month now add up: upload October 1–15, later October 16–31, and the month fills in. Your changes are kept.",
+    "Holidays & suspensions: set a holiday, class suspension or vacation once for everyone, a category (e.g. Teaching) or chosen employees.",
+    "Longer remarks (up to 48 letters, e.g. TRAVEL TO MANILA FOR SEMINAR) now print in full — long ones print smaller.",
+    "A cleaner Settings window with a menu on the left; the Employee List now fits on the screen."
   ],
   "package": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.13.1/DTR-Converter-1.13.1-portable.zip",
-    "sha256": "fc4a692e40a48106ec47a996ae1a817c0ba04f40368d91e0549732860561e335",
-    "size": 13148616,
-    "signature": "DNPIDpIsH0Mooo1yUfB4VcRCB4EKMh7CrCtw1d7nS8yIhvUNMMK43GZzQuXm6TxpXRtrNX+zKyloLeVtZt5jAg=="
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.14.0/DTR-Converter-1.14.0-portable.zip",
+    "sha256": "b9b997f2e38d7c069f58ac403b80fcb3d4382f3674c370eb8f09be6f790972dc",
+    "size": 12115856,
+    "signature": "RYZ3AcEl9oWRO64txQCtuineLFPKhylfkk6sTwo4wEG82kKQfVxb+MLAnK8f0dP+iajuNKsLbzJQcXI8WxTDCg=="
   }
 }
