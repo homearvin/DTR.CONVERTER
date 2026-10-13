@@ -1,17 +1,17 @@
 {
-  "latest": "1.14.0",
-  "released": "2026-10-12",
+  "latest": "1.14.2",
+  "released": "2026-10-13",
   "download_url": "https://homearvin.github.io/DTR.CONVERTER/#get",
   "changes": [
-    "Files for the same month now add up: upload October 1–15, later October 16–31, and the month fills in. Your changes are kept.",
-    "Holidays & suspensions: set a holiday, class suspension or vacation once for everyone, a category (e.g. Teaching) or chosen employees.",
-    "Longer remarks (up to 48 letters, e.g. TRAVEL TO MANILA FOR SEMINAR) now print in full — long ones print smaller.",
-    "A cleaner Settings window with a menu on the left; the Employee List now fits on the screen."
+    "Reads Person ID attendance CSV exports while preserving leading-zero employee IDs, names, dates and recorded clock times.",
+    "Fixes numeric employee IDs being mistaken for Excel dates, which could combine different employees into one record.",
+    "Unreadable times are skipped with a visible warning. Excel web-page exports missing their linked worksheets now show clear re-export instructions.",
+    "Your saved DTRs, settings and activation are retained when updating."
   ],
   "package": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.14.0/DTR-Converter-1.14.0-portable.zip",
-    "sha256": "b9b997f2e38d7c069f58ac403b80fcb3d4382f3674c370eb8f09be6f790972dc",
-    "size": 12115856,
-    "signature": "RYZ3AcEl9oWRO64txQCtuineLFPKhylfkk6sTwo4wEG82kKQfVxb+MLAnK8f0dP+iajuNKsLbzJQcXI8WxTDCg=="
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.14.2/DTR-Converter-1.14.2-portable.zip",
+    "sha256": "b7a026f3b47f7e4c37a1cd9dc166cb464bbbe86dc0aefe94f6c4bd7037128368",
+    "size": 13154514,
+    "signature": "+hukj0iH4l0FcfDjtbUI7mbLjjBgcS72ip+ve+cxjE8SrDXc1kjOAzgZy95qdfZNKdmxZJoplLNAO8OT5oXzCg=="
   }
 }
