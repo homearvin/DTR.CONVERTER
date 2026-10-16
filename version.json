@@ -1,16 +1,15 @@
 {
-  "latest": "1.14.6",
-  "released": "2026-10-14",
+  "latest": "1.15.0",
+  "released": "2026-10-16",
   "download_url": "https://homearvin.github.io/DTR.CONVERTER/#get",
   "changes": [
-    "Added daily attendance summaries with AC-No., Date, Clock In and Clock Out columns; schedules and calculated totals are ignored.",
-    "Machine names separated by underscores now display as normal names. Raw logs retain every repeated and extra tap.",
-    "Saved DTRs, settings and activation are retained when updating."
+    "Pro: add your school or office logo — frame it in a circle and it prints small in the top-right corner of every DTR.",
+    "Reads more biometric files, including Daily Attendance Summary exports."
   ],
   "package": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.14.6/DTR-Converter-1.14.6-portable.zip",
-    "sha256": "b31f3050f8a7a561eac1a8b5fb0e2d1abc933e0a502b95f7a8c68a3b576f1ad5",
-    "size": 13155413,
-    "signature": "nRnN845PckLRui+VJdOJo5lfU36HNo/sncGedFbYZPOazV4yPY49AEEnFDThbXkci1HdtEagpG/XdGYzY+DGAg=="
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.15.0/DTR-Converter-1.15.0-portable.zip",
+    "sha256": "340356c3948a96f4f7ac9605724b5832c044f723717f05534255b90b494e4867",
+    "size": 12122601,
+    "signature": "el7Dhh9jD5befwg0VFG4ZDqqtj+zA0OFOjk0SwmZAPBpQ3fDLXwn0Mae8b68MjK0ANDYdjevS2N0z/YIdm1DBA=="
   }
 }
