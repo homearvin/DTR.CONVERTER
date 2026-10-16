@@ -1,15 +1,22 @@
 {
-  "latest": "1.15.0",
+  "latest": "1.16.0",
   "released": "2026-10-16",
   "download_url": "https://homearvin.github.io/DTR.CONVERTER/#get",
   "changes": [
-    "Pro: add your school or office logo — frame it in a circle and it prints small in the top-right corner of every DTR.",
-    "Reads more biometric files, including Daily Attendance Summary exports."
+    "Standard: try every Pro feature free — Under Time from your official time, the Undertaking list and your school logo show on screen.",
+    "Printing with Pro features? Print the plain DTR, or click Get Pro to upgrade for ₱1,001.",
+    "New: an installer (Start menu, desktop icon, Uninstall in Windows Settings). Your saved work stays.",
+    "Pro: your school logo, framed in a circle, prints in the top-right corner of every DTR."
   ],
   "package": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.15.0/DTR-Converter-1.15.0-portable.zip",
-    "sha256": "340356c3948a96f4f7ac9605724b5832c044f723717f05534255b90b494e4867",
-    "size": 12122601,
-    "signature": "el7Dhh9jD5befwg0VFG4ZDqqtj+zA0OFOjk0SwmZAPBpQ3fDLXwn0Mae8b68MjK0ANDYdjevS2N0z/YIdm1DBA=="
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.16.0/DTR-Converter-1.16.0-portable.zip",
+    "sha256": "4e809341faad243e65d9c9a1b1e73e89a60db3510a264a6f23ab629c1a02a902",
+    "size": 12126773,
+    "signature": "mDBlH2C8VULaK+f86lxN6ZqajaSliImiWvW15CadQIIDSMz3tiztVtUb4RSUHSrvTDnCoXUJsVS+JY/iUdXOAg=="
+  },
+  "installer": {
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.16.0/DTR-Converter-1.16.0-setup.exe",
+    "sha256": "884189b6b5db8f19b78261443dd94382a3f9dfd780d92598c7fcfd637aa36b6d",
+    "size": 14069241
   }
 }

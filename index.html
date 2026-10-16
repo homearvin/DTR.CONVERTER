@@ -263,6 +263,7 @@
           <li><svg><use href="#i-check"/></svg>Checking list, names remembered, inactive staff set aside</li>
           <li><svg><use href="#i-check"/></svg>Print A4 cut cards or long bond, or save as PDF</li>
           <li><svg><use href="#i-check"/></svg>Backup, Help guide, one-click updates</li>
+          <li><svg><use href="#i-check"/></svg>Try every Pro feature on screen — upgrade any time for ₱1,001</li>
         </ul>
         <a class="btn ghost" href="#get">Get Standard</a>
       </div>
@@ -277,11 +278,12 @@
           <li><svg><use href="#i-check"/></svg>Under Time and TOTAL filled in — late + early, lunch never counted</li>
           <li><svg><use href="#i-check"/></svg>Missing taps flagged, never guessed; Locator Slip / Undertaking days marked Covered</li>
           <li><svg><use href="#i-check"/></svg>Undertaking checklist to print at month-end</li>
+          <li><svg><use href="#i-check"/></svg>Your school logo on every DTR, framed in a small circle</li>
         </ul>
         <a class="btn primary" href="#get">Get Pro</a>
       </div>
     </div>
-    <p class="center" style="margin-top:16px; color:var(--muted); font-size:14px">A key works on one computer. Replacing a laptop? Message us and we move your key, free.</p>
+    <p class="center" style="margin-top:16px; color:var(--muted); font-size:14px">A key works on one computer. Replacing a laptop? Message us and we move your key, free.<br>Already on Standard? Upgrade to Pro for <b>₱1,001</b> — open DTR Converter and click <b>Get Pro</b>.</p>
   </section>
 
   <section id="get">
@@ -293,13 +295,14 @@
       <div class="card">
         <h3>Steps</h3>
         <ol>
-          <li><a class="js-download" href="https://github.com/homearvin/DTR.CONVERTER/releases/latest">Download DTR Converter</a> (a zip, about 12 MB). Right-click → Extract All, then open <b>DTR Converter.exe</b>.</li>
+          <li><a class="js-setup" href="https://github.com/homearvin/DTR.CONVERTER/releases/latest">Download the DTR Converter installer</a> (about 12 MB) and open it: it adds DTR Converter to the Start menu and desktop, and you can uninstall it from Windows Settings. Prefer no installing? Get the <a class="js-download" href="https://github.com/homearvin/DTR.CONVERTER/releases/latest">portable zip</a> instead.</li>
           <li>Send the payment below with your <b>name and school/office</b> and whether you want <b>Standard or Pro</b>.</li>
           <li>You receive a small <b>.dtrkey</b> file. With internet on, open DTR Converter and choose it. That's it — it works offline from then on.</li>
         </ol>
         <div class="hero-cta" style="margin-top:22px">
-          <a class="btn primary js-download" href="https://github.com/homearvin/DTR.CONVERTER/releases/latest"><svg><use href="#i-dl"/></svg>Download DTR Converter</a>
+          <a class="btn primary js-setup" href="https://github.com/homearvin/DTR.CONVERTER/releases/latest"><svg><use href="#i-dl"/></svg>Download DTR Converter</a>
         </div>
+        <p class="dl-facts">Installer for Windows · or the <a class="js-download" href="https://github.com/homearvin/DTR.CONVERTER/releases/latest">portable zip</a> (no installing: Right-click → Extract All, then open DTR Converter.exe). Your saved work stays when you switch between them.</p>
         <p class="dl-facts">Windows 10 or 11 (64-bit) with Microsoft Edge or Google Chrome. If Windows says "Windows protected your PC", click More info → Run anyway (first time only).</p>
       </div>
       <div class="card">
@@ -391,6 +394,11 @@
       var pack = data.package;
       if (pack && pack.url && pack.url.indexOf('https://') === 0) {
         document.querySelectorAll('a.js-download').forEach(function (a) { a.href = pack.url; });
+      }
+      // The installer, when the release has one; otherwise the main buttons get the zip too.
+      var setup = data.installer && data.installer.url && data.installer.url.indexOf('https://') === 0 ? data.installer.url : (pack && pack.url);
+      if (setup && setup.indexOf('https://') === 0) {
+        document.querySelectorAll('a.js-setup').forEach(function (a) { a.href = setup; });
       }
       if (data.latest) {
         document.querySelectorAll('.js-version').forEach(function (s) { s.textContent = 'version ' + data.latest; });
