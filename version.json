@@ -1,21 +1,21 @@
 {
-  "latest": "1.18.0",
-  "released": "2026-10-20",
+  "latest": "1.19.0",
+  "released": "2026-10-21",
   "download_url": "https://homearvin.github.io/DTR.CONVERTER/#get",
   "changes": [
-    "Different signers: the Principal's own DTR (or any employee's) can now be signed by someone else, e.g. the District Supervisor.",
-    "Settings > Form & taps > Add another signer, then choose them in Employee List > Signed by. The title is optional.",
-    "The app warns when someone would sign their own DTR."
+    "New: 30-day Pro pass (P299) - full Pro for 30 days from activation. The top bar shows the days left.",
+    "When a pass ends, your DTRs stay: open and check them any time; printing needs a new pass or a lifetime license.",
+    "Get Pro now shows both choices: the 30-day pass and Pro for life."
   ],
   "package": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.18.0/DTR-Converter-1.18.0-portable.zip",
-    "sha256": "4ed1620c5432efec3db8d36a0bd7412977308a2e71481f6699110d3f7fa0e693",
-    "size": 12133794,
-    "signature": "cb8e898qFCNQ1dVp4K1Wf4WyhyhG3VF6Xi6CCZWTonHI4/amCX6+HSa7R4yLLqESX9DAqqtORcrQHRFMZYaLCw=="
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.19.0/DTR-Converter-1.19.0-portable.zip",
+    "sha256": "06cc555f2b2ae382f8277a987cbc83eb402658c417e86af6a98addadb86b45fa",
+    "size": 12138393,
+    "signature": "iF3UxpSO2c3frjgxCpUmMqiwvhdqzRKaQM80FfEJa7Ayb94iEX6NvRHYEVA3ewoTJxbYNNB/+0wJVUNM+5SzAA=="
   },
   "installer": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.18.0/DTR-Converter-1.18.0-setup.exe",
-    "sha256": "19716c61f837637d154540173f0aff4a428436d449686215324ce809287eef88",
-    "size": 14076622
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.19.0/DTR-Converter-1.19.0-setup.exe",
+    "sha256": "2d775a2842586a88401324f2c30e9776f13efabed3804f42beb94354ebe610aa",
+    "size": 14080820
   }
 }
