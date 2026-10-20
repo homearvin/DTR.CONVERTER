@@ -84,6 +84,20 @@
 
   .plans{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; margin-top:34px; max-width:1180px; margin-left:auto; margin-right:auto}
   .plan .tag.tag--pass{background:#0f9d6b}
+  /* Introductory offer: the 30-day Pro Pass (P299) — promo bar, hero box, first price card */
+  .promo-bar{display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:6px 12px; padding:9px 16px; background:linear-gradient(90deg,#0b7a53,#0f9d6b); color:#fff; font-size:14px; text-decoration:none; text-align:center}
+  .promo-bar b{font-weight:800}
+  .promo-go{font-weight:800; text-decoration:underline; text-underline-offset:3px}
+  .promo-badge{display:inline-block; padding:4px 10px; border-radius:99px; background:#fff; color:#0b7a53; font-size:11.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase}
+  .promo-box{display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-top:22px; padding:14px 18px; border-radius:16px; background:#ecfbf3; box-shadow:inset 0 0 0 2px #0f9d6b; color:var(--navy); text-decoration:none; max-width:520px}
+  .promo-box .promo-badge{background:#0f9d6b; color:#fff}
+  .promo-box-main{display:flex; align-items:center; gap:12px}
+  .promo-box-main b{font-size:32px; font-weight:800; color:#0b7a53; line-height:1}
+  .promo-box-main span{font-size:14px; color:var(--ink-2)}
+  .plan.featured.featured--pass{box-shadow:var(--shadow), inset 0 0 0 2px #0f9d6b}
+  .plan .who.who--pass{color:#0b7a53}
+  .btn.primary.btn--pass{background:#0f9d6b; box-shadow:0 8px 20px rgba(15,157,107,.3)}
+  .btn.primary.btn--pass:hover{background:#0b7a53}
   .plan{position:relative; padding:28px 28px 26px; display:flex; flex-direction:column}
   .plan.featured{box-shadow:var(--shadow), inset 0 0 0 2px var(--blue)}
   .plan .tag{position:absolute; top:-13px; left:26px; background:var(--blue); color:#fff; font-size:11.5px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; padding:6px 13px; border-radius:99px}
@@ -156,6 +170,8 @@
   <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3.5" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M3 20c.6-3.4 3-5.5 6-5.5s5.4 2.1 6 5.5M15.5 5.2a3.5 3.5 0 0 1 0 6.6M17.5 14.8c1.8.7 3 2.6 3.5 5.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
 </defs></svg>
 
+<a class="promo-bar" href="#editions"><span class="promo-badge">Introductory offer</span>
+  <span>Start with the <b>30-day Pro Pass — only ₱299</b>. Full Pro, no automatic renewal.</span><span class="promo-go">See prices →</span></a>
 <header class="top">
   <div class="wrap">
     <a class="brand" href="#top"><span class="mark"><svg width="22" height="22"><use href="#i-doc"/></svg></span>
@@ -181,6 +197,10 @@
         <a class="btn primary" href="#get"><svg><use href="#i-dl"/></svg>Get DTR Converter</a>
         <a class="btn ghost" href="#how">See how it works</a>
       </div>
+      <a class="promo-box" href="#editions">
+        <span class="promo-badge">Introductory package</span>
+        <span class="promo-box-main"><b>₱299</b><span>Full Pro for 30 days — try it on this month's DTRs before buying for life.</span></span>
+      </a>
       <p class="dl-facts">Windows 10 or 11 · <span class="js-version">latest version</span> · about 12 MB · works offline</p>
       <div class="hero-trust">
         <span><svg><use href="#i-check"/></svg>Times copied exactly as recorded</span>
@@ -250,11 +270,25 @@
 
   <section id="editions">
     <div class="center">
-      <span class="eyebrow">Standard · Pro · 30-day Pass</span>
+      <span class="eyebrow">30-day Pass · Standard · Pro</span>
       <h2 style="margin-top:8px">The converter, or the converter plus Under Time.</h2>
       <p class="lead" style="margin:12px auto 0; max-width:640px">One app. Your license key decides the edition — upgrade any time without reinstalling.</p>
     </div>
     <div class="plans">
+      <div class="card plan featured featured--pass">
+        <span class="tag tag--pass">Introductory offer</span>
+        <span class="who who--pass">Start here · 30-day Pass</span>
+        <h3>Pro Pass</h3>
+        <div class="price"><b>₱299</b><span>30 days · one computer</span></div>
+        <ul>
+          <li><svg><use href="#i-check"/></svg>Everything in Pro, for 30 days from the day you activate it</li>
+          <li><svg><use href="#i-check"/></svg>Good for one reporting month — convert, check and print your DTRs</li>
+          <li><svg><use href="#i-check"/></svg>No automatic renewal — buy another pass only when you need it</li>
+          <li><svg><use href="#i-check"/></svg>Days left shown in the app</li>
+          <li><svg><use href="#i-check"/></svg>When it ends, your DTRs stay: open and check them any time; printing needs a new pass or a lifetime license</li>
+        </ul>
+        <a class="btn primary btn--pass" href="#get">Start for ₱299</a>
+      </div>
       <div class="card plan">
         <span class="who">Standard</span>
         <h3>DTR Converter</h3>
@@ -268,7 +302,7 @@
         </ul>
         <a class="btn ghost" href="#get">Get Standard</a>
       </div>
-      <div class="card plan featured">
+      <div class="card plan">
         <span class="tag">For computed DTRs</span>
         <span class="who">Pro</span>
         <h3>DTR Converter Pro</h3>
@@ -281,21 +315,7 @@
           <li><svg><use href="#i-check"/></svg>Undertaking checklist to print at month-end</li>
           <li><svg><use href="#i-check"/></svg>Your school logo on every DTR, framed in a small circle</li>
         </ul>
-        <a class="btn primary" href="#get">Get Pro</a>
-      </div>
-      <div class="card plan">
-        <span class="tag tag--pass">Pay only when you need it</span>
-        <span class="who">30-day Pass</span>
-        <h3>Pro Pass</h3>
-        <div class="price"><b>₱299</b><span>30 days · one computer</span></div>
-        <ul>
-          <li><svg><use href="#i-check"/></svg>Everything in Pro, for 30 days from the day you activate it</li>
-          <li><svg><use href="#i-check"/></svg>Good for one reporting month — convert, check and print your DTRs</li>
-          <li><svg><use href="#i-check"/></svg>No automatic renewal — buy another pass only when you need it</li>
-          <li><svg><use href="#i-check"/></svg>Days left shown in the app</li>
-          <li><svg><use href="#i-check"/></svg>When it ends, your DTRs stay: open and check them any time; printing needs a new pass or a lifetime license</li>
-        </ul>
-        <a class="btn ghost" href="#get">Get the 30-day Pass</a>
+        <a class="btn ghost" href="#get">Get Pro</a>
       </div>
     </div>
     <p class="center" style="margin-top:16px; color:var(--muted); font-size:14px">A key works on one computer. Replacing a laptop? Message us and we move your key, free.<br>Already on Standard? Upgrade to Pro for <b>₱1,001</b> — open DTR Converter and click <b>Get Pro</b>.<br>
