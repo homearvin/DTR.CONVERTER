@@ -1,22 +1,21 @@
 {
-  "latest": "1.17.1",
+  "latest": "1.18.0",
   "released": "2026-10-20",
   "download_url": "https://homearvin.github.io/DTR.CONVERTER/#get",
   "changes": [
-    "Added Staff On-Duty/Off-Duty Timetable Excel reports: employee numbers, names and daily clock pairs are read from the contents, independent of the filename.",
-    "Keeps employees without taps, repeated clocks and employee blocks split across printed pages.",
-    "Unreadable clocks are kept as notes with a warning. Valid neighboring times are imported; missing digits are never guessed.",
-    "The blue interface, Standard/Pro features, saved work and printed CSC Form 48 remain unchanged."
+    "Different signers: the Principal's own DTR (or any employee's) can now be signed by someone else, e.g. the District Supervisor.",
+    "Settings > Form & taps > Add another signer, then choose them in Employee List > Signed by. The title is optional.",
+    "The app warns when someone would sign their own DTR."
   ],
   "package": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.17.1/DTR-Converter-1.17.1-portable.zip",
-    "sha256": "7b8d98797bc2aaaeda5ae75d52e98f878fd9a5c720d2936edb2b77e810ff9dd5",
-    "size": 13156690,
-    "signature": "8ml2pti6fMZvJnIZB1T5Q7uvrs5Dxr7BHOoAv3LXjA9wqxhFMPBsXTkAzXg9LowZwFBmG+mzrFMD2IKWF3GiAg=="
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.18.0/DTR-Converter-1.18.0-portable.zip",
+    "sha256": "4ed1620c5432efec3db8d36a0bd7412977308a2e71481f6699110d3f7fa0e693",
+    "size": 12133794,
+    "signature": "cb8e898qFCNQ1dVp4K1Wf4WyhyhG3VF6Xi6CCZWTonHI4/amCX6+HSa7R4yLLqESX9DAqqtORcrQHRFMZYaLCw=="
   },
   "installer": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.17.1/DTR-Converter-1.17.1-setup.exe",
-    "sha256": "433984638685f8f4ca0549baf712fbb0211e3bd709cfade07c18828f50a25953",
-    "size": 15100683
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.18.0/DTR-Converter-1.18.0-setup.exe",
+    "sha256": "19716c61f837637d154540173f0aff4a428436d449686215324ce809287eef88",
+    "size": 14076622
   }
 }
