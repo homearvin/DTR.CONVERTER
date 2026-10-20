@@ -82,7 +82,8 @@
   .step i{display:grid; place-items:center; width:34px; height:34px; border-radius:10px; background:var(--navy); color:#fff; font-style:normal; font-weight:800; margin-bottom:12px}
   .step p{margin-top:6px; color:var(--muted); font-size:14.5px}
 
-  .plans{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; margin-top:34px; max-width:880px; margin-left:auto; margin-right:auto}
+  .plans{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; margin-top:34px; max-width:1180px; margin-left:auto; margin-right:auto}
+  .plan .tag.tag--pass{background:#0f9d6b}
   .plan{position:relative; padding:28px 28px 26px; display:flex; flex-direction:column}
   .plan.featured{box-shadow:var(--shadow), inset 0 0 0 2px var(--blue)}
   .plan .tag{position:absolute; top:-13px; left:26px; background:var(--blue); color:#fff; font-size:11.5px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; padding:6px 13px; border-radius:99px}
@@ -162,7 +163,7 @@
     <nav class="main" aria-label="Sections">
       <a href="#features">Features</a>
       <a href="#how">How it works</a>
-      <a href="#editions">Standard &amp; Pro</a>
+      <a href="#editions">Prices</a>
       <a href="#faq">Questions</a>
     </nav>
     <a class="btn primary sm" href="#get">Get DTR Converter</a>
@@ -184,7 +185,7 @@
       <div class="hero-trust">
         <span><svg><use href="#i-check"/></svg>Times copied exactly as recorded</span>
         <span><svg><use href="#i-check"/></svg>Your staff data stays on your PC</span>
-        <span><svg><use href="#i-check"/></svg>One-time payment</span>
+        <span><svg><use href="#i-check"/></svg>One-time payment, or ₱299 for 30 days</span>
       </div>
     </div>
     <img class="shot" src="images/check.png" width="1366" height="768" alt="DTR Converter checking screen: the employee list in groups, the CSC Form 48 preview, and the Under Time summary">
@@ -249,7 +250,7 @@
 
   <section id="editions">
     <div class="center">
-      <span class="eyebrow">Standard &amp; Pro</span>
+      <span class="eyebrow">Standard · Pro · 30-day Pass</span>
       <h2 style="margin-top:8px">The converter, or the converter plus Under Time.</h2>
       <p class="lead" style="margin:12px auto 0; max-width:640px">One app. Your license key decides the edition — upgrade any time without reinstalling.</p>
     </div>
@@ -272,7 +273,6 @@
         <span class="who">Pro</span>
         <h3>DTR Converter Pro</h3>
         <div class="price"><b>₱2,000</b><span>one-time · one computer</span></div>
-        <p class="note" style="margin-top:6px; text-align:left">Or full Pro for 30 days: <b>₱299</b> pass — renew only when you need it.</p>
         <ul>
           <li><svg><use href="#i-check"/></svg>Everything in Standard</li>
           <li><svg><use href="#i-check"/></svg>Your official time, one or more schedules</li>
@@ -283,9 +283,23 @@
         </ul>
         <a class="btn primary" href="#get">Get Pro</a>
       </div>
+      <div class="card plan">
+        <span class="tag tag--pass">Pay only when you need it</span>
+        <span class="who">30-day Pass</span>
+        <h3>Pro Pass</h3>
+        <div class="price"><b>₱299</b><span>30 days · one computer</span></div>
+        <ul>
+          <li><svg><use href="#i-check"/></svg>Everything in Pro, for 30 days from the day you activate it</li>
+          <li><svg><use href="#i-check"/></svg>Good for one reporting month — convert, check and print your DTRs</li>
+          <li><svg><use href="#i-check"/></svg>No automatic renewal — buy another pass only when you need it</li>
+          <li><svg><use href="#i-check"/></svg>Days left shown in the app</li>
+          <li><svg><use href="#i-check"/></svg>When it ends, your DTRs stay: open and check them any time; printing needs a new pass or a lifetime license</li>
+        </ul>
+        <a class="btn ghost" href="#get">Get the 30-day Pass</a>
+      </div>
     </div>
     <p class="center" style="margin-top:16px; color:var(--muted); font-size:14px">A key works on one computer. Replacing a laptop? Message us and we move your key, free.<br>Already on Standard? Upgrade to Pro for <b>₱1,001</b> — open DTR Converter and click <b>Get Pro</b>.<br>
-      <b>30-day Pro pass, ₱299:</b> full Pro for 30 days from activation. When it ends your DTRs stay — you can open and check them; printing needs a new pass or a lifetime license (full price).</p>
+      Lifetime licenses are full price; a pass is not credited toward them.</p>
   </section>
 
   <section id="get">
@@ -298,7 +312,7 @@
         <h3>Steps</h3>
         <ol>
           <li><a class="js-setup" href="https://github.com/homearvin/DTR.CONVERTER/releases/latest">Download the DTR Converter installer</a> (about 12 MB) and open it: it adds DTR Converter to the Start menu and desktop, and you can uninstall it from Windows Settings. Prefer no installing? Get the <a class="js-download" href="https://github.com/homearvin/DTR.CONVERTER/releases/latest">portable zip</a> instead.</li>
-          <li>Send the payment below with your <b>name and school/office</b> and whether you want <b>Standard or Pro</b>.</li>
+          <li>Send the payment below with your <b>name and school/office</b> and whether you want <b>Standard</b>, <b>Pro</b> or the <b>30-day Pass</b>.</li>
           <li>You receive a small <b>.dtrkey</b> file. With internet on, open DTR Converter and choose it. That's it — it works offline from then on.</li>
         </ol>
         <div class="hero-cta" style="margin-top:22px">
