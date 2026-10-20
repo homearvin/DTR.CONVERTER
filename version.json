@@ -1,22 +1,22 @@
 {
-  "latest": "1.17.0",
-  "released": "2026-10-17",
+  "latest": "1.17.1",
+  "released": "2026-10-20",
   "download_url": "https://homearvin.github.io/DTR.CONVERTER/#get",
   "changes": [
-    "A simpler blue upload screen with Upload, History and Settings at the top.",
-    "Review and edit one complete CSC Form 48 at a time; open the employee review list when needed.",
-    "Open saved months from History and reach holidays and suspensions directly from review.",
-    "A compact update reminder you can dismiss. Standard and Pro features, saved work and the printed Form 48 stay the same."
+    "Added Staff On-Duty/Off-Duty Timetable Excel reports: employee numbers, names and daily clock pairs are read from the contents, independent of the filename.",
+    "Keeps employees without taps, repeated clocks and employee blocks split across printed pages.",
+    "Unreadable clocks are kept as notes with a warning. Valid neighboring times are imported; missing digits are never guessed.",
+    "The blue interface, Standard/Pro features, saved work and printed CSC Form 48 remain unchanged."
   ],
   "package": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.17.0/DTR-Converter-1.17.0-portable.zip",
-    "sha256": "abd3376aad40b68389de11bb24be330bb0ec939a4f6d596630375b37b392a91d",
-    "size": 13166334,
-    "signature": "t5u2vdOx1ANfe/0I/5xmnhRhu9Go/vtFcQMSRq6tVjnUO0Hfnv6dsD0jdL9Xq7RzfUl5Suf5vYVS+XFdflCYBQ=="
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.17.1/DTR-Converter-1.17.1-portable.zip",
+    "sha256": "7b8d98797bc2aaaeda5ae75d52e98f878fd9a5c720d2936edb2b77e810ff9dd5",
+    "size": 13156690,
+    "signature": "8ml2pti6fMZvJnIZB1T5Q7uvrs5Dxr7BHOoAv3LXjA9wqxhFMPBsXTkAzXg9LowZwFBmG+mzrFMD2IKWF3GiAg=="
   },
   "installer": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.17.0/DTR-Converter-1.17.0-setup.exe",
-    "sha256": "03137e303fc712202ef25761277b369b014fcd6809e41b9b0a0b7c5cde71e72c",
-    "size": 15101608
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.17.1/DTR-Converter-1.17.1-setup.exe",
+    "sha256": "433984638685f8f4ca0549baf712fbb0211e3bd709cfade07c18828f50a25953",
+    "size": 15100683
   }
 }
