@@ -1492,7 +1492,7 @@ window.DTR = window.DTR || {};
 DTR.config = Object.freeze({
   APP_NAME: 'DTR Converter',
   APP_SUBTITLE: 'Biometric Timecard → CSC Form No. 48',
-  APP_VERSION: '1.20.0',
+  APP_VERSION: '1.20.1',
 
   /* Where clients ask for help and keys (same as desktop/licensing.py CONTACT_*). */
   CONTACT: Object.freeze({ email: 'azmarketingservicesbicol@gmail.com', facebook: 'AZ Digital Marketing' }),
@@ -2565,8 +2565,16 @@ DTR.readers = DTR.readers || {};
     if (!m || +m[1] < 1 || +m[1] > 12 || +m[2] < 1 || +m[2] > daysInMonth(+m[3], +m[1])) return null;
     return cells.date(`${m[3]}-${pad2(+m[1])}-${pad2(+m[2])}`);
   }
+  // Some exports of the same template write the period year-first (2026-09-01~2026-09-30,
+  // client file Oct-23). Year-first is never ambiguous, so it is accepted beside month/day/year.
+  function ymd(value) {
+    const m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(text(value));
+    if (!m || +m[2] < 1 || +m[2] > 12 || +m[3] < 1 || +m[3] > daysInMonth(+m[1], +m[2])) return null;
+    return cells.date(`${m[1]}-${pad2(+m[2])}-${pad2(+m[3])}`);
+  }
+  const periodDate = (value) => mdy(value) || ymd(value);
   function period(startText, endText) {
-    const start = mdy(startText), end = mdy(endText);
+    const start = periodDate(startText), end = periodDate(endText);
     if (!start || !end || start > end || start.slice(0,7) !== end.slice(0,7)) throw new Error('The attendance table needs a valid date range within one month.');
     return {start, end};
   }

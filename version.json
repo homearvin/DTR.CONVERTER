@@ -1,21 +1,20 @@
 {
-  "latest": "1.20.0",
-  "released": "2026-10-21",
+  "latest": "1.20.1",
+  "released": "2026-10-23",
   "download_url": "https://homearvin.github.io/DTR.CONVERTER/#get",
   "changes": [
-    "New: an online demo of DTR Converter - share it with other offices: homearvin.github.io/DTR.CONVERTER/demo",
-    "Introductory 30-day Pro pass for P299 - full Pro for 30 days, no automatic renewal.",
-    "Small behind-the-scenes improvements."
+    "Reads more Employee Attendance Table reports (AttendReport exports whose dates are written year-first, e.g. 2026-09-01~2026-09-30).",
+    "Try DTR Converter online and share it with other offices: homearvin.github.io/DTR.CONVERTER/demo"
   ],
   "package": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.20.0/DTR-Converter-1.20.0-portable.zip",
-    "sha256": "1bcf5565440887a94e4d9e807fffd06ff073940cb953ff86c3935a29a0fb37fd",
-    "size": 12141415,
-    "signature": "hugkMKfcdblE0NlBN94qj+p/InOq20yUHplI4D/Qb/VnhVKpilRfEUcKRuXreopP7hBbQ9BhYA2c5UeM1r2zDg=="
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.20.1/DTR-Converter-1.20.1-portable.zip",
+    "sha256": "a3cc6070fa9e9e522b7f9587cc8a54e884f9f020d86b83217c081a283d82bff2",
+    "size": 12142793,
+    "signature": "9R+ce0677GjDDugcICMsuC4uO+ZmMZg2gOXGlFka7MhVxjyd/vnNnqeT9sbQ0dyTeDo/8i4D7cv8oR4yB9rhBQ=="
   },
   "installer": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.20.0/DTR-Converter-1.20.0-setup.exe",
-    "sha256": "c7b4bd708e21c67ae78600023b02bdd722faa173d0acce285a9a3c46d209676f",
-    "size": 14084597
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.20.1/DTR-Converter-1.20.1-setup.exe",
+    "sha256": "1a0a9241df948f471562205c0fc2a2f6efd133525c4ca8e5c2e2f71aca0b33e4",
+    "size": 14087163
   }
 }
