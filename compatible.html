@@ -216,6 +216,18 @@
  */
 const FORMATS = [
   {
+    name: 'Bio-office Timesheet Report', brand: 'Mustard Seed Systems Bio-office', types: ['xls', 'xlsx'],
+    lookFor: '<code>TIMESHEET REPORT</code>, a <code>From ... to ...</code> date range, <code>Employee: Name (ID)</code>, and numbered <code>In 1 / Out 1</code> through <code>In 6 / Out 6</code> columns.',
+    sample: [
+      [['TIMESHEET REPORT', 'ti'], '', '', '', ''],
+      ['From September 01, 2026 to September 30, 2026', '', '', '', ''],
+      ['Employee: Dela Cruz, Juan (1001)', '', '', '', ''],
+      [['Date', 'hd'], ['In 1', 'hd'], ['Out 1', 'hd'], ['In 2', 'hd'], ['Out 2', 'hd']],
+      ['09/01/2026', ['07:30', 'tm'], ['12:00', 'tm'], ['13:00', 'tm'], ['17:00', 'tm']]
+    ],
+    reads: ['Names, employee numbers and every recorded IN / OUT pair', 'Missing times and employees without attendance stay blank', 'Calculated hours, overtime and undertime from the report are not imported.']
+  },
+  {
     name: 'Daily Attendance TXT / CSV', brand: null, types: ['txt', 'csv'],
     lookFor: 'No heading row: employee number, optional name, <code>YYYY-MM-DD</code>, arrival, departure, then <code>Late</code>, <code>Early</code> or <code>No attendance</code> notes.',
     sample: [

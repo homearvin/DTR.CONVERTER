@@ -1492,7 +1492,7 @@ window.DTR = window.DTR || {};
 DTR.config = Object.freeze({
   APP_NAME: 'DTR Converter',
   APP_SUBTITLE: 'Biometric Timecard → CSC Form No. 48',
-  APP_VERSION: '1.20.2',
+  APP_VERSION: '1.20.3',
 
   /* Where clients ask for help and keys (same as desktop/licensing.py CONTACT_*). */
   CONTACT: Object.freeze({ email: 'azmarketingservicesbicol@gmail.com', facebook: 'AZ Digital Marketing' }),
@@ -1663,7 +1663,7 @@ DTR.config = Object.freeze({
     MONTHLY_STATEMENT: 'monthly-statement',
     EMPLOYEE_TABLE: 'employee-table',
     ATTENDANCE_RECORDS: 'attendance-records',
-    STAFF_TIMETABLE: 'staff-timetable', DAILY_SUMMARY: 'daily-summary', DAILY_PAIRS: 'daily-pairs',
+    STAFF_TIMETABLE: 'staff-timetable', TIMESHEET: 'timesheet', DAILY_SUMMARY: 'daily-summary', DAILY_PAIRS: 'daily-pairs',
     PUNCH_LOG: 'punch-log'
   }),
   FILE_FORMAT_LABELS: Object.freeze({
@@ -1675,6 +1675,7 @@ DTR.config = Object.freeze({
     'employee-table': 'Employee Attendance Table',
     'attendance-records': 'Attendance Records',
     'staff-timetable': 'Staff On-Duty/Off-Duty Timetable',
+    'timesheet': 'Bio-office Timesheet Report',
     'daily-summary': 'Daily Attendance Summary',
     'daily-pairs': 'Daily Attendance TXT / CSV',
     'punch-log': 'Attendance log (one row per tap)'
@@ -2863,6 +2864,104 @@ DTR.readers.dailySummary = (function () {
 
 </script>
   <script>
+/* Bio-office Timesheet Reports: employee blocks and numbered recorded IN/OUT pairs. */
+window.DTR = window.DTR || {};
+DTR.readers = DTR.readers || {};
+DTR.readers.timesheet = (function () {
+  const { FILE_FORMATS, MONTH_NAMES, TAP_KINDS } = DTR.config;
+  const { isBlank, parseIsoDate, daysInMonth } = DTR.util;
+  const cells = DTR.readers.cells;
+  const text = value => isBlank(value) ? '' : String(value).trim();
+  const label = value => text(value).toLowerCase().replace(/\s+/g, ' ');
+  const identity = value => /^Employee:\s*(.*?)\s*\(([^()]+)\)\s*$/i.exec(text(value));
+  function columns(row) {
+    const labels = row.map(label);
+    if (!labels.includes('date') || !labels.includes('in 1') || !labels.includes('out 1')) return null;
+    const clocks = [];
+    for (let pair = 1; pair <= 6; pair++) for (const kind of ['in', 'out']) {
+      const index = labels.indexOf(`${kind} ${pair}`);
+      if (index >= 0) clocks.push({ index, kind: kind === 'in' ? TAP_KINDS.IN : TAP_KINDS.OUT });
+    }
+    return { date: labels.indexOf('date'), clocks };
+  }
+  const matches = sheet => sheet.rows.some(row => row.some(v => label(v) === 'timesheet report'))
+    && sheet.rows.some(row => columns(row)) && sheet.rows.some(row => row.some(v => identity(v)));
+  function validDate(value) {
+    const date = cells.date(value), parts = date && parseIsoDate(date);
+    return parts && parts.month >= 1 && parts.month <= 12 && parts.day >= 1
+      && parts.day <= daysInMonth(parts.year, parts.month) ? date : null;
+  }
+  function period(rows) {
+    const ranges = [];
+    for (const row of rows) for (const value of row) {
+      const m = /^From\s+([A-Za-z]+)\s+(\d{1,2}),\s*(\d{4})\s+to\s+([A-Za-z]+)\s+(\d{1,2}),\s*(\d{4})$/i.exec(text(value));
+      if (!m) continue;
+      const date = (month, day, year) => validDate(`${year}-${MONTH_NAMES.findIndex(n => n.toLowerCase() === month.toLowerCase()) + 1}-${day}`);
+      const start = date(m[1], m[2], m[3]), end = date(m[4], m[5], m[6]);
+      if (!start || !end || start > end || start.slice(0, 7) !== end.slice(0, 7))
+        throw new Error('The Timesheet Report needs a valid date range within one month.');
+      ranges.push({ start, end });
+    }
+    if (!ranges.length || ranges.some(p => p.start !== ranges[0].start || p.end !== ranges[0].end))
+      throw new Error('The Timesheet Report date range is missing or inconsistent.');
+    return ranges[0];
+  }
+  function read(sheets) {
+    const selected = sheets.filter(matches), range = period(selected.flatMap(sheet => sheet.rows));
+    const result = { format: FILE_FORMATS.TIMESHEET, periodText: range, employees: [], warnings: [] };
+    const employees = new Map();
+    for (const sheet of selected) {
+      let employee = null, header = null;
+      cells.learnDateOrder(sheet.rows.map(row => row[0]));
+      for (let i = 0; i < sheet.rows.length; i++) {
+        const row = sheet.rows[i], location = `${sheet.name} row ${i + 1}`;
+        const person = row.map(identity).find(Boolean);
+        if (person) {
+          const id = cells.employeeId(person[2]), rawName = text(person[1]);
+          if (!id) throw new Error(`${location}: the employee number is missing.`);
+          employee = employees.get(id);
+          if (employee && employee.rawName !== rawName) throw new Error(`${location}: one employee number has conflicting names.`);
+          if (!employee) {
+            // A report may list employees with no daily rows at all. Keep them and its month.
+            employee = { id, rawName, days: { [range.start]: [] }, kinds: { [range.start]: [] } };
+            employees.set(id, employee); result.employees.push(employee);
+          }
+          header = null; continue;
+        }
+        if (row.some(v => /^employee:/i.test(text(v)))) throw new Error(`${location}: the employee heading is unreadable.`);
+        const next = columns(row);
+        if (next) { header = next; continue; }
+        if (!employee || !header || row.every(isBlank)) continue;
+        if (/^(total:|days present:|total hours required:)/i.test(text(row[header.date]))) { employee = null; header = null; continue; }
+        const date = validDate(row[header.date]);
+        if (!date || date < range.start || date > range.end)
+          throw new Error(`${location}: an attendance date is unreadable or outside the report period.`);
+        employee.days[date] ||= []; employee.kinds[date] ||= [];
+        for (const { index, kind } of header.clocks) {
+          const value = row[index];
+          if (isBlank(value)) continue;
+          const display = text(sheet.displayRows?.[i]?.[index]);
+          const clockValue = typeof value === 'number' && /^\d{1,2}:\d{2}\s*(?:[AP]M)?$/i.test(display) ? display : value;
+          const parts = /^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AP]M)?$/i.exec(text(clockValue));
+          const clock = cells.time(clockValue);
+          if (!clock || (typeof value === 'number' && (!Number.isFinite(value) || value < 0 || value >= 1))
+            || (parts && (+parts[3] > 59 || (parts[4] && (+parts[1] < 1 || +parts[1] > 12)))))
+            throw new Error(`${location}: a recorded IN/OUT time is unreadable. No attendance was imported.`);
+          employee.days[date].push(clock); employee.kinds[date].push(kind);
+        }
+      }
+    }
+    for (const employee of result.employees) for (const [date, times] of Object.entries(employee.days)) {
+      const records = times.map((time, i) => ({ time, kind: employee.kinds[date][i] })).sort((a, b) => a.time.localeCompare(b.time));
+      employee.days[date] = records.map(r => r.time); employee.kinds[date] = records.map(r => r.kind);
+    }
+    return result;
+  }
+  return { id: FILE_FORMATS.TIMESHEET, detect: sheets => sheets.some(matches), read };
+})();
+
+</script>
+  <script>
 /* Headerless daily TXT/CSV: ID, name, ISO date, arrival, departure, late/early notes.
  * Recognise this layout before the generic single-tap log: both clocks are data,
  * never names. Device calculations remain notes, not computed Form 48 values.
@@ -3342,7 +3441,7 @@ DTR.parser = (function () {
   const R = DTR.readers;
 
   /* Most specific first: the Timecard Report also contains dates and times. */
-  const READERS = [R.timecard, R.clockTable, R.standardReport, R.punchReport, R.monthlyStatement, R.employeeTable, R.attendanceRecords, R.dailySummary, R.dailyPairs, R.staffTimetable, R.punchLog];
+  const READERS = [R.timecard, R.clockTable, R.standardReport, R.punchReport, R.monthlyStatement, R.employeeTable, R.attendanceRecords, R.timesheet, R.dailySummary, R.dailyPairs, R.staffTimetable, R.punchLog];
   const TEXT_FILE = /\.(csv|txt|dat)$/i;
 
   class SourceFormatError extends Error {}
@@ -3434,7 +3533,7 @@ DTR.parser = (function () {
     const sheets = toSheets(buffer, fileName);
     const reader = READERS.find((r) => r.detect(sheets));
     if (!reader) {
-      throw new SourceFormatError('This file\'s layout is not recognised. It needs a "Timecard Report", an "Attendance Clock Table", an "Attendance Record Report", a monthly "Punch" report, a "Monthly Statement Report", an "Employee Attendance Table", "Attendance Records", a daily "Clock In / Clock Out" summary, a "Staff\'s On-Duty/Off-Duty Timetable", or an attendance log with an employee number and the date and time of each tap.');
+      throw new SourceFormatError('This file\'s layout is not recognised. It needs a "Timecard Report", an "Attendance Clock Table", an "Attendance Record Report", a monthly "Punch" report, a "Monthly Statement Report", an "Employee Attendance Table", "Attendance Records", a daily "Clock In / Clock Out" summary, a "Staff\'s On-Duty/Off-Duty Timetable", a "Timesheet Report", or an attendance log with an employee number and the date and time of each tap.');
     }
     const result = reader.read(sheets, fileName, options);
     if (!result.employees.length) {
@@ -3467,7 +3566,7 @@ DTR.parser = (function () {
     const month = parsed.months.find((m) => m.key === monthKey) || parsed.months[0];
     const isReport = parsed.format === FILE_FORMATS.TIMECARD || parsed.format === FILE_FORMATS.CLOCK_TABLE
       || parsed.format === FILE_FORMATS.STANDARD_REPORT || parsed.format === FILE_FORMATS.PUNCH_REPORT
-      || parsed.format === FILE_FORMATS.MONTHLY_STATEMENT || parsed.format === FILE_FORMATS.EMPLOYEE_TABLE || parsed.format === FILE_FORMATS.STAFF_TIMETABLE || parsed.format === FILE_FORMATS.DAILY_SUMMARY || parsed.format === FILE_FORMATS.DAILY_PAIRS || parsed.format === FILE_FORMATS.ATTENDANCE_RECORDS;
+      || parsed.format === FILE_FORMATS.MONTHLY_STATEMENT || parsed.format === FILE_FORMATS.EMPLOYEE_TABLE || parsed.format === FILE_FORMATS.STAFF_TIMETABLE || parsed.format === FILE_FORMATS.TIMESHEET || parsed.format === FILE_FORMATS.DAILY_SUMMARY || parsed.format === FILE_FORMATS.DAILY_PAIRS || parsed.format === FILE_FORMATS.ATTENDANCE_RECORDS;
 
     const periodText = parsed.periods?.[month.key] || parsed.periodText;
     let period;
