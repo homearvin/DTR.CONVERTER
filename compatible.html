@@ -125,6 +125,7 @@
     .count{margin-left:0; width:100%}
     .missing{grid-template-columns:minmax(0,1fr)}
   }
+.fmt[hidden] { display: none; }
 </style>
 </head>
 <body>
@@ -214,6 +215,15 @@
  *   ti (title) · hd (heading) · tm (time) · mu (faint).
  */
 const FORMATS = [
+  {
+    name: 'Daily Attendance TXT / CSV', brand: null, types: ['txt', 'csv'],
+    lookFor: 'No heading row: employee number, optional name, <code>YYYY-MM-DD</code>, arrival, departure, then <code>Late</code>, <code>Early</code> or <code>No attendance</code> notes.',
+    sample: [
+      ['1001', '', '2026-09-01', ['07:24:51', 'tm'], ['16:39:12', 'tm'], '', 'Early: 21minutes'],
+      ['1002', '', '2026-09-01', ['07:40:03', 'tm'], '', '', 'No attendance']
+    ],
+    reads: ['Both recorded times; missing times stay blank', 'Choose the month when a file spans months. If names are blank, import an employee name list.', 'Late / Early values stay in Day details; they are not copied into Form 48 totals.']
+  },
   {
     name: 'Timecard Report', brand: 'NGTeco', types: ['xls'],
     lookFor: 'A sheet called <code>Employee Timecard</code>, each employee as <code>Name (ID)</code>, and columns <code>Date · IN · OUT</code>.',

@@ -1,20 +1,21 @@
 {
-  "latest": "1.20.1",
-  "released": "2026-10-23",
+  "latest": "1.20.2",
+  "released": "2026-10-29",
   "download_url": "https://homearvin.github.io/DTR.CONVERTER/#get",
   "changes": [
-    "Reads more Employee Attendance Table reports (AttendReport exports whose dates are written year-first, e.g. 2026-09-01~2026-09-30).",
-    "Try DTR Converter online and share it with other offices: homearvin.github.io/DTR.CONVERTER/demo"
+    "Reads daily attendance TXT/CSV files with separate arrival and departure columns. Both times are retained; clocks are no longer mistaken for employee names.",
+    "Files spanning several months offer a month choice. Missing times stay blank; Late/Early/No attendance values remain notes.",
+    "If the machine export has no names, import an employee name list."
   ],
   "package": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.20.1/DTR-Converter-1.20.1-portable.zip",
-    "sha256": "a3cc6070fa9e9e522b7f9587cc8a54e884f9f020d86b83217c081a283d82bff2",
-    "size": 12142793,
-    "signature": "9R+ce0677GjDDugcICMsuC4uO+ZmMZg2gOXGlFka7MhVxjyd/vnNnqeT9sbQ0dyTeDo/8i4D7cv8oR4yB9rhBQ=="
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.20.2/DTR-Converter-1.20.2-portable.zip",
+    "sha256": "780cfc149e504dbad227cd3fe9e7062634d561a400860cfae0e0268b5e83ef12",
+    "size": 13181653,
+    "signature": "92zKq+/vrsg09IghtdKM0D2bVWhFdYEolE2XXZs8Dn8RtiUWVYsaqZdvNu0CBB4xHVh3zSa9fJvn7PVEUyv+DQ=="
   },
   "installer": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.20.1/DTR-Converter-1.20.1-setup.exe",
-    "sha256": "1a0a9241df948f471562205c0fc2a2f6efd133525c4ca8e5c2e2f71aca0b33e4",
-    "size": 14087163
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.20.2/DTR-Converter-1.20.2-setup.exe",
+    "sha256": "be40fd914e21018c3a68c2c086f23452e8d6e975d1e0876ec1c4f06436d2f758",
+    "size": 15114382
   }
 }
