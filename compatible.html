@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compatible biometric files — DTR Converter</title>
+<meta name="description" content="Every biometric attendance report DTR Converter reads, with the machine brand where known, a sample of the layout, and the file types. Test your own file in the online demo.">
+<link rel="canonical" href="https://homearvin.github.io/DTR.CONVERTER/compatible.html">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%232563eb'/%3E%3Cpath d='M11 7h7l4 4v14H11z' fill='none' stroke='white' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M14 16h5M14 19.5h5' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+  /* Same look as the main page (index.html). */
+  :root{
+    --navy:#16324f; --blue:#2563eb; --blue-deep:#1d4ed8; --blue-soft:#eff5ff; --blue-edge:#c9dafc;
+    --ink:#0f172a; --ink-2:#334155; --muted:#5b6b80; --faint:#8a99ad; --line:#e2e8f0;
+    --ground:#f4f7fc; --card:#fff; --green:#0f9d6b; --green-deep:#0b7a53; --green-soft:#ecfbf3; --amber-soft:#fff7e6;
+    --radius:18px; --shadow:0 1px 2px rgba(15,23,42,.05),0 10px 30px rgba(15,23,42,.07);
+    --font:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+    --mono:Consolas,"Cascadia Mono","Courier New",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; font-family:var(--font); color:var(--ink); background:var(--ground); line-height:1.6; -webkit-font-smoothing:antialiased}
+  h1,h2,h3{margin:0; color:var(--navy); letter-spacing:-.02em; line-height:1.15}
+  h1{font-size:clamp(30px,4vw,46px); font-weight:850}
+  h2{font-size:clamp(22px,2.4vw,30px); font-weight:800}
+  h3{font-size:19px; font-weight:800}
+  p{margin:0}
+  a{color:var(--blue-deep)}
+  .wrap{max-width:1180px; margin:0 auto; padding:0 20px}
+  .eyebrow{font-size:12.5px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--blue)}
+  .lead{color:var(--muted); font-size:clamp(16px,1vw+13px,18px)}
+  .btn{display:inline-flex; align-items:center; justify-content:center; gap:9px; font:inherit; font-weight:800; font-size:15px;
+    padding:12px 20px; border-radius:13px; border:1.5px solid transparent; text-decoration:none; cursor:pointer}
+  .btn svg{width:18px; height:18px}
+  .btn.primary{background:var(--blue); color:#fff; box-shadow:0 8px 20px rgba(37,99,235,.25)}
+  .btn.primary:hover{background:var(--blue-deep)}
+  .btn.ghost{background:#fff; color:var(--navy); border-color:var(--line)}
+  .btn.ghost:hover{border-color:var(--blue-edge)}
+  .btn.sm{font-size:14px; padding:9px 15px; border-radius:11px}
+  .card{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow)}
+
+  header.top{position:sticky; top:0; z-index:5; background:rgba(244,247,252,.92); backdrop-filter:blur(10px); border-bottom:1px solid var(--line)}
+  header.top .wrap{display:flex; align-items:center; gap:22px; height:66px}
+  .brand{display:flex; align-items:center; gap:11px; font-weight:850; font-size:19px; color:var(--navy); text-decoration:none; letter-spacing:-.02em}
+  .brand .mark{display:grid; place-items:center; width:38px; height:38px; border-radius:11px; background:var(--blue); color:#fff}
+  .brand small{display:block; font-size:11px; font-weight:600; color:var(--muted); letter-spacing:.01em}
+  nav.main{display:flex; gap:20px; margin-left:auto}
+  nav.main a{color:var(--muted); text-decoration:none; font-weight:650; font-size:14.5px}
+  nav.main a:hover, nav.main a.is-here{color:var(--navy)}
+  nav.main a.is-here{border-bottom:2px solid var(--blue)}
+
+  /* intro */
+  .intro{display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr); gap:34px; align-items:center; padding:48px 0 10px}
+  .intro .lead{margin-top:14px; max-width:600px}
+  .types{display:flex; flex-wrap:wrap; gap:8px; margin-top:20px}
+  .type{display:inline-flex; align-items:center; gap:6px; padding:6px 11px; border-radius:10px; background:#fff; box-shadow:inset 0 0 0 1px var(--line); font-weight:750; font-size:13.5px; color:var(--navy)}
+  .type i{display:grid; place-items:center; width:26px; height:18px; border-radius:4px; color:#fff; font-style:normal; font-size:9.5px; font-weight:800}
+  .t-xls i,.t-xlsx i{background:#1d7a45} .t-csv i{background:#2563eb} .t-txt i{background:#64748b} .t-dat i{background:#7c3aed}
+  .steps{padding:22px 24px}
+  .steps h3{font-size:16px}
+  .steps ol{margin:12px 0 0; padding:0; list-style:none; display:grid; gap:12px}
+  .steps li{display:flex; gap:12px; font-size:14.5px; color:var(--ink-2)}
+  .steps li > b{display:grid; place-items:center; flex:none; width:28px; height:28px; border-radius:9px; background:var(--blue-soft); color:var(--blue-deep); font-size:14px}
+  .steps .note{margin-top:14px; padding:10px 12px; border-radius:11px; background:var(--green-soft); color:var(--green-deep); font-size:13.5px}
+
+  /* finder */
+  .finder{position:sticky; top:66px; z-index:4; display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; margin-top:30px; padding:12px 14px; border-radius:15px; background:rgba(255,255,255,.95); box-shadow:var(--shadow)}
+  .finder input{flex:1 1 260px; min-width:0; height:42px; padding:0 14px 0 40px; border:1.5px solid var(--line); border-radius:11px; font:inherit; font-size:15px; color:var(--ink);
+    background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='6.5' fill='none' stroke='%238a99ad' stroke-width='2'/%3E%3Cpath d='m16 16 4 4' stroke='%238a99ad' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat 12px center / 18px}
+  .finder input:focus{outline:none; border-color:var(--blue)}
+  .chips{display:flex; flex-wrap:wrap; gap:6px}
+  .chip{height:36px; padding:0 13px; border:1.5px solid var(--line); border-radius:99px; background:#fff; font:inherit; font-weight:700; font-size:13.5px; color:var(--muted); cursor:pointer}
+  .chip:hover{border-color:var(--blue-edge); color:var(--navy)}
+  .chip[aria-pressed="true"]{background:var(--navy); border-color:var(--navy); color:#fff}
+  .count{margin-left:auto; font-size:13.5px; color:var(--muted); font-weight:650}
+
+  /* the grid of formats */
+  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,520px),1fr)); gap:18px; margin-top:18px}
+  .fmt{display:flex; flex-direction:column; padding:20px 20px 18px}
+  .fmt-head{display:flex; align-items:flex-start; justify-content:space-between; gap:12px}
+  .fmt-head h3{margin-top:5px}
+  .brandtag{display:inline-block; padding:3px 10px; border-radius:99px; font-size:12px; font-weight:800; letter-spacing:.02em}
+  .brandtag.known{background:var(--blue-soft); color:var(--blue-deep)}
+  .brandtag.unknown{background:#f1f5f9; color:var(--muted)}
+  .fmt-types{display:flex; gap:5px; flex:none}
+  .fmt-types .type{padding:4px 8px; font-size:12px}
+  .lookfor{margin-top:12px; padding:10px 12px; border-radius:11px; background:var(--amber-soft); font-size:13.5px; color:#5c3d00}
+  .lookfor b{color:#3d2900}
+  .lookfor code{font-family:var(--mono); font-size:12.5px; background:#fff3d1; padding:1px 5px; border-radius:5px}
+  /* the sample: a small spreadsheet with made-up names */
+  .sample{margin-top:14px; border:1px solid #d5dde8; border-radius:10px; overflow:hidden; background:#fff}
+  .sample-bar{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 10px; background:#f1f5f9; border-bottom:1px solid #d5dde8; font-size:11.5px; color:var(--muted); font-weight:650}
+  .sample-bar span:first-child::before{content:""; display:inline-block; width:9px; height:9px; margin-right:6px; border-radius:2px; background:#1d7a45; vertical-align:-1px}
+  .sample-scroll{overflow-x:auto}
+  .sample table{border-collapse:collapse; font-size:11.5px; white-space:nowrap; min-width:100%}
+  .sample td,.sample th{border:1px solid #e5ebf2; padding:3px 7px; text-align:left; color:var(--ink-2); font-weight:400}
+  .sample th{background:#f8fafc; color:var(--faint); font-weight:600; text-align:center; font-size:10.5px}
+  .sample .hd{background:#eaf1ff; color:var(--navy); font-weight:700}
+  .sample .ti{font-weight:800; color:var(--navy); font-size:12.5px}
+  .sample .tm{font-family:var(--mono); color:#0b4d8f}
+  .sample .mu{color:var(--faint)}
+  .reads{margin:12px 0 0; padding:0; list-style:none; display:grid; gap:5px; font-size:13.5px; color:var(--ink-2)}
+  .reads li{display:flex; gap:8px}
+  .reads svg{flex:none; width:16px; height:16px; margin-top:3px; color:var(--green)}
+  .fmt-foot{display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:auto; padding-top:16px}
+  .fmt-foot .btn.primary{background:var(--green); box-shadow:0 8px 18px rgba(15,157,107,.25)}
+  .fmt-foot .btn.primary:hover{background:var(--green-deep)}
+  .fmt-foot small{color:var(--faint); font-size:12.5px}
+  .empty{display:none; padding:34px; text-align:center; color:var(--muted)}
+  .empty.show{display:block}
+
+  .missing{display:grid; grid-template-columns:minmax(0,1fr) auto; gap:20px; align-items:center; margin-top:34px; padding:24px 26px}
+  .missing p{margin-top:6px; color:var(--muted); font-size:15px}
+  footer{border-top:1px solid var(--line); margin-top:60px; padding:28px 0 44px; color:var(--muted); font-size:13.5px}
+  footer .wrap{display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px}
+  footer a{color:var(--muted)}
+
+  @media (max-width:900px){
+    nav.main{display:none}
+    header.top .wrap{justify-content:space-between; gap:12px}
+    .brand{font-size:17px; white-space:nowrap}
+    .brand small{display:none}
+    header.top .btn.sm{padding:8px 13px; font-size:13.5px; white-space:nowrap}
+    .intro{grid-template-columns:minmax(0,1fr); padding-top:30px}
+    .finder{position:static}
+    .count{margin-left:0; width:100%}
+    .missing{grid-template-columns:minmax(0,1fr)}
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M14 3v4h4M9 12h6M9 15.5h6M9 19h3.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10-6.5z" fill="currentColor"/></symbol>
+</svg>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="./"><span class="mark"><svg width="22" height="22"><use href="#i-doc"/></svg></span>
+      <span>DTR Converter<small>by AZ Digital Marketing</small></span></a>
+    <nav class="main" aria-label="Sections">
+      <a href="./#features">Features</a>
+      <a href="./#editions">Prices</a>
+      <a class="is-here" href="compatible.html">Compatible files</a>
+      <a href="demo/">Try the demo</a>
+    </nav>
+    <a class="btn primary sm" href="./#get">Get DTR Converter</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="intro">
+    <div>
+      <span class="eyebrow">Compatible biometric files</span>
+      <h1>Is your biometric file compatible?</h1>
+      <p class="lead">These are the attendance reports DTR Converter already reads — from different machines and brands. Find the one that looks like yours, then test your own file in the free online demo.</p>
+      <div class="types" aria-label="File types it reads">
+        <span class="type t-xls"><i>XLS</i>Excel 97–2003</span>
+        <span class="type t-xlsx"><i>XLSX</i>Excel</span>
+        <span class="type t-csv"><i>CSV</i>Comma separated</span>
+        <span class="type t-txt"><i>TXT</i>Text log</span>
+        <span class="type t-dat"><i>DAT</i>Device log</span>
+      </div>
+    </div>
+    <div class="card steps">
+      <h3>Check your file in 3 steps</h3>
+      <ol>
+        <li><b>1</b><span>Export the monthly attendance report from your biometric machine or its software.</span></li>
+        <li><b>2</b><span>Find the card below that looks like it — same title or same columns.</span></li>
+        <li><b>3</b><span>Click <b>Test my file in the demo</b> and open your file there.</span></li>
+      </ol>
+      <p class="note">Your file is read inside your browser only — it is never uploaded. Samples below use made-up names.</p>
+    </div>
+  </section>
+
+  <div class="finder" role="search">
+    <input id="q" type="search" placeholder="Search: report title, brand or a heading in your file (e.g. Timecard, ZKTeco, Clock In)" aria-label="Search compatible files">
+    <div class="chips" id="chips" aria-label="Filter by file type"></div>
+    <span class="count" id="count"></span>
+  </div>
+
+  <div class="grid" id="grid"></div>
+  <p class="empty" id="empty">No report matches. Try another word, or see <a href="#missing">Don't see your file?</a></p>
+
+  <section class="card missing" id="missing">
+    <div>
+      <h2>Don't see your file?</h2>
+      <p>Try it in the demo anyway — many more exports work than the ones shown here. If the demo can't read it, message us: send the file or a screenshot of its top rows, and we add your machine in an update for everyone.</p>
+    </div>
+    <div style="display:flex; flex-wrap:wrap; gap:10px">
+      <a class="btn primary" href="demo/"><svg><use href="#i-play"/></svg>Open the demo</a>
+      <a class="btn ghost" href="https://www.facebook.com/AZDigitalMarketingOfficial" target="_blank" rel="noopener">Message us</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>DTR Converter · by AZ Digital Marketing</span>
+    <span>
+      <a href="mailto:azmarketingservicesbicol@gmail.com">azmarketingservicesbicol@gmail.com</a> ·
+      <a href="https://www.facebook.com/AZDigitalMarketingOfficial" target="_blank" rel="noopener">Facebook</a> ·
+      <a href="./">DTR Converter home</a>
+    </span>
+  </div>
+</footer>
+
+<script>
+/*
+ * THE LIST OF COMPATIBLE FILES — one entry per report layout the PUBLIC app reads.
+ * To add a newly supported file: copy an entry and change it. Samples use MADE-UP names only
+ * (never a client's real file). `brand`: null = the file does not name its machine.
+ * `sample`: rows of the small spreadsheet; a cell is text, or [text, class] with class
+ *   ti (title) · hd (heading) · tm (time) · mu (faint).
+ */
+const FORMATS = [
+  {
+    name: 'Timecard Report', brand: 'NGTeco', types: ['xls'],
+    lookFor: 'A sheet called <code>Employee Timecard</code>, each employee as <code>Name (ID)</code>, and columns <code>Date · IN · OUT</code>.',
+    sample: [
+      [['Timecard Report', 'ti'], '', '', '', ''],
+      ['Pay Period', '2026-09-01-2026-09-30', '', '', ''],
+      ['Employee', 'Juan Dela Cruz (1001)', '', '', ''],
+      [['Date', 'hd'], ['IN', 'hd'], ['OUT', 'hd'], ['Work Time', 'hd'], ['Note', 'hd']],
+      ['09/01 Tue', ['07:24', 'tm'], ['11:31', 'tm'], ['04:07', 'mu'], ''],
+      ['', ['12:29', 'tm'], ['16:39', 'tm'], ['04:10', 'mu'], ''],
+      ['09/02 Wed', ['07:17', 'tm'], ['', 'tm'], '', ['Missing OUT', 'mu']]
+    ],
+    reads: ['Every IN and OUT time, including extra tap pairs on the next rows', 'Names and ID numbers from the report']
+  },
+  {
+    name: 'Attendance Clock Table', brand: null, types: ['xlsx'],
+    lookFor: 'Title <code>Attendance Clock Table</code>, a <code>Month :</code> (and usually <code>Year :</code>) heading, and one block per employee starting <code>ID: … Name: … Dep.:</code>.',
+    sample: [
+      [['Attendance Clock Table', 'ti'], '', '', '', '', ''],
+      ['Month : 9', 'Year : 2026', '', '', '', ''],
+      [['ID: 1001  Name: Juan Dela Cruz  Dep.: Office', 'hd'], '', '', '', '', ''],
+      [['1', 'hd'], ['2', 'hd'], ['3', 'hd'], ['4', 'hd'], ['5', 'hd'], ['…', 'mu']],
+      [['07:24 11:31 12:29 16:39', 'tm'], ['07:17 16:41', 'tm'], ['07:24 16:38', 'tm'], ['07:17 11:36 16:37', 'tm'], '', '']
+    ],
+    reads: ['All taps written in each day cell, in order', 'Employees with no taps stay listed', 'If the year is missing, the app asks you for it']
+  },
+  {
+    name: 'Attendance Record Report', brand: null, types: ['xls', 'xlsx'],
+    lookFor: 'Title <code>Attendance Record Report</code> (often a file called <code>StandardReport</code>), an <code>Att. Time</code> date range, and <code>ID: · Name: · Dept.:</code> above day columns.',
+    sample: [
+      [['Attendance Record Report', 'ti'], '', '', '', '', ''],
+      ['Att. Time:', '2026-09-01 ~ 2026-09-30', '', '', '', ''],
+      ['ID:', '1001', 'Name:', 'Juan Dela Cruz', 'Dept.:', 'Office'],
+      [['1', 'hd'], ['2', 'hd'], ['3', 'hd'], ['4', 'hd'], ['5', 'hd'], ['…', 'mu']],
+      [['07:2411:3112:2916:39', 'tm'], ['07:1716:41', 'tm'], ['07:2416:38', 'tm'], ['', 'tm'], '', '']
+    ],
+    reads: ['Times joined in one cell are split correctly (07:24 11:31 …)', 'Schedule, statistics and exception sheets are ignored, so nothing is counted twice']
+  },
+  {
+    name: 'Monthly Punch Report', brand: null, types: ['xls', 'xlsx'],
+    lookFor: 'A title like <code>2026:9/1-9/30 Punch</code> and one combined header cell per employee: <code>ID:… Name:… Dept:…</code>.',
+    sample: [
+      [['2026:9/1-9/30 Punch', 'ti'], '', '', '', ''],
+      [['ID:1001  Name:Juan Dela Cruz  Dept:Office', 'hd'], '', '', '', ''],
+      [['1', 'hd'], ['2', 'hd'], ['3', 'hd'], ['4', 'hd'], ['5', 'hd']],
+      [['07:24 16:39', 'tm'], ['07:17 16:41', 'tm'], ['07:24 12:29 16:38', 'tm'], '', ['07:20 16:35', 'tm']]
+    ],
+    reads: ['Every clock time in each day column', 'ID numbers keep their leading zeros (e.g. 0007)']
+  },
+  {
+    name: 'Monthly Statement Report', brand: null, types: ['xlsx'],
+    lookFor: 'Title <code>Monthly Statement Report</code>, a <code>From … To …</code> period, and per employee <code>User ID · Full Name</code> above <code>Date · Week · Timetable · In · Out</code>.',
+    sample: [
+      [['Monthly Statement Report', 'ti'], '', '', '', '', ''],
+      ['From 09/01/2026 To 09/30/2026', '', '', '', '', ''],
+      ['User ID', '1001', 'Full Name', 'Juan Dela Cruz', '', ''],
+      [['Date', 'hd'], ['Week', 'hd'], ['Timetable', 'hd'], ['In', 'hd'], ['Out', 'hd'], ['Work hours', 'hd']],
+      ['09/01/2026', 'Tue', ['Day shift', 'mu'], ['07:24', 'tm'], ['16:39', 'tm'], ['8:15', 'mu']]
+    ],
+    reads: ['Only the recorded In and Out times — work hours and totals are ignored']
+  },
+  {
+    name: 'Employee Attendance Table', brand: null, types: ['xls'],
+    lookFor: 'Title <code>Employee Attendance Table</code>, three employee cards side by side on each sheet, and columns <code>Before Noon · After Noon · Overtime</code> with In / Out.',
+    sample: [
+      [['Employee Attendance Table', 'ti'], '', '', '', '', '', ''],
+      ['Name', 'Juan Dela Cruz', '', 'User ID', '1001', '', ''],
+      ['Date', '2026-09-01~2026-09-30', '', '', '', '', ''],
+      [['Date/Weekday', 'hd'], ['Before Noon', 'hd'], '', ['After Noon', 'hd'], '', ['Overtime', 'hd'], ''],
+      ['', ['In', 'hd'], ['Out', 'hd'], ['In', 'hd'], ['Out', 'hd'], ['In', 'hd'], ['Out', 'hd']],
+      ['01 Tu', ['07:24', 'tm'], ['11:31', 'tm'], ['12:29', 'tm'], ['16:39', 'tm'], '', ''],
+      ['02 We', ['07:17', 'tm'], '', '', ['16:41', 'tm'], '', '']
+    ],
+    reads: ['Every card on every sheet, including employees with no taps', 'Both date styles: 09/01/2026 and 2026-09-01']
+  },
+  {
+    name: 'Attendance Records', brand: null, types: ['xls', 'xlsx'],
+    lookFor: 'Title <code>Attendance Records</code> (sometimes spelled <code>Attandence</code>), a <code>Department:</code> line with name and ID, then dated times marked <code>C/In</code> or <code>C/Out</code>.',
+    sample: [
+      [['Attendance Records', 'ti'], '', '', ''],
+      ['Department: Office', 'Name: Juan Dela Cruz', 'ID: 1001', ''],
+      [['2026-09-01 07:24', 'tm'], 'C/In', ['2026-09-01 16:39', 'tm'], 'C/Out'],
+      [['2026-09-02 07:17', 'tm'], 'C/In', ['2026-09-02 16:41', 'tm'], 'C/Out']
+    ],
+    reads: ['Every time with its In / Out label', 'Report totals and the preparer footer are ignored']
+  },
+  {
+    name: "Staff's On-Duty/Off-Duty Timetable", brand: null, types: ['xls'],
+    lookFor: "Title <code>Staff's On-Duty/Off-Duty Timetable</code>, a range like <code>2026-09-01 -- 2026-09-30</code>, and ten-day headings such as <code>1 Tue</code> with time pairs.",
+    sample: [
+      [["Staff's On-Duty/Off-Duty Timetable", 'ti'], '', '', ''],
+      ['2026-09-01 -- 2026-09-30', 'ID: 1001', 'Juan Dela Cruz', ''],
+      [['1 Tue', 'hd'], ['2 Wed', 'hd'], ['3 Thu', 'hd'], ['4 Fri', 'hd']],
+      [['07:24-11:31 12:29-16:39', 'tm'], ['07:17-16:41', 'tm'], ['07:24-16:38', 'tm'], ['', 'tm']]
+    ],
+    reads: ['Every on-duty and off-duty time', 'A time it cannot read is noted and flagged — never guessed']
+  },
+  {
+    name: 'Daily Attendance Summary', brand: null, types: ['xls', 'xlsx'],
+    lookFor: 'One row per employee per day, with the columns <code>AC-No. · Name · Date · Clock In · Clock Out</code>.',
+    sample: [
+      [['AC-No.', 'hd'], ['Name', 'hd'], ['Date', 'hd'], ['Clock In', 'hd'], ['Clock Out', 'hd'], ['Exception', 'hd']],
+      ['1001', 'Juan Dela Cruz', '09/01/2026', ['07:24', 'tm'], ['16:39', 'tm'], ''],
+      ['1001', 'Juan Dela Cruz', '09/02/2026', ['07:17', 'tm'], '', ['No clock out', 'mu']],
+      ['1002', 'Maria Santos', '09/01/2026', ['07:40', 'tm'], ['16:35', 'tm'], '']
+    ],
+    reads: ['Clock In and Clock Out of every day', 'Blank days and employees without clocks are kept']
+  },
+  {
+    name: 'Attendance log (attlog)', brand: 'ZKTeco', types: ['xlsx', 'dat'],
+    lookFor: 'One row per tap with <b>no headings</b>: the employee number, then the date and time, and a 0 / 1 for in / out. Files are often named like <code>…_attlog.dat</code>.',
+    sample: [
+      [['1001', ''], ['2026-09-01 07:24:51', 'tm'], '1', '0', '1', '0'],
+      [['1001', ''], ['2026-09-01 16:39:12', 'tm'], '1', '1', '1', '0'],
+      [['1002', ''], ['2026-09-01 07:40:03', 'tm'], '1', '0', '1', '0']
+    ],
+    reads: ['Every tap; weekly files add up into the month', 'This log has no names — paste your name list once and it is remembered']
+  },
+  {
+    name: 'Device log (TXT)', brand: 'AGL', types: ['txt', 'xlsx'],
+    lookFor: 'The headings <code>No · Mchn · EnNo · Name · Mode · IOMd · DateTime</code> — the text log or its Excel copy.',
+    sample: [
+      [['No', 'hd'], ['Mchn', 'hd'], ['EnNo', 'hd'], ['Name', 'hd'], ['Mode', 'hd'], ['IOMd', 'hd'], ['DateTime', 'hd']],
+      ['00001', '1', '00001001', 'Juan Dela Cruz', '33', '0', ['2026/09/01 07:24:51', 'tm']],
+      ['00002', '1', '00001001', 'Juan Dela Cruz', '33', '0', ['2026/09/01 16:39:12', 'tm']]
+    ],
+    reads: ['The employee number (EnNo), never the row counter', 'The text file and its Excel copy give the same result']
+  },
+  {
+    name: 'Attendance log with headings (CSV)', brand: null, types: ['csv', 'txt'],
+    lookFor: 'One row per tap with headings like <code>AC-No. · Name · Time · State</code> and <code>C/In</code> / <code>C/Out</code>.',
+    sample: [
+      [['AC-No.', 'hd'], ['Name', 'hd'], ['Time', 'hd'], ['State', 'hd']],
+      ['1001', 'Juan Dela Cruz', ['01/09/2026 7:24 AM', 'tm'], 'C/In'],
+      ['1001', 'Juan Dela Cruz', ['01/09/2026 4:39 PM', 'tm'], 'C/Out']
+    ],
+    reads: ['Day/month or month/day dates, AM/PM or 24-hour times', 'Seconds are dropped (07:24:59 shows as 07:24), exactly like the machine']
+  }
+];
+
+const TYPE_LABELS = { xls: 'XLS', xlsx: 'XLSX', csv: 'CSV', txt: 'TXT', dat: 'DAT' };
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const typeChip = (t) => `<span class="type t-${t}"><i>${TYPE_LABELS[t]}</i></span>`;
+const letters = (n) => Array.from({ length: n }, (_, i) => String.fromCharCode(65 + i));
+
+function sampleHtml(rows) {
+  const width = Math.max(...rows.map((r) => r.length));
+  const cell = (c) => (Array.isArray(c) ? `<td class="${c[1]}">${esc(c[0])}</td>` : `<td>${esc(c)}</td>`);
+  return `<div class="sample" role="img" aria-label="Sample layout with made-up names">
+    <div class="sample-bar"><span>Sample layout</span><span>made-up names</span></div>
+    <div class="sample-scroll"><table>
+      <tr><th></th>${letters(width).map((l) => `<th>${l}</th>`).join('')}</tr>
+      ${rows.map((r, i) => `<tr><th>${i + 1}</th>${r.map(cell).join('')}${'<td></td>'.repeat(width - r.length)}</tr>`).join('')}
+    </table></div></div>`;
+}
+
+function cardHtml(f) {
+  const brand = f.brand ? `<span class="brandtag known">${esc(f.brand)}</span>` : '<span class="brandtag unknown">Brand not shown in the file</span>';
+  return `<article class="card fmt" data-types="${f.types.join(' ')}" data-search="${esc([f.name, f.brand || '', f.lookFor.replace(/<[^>]+>/g, ''), ...f.reads].join(' ').toLowerCase())}">
+    <div class="fmt-head"><div>${brand}<h3>${esc(f.name)}</h3></div><div class="fmt-types">${f.types.map(typeChip).join('')}</div></div>
+    <p class="lookfor"><b>Look for:</b> ${f.lookFor}</p>
+    ${sampleHtml(f.sample)}
+    <ul class="reads">${f.reads.map((r) => `<li><svg><use href="#i-check"/></svg><span>${esc(r)}</span></li>`).join('')}</ul>
+    <div class="fmt-foot"><a class="btn primary sm" href="demo/"><svg><use href="#i-play"/></svg>Test my file in the demo</a><small>Free · your file stays on your computer</small></div>
+  </article>`;
+}
+
+const grid = document.getElementById('grid'), q = document.getElementById('q'), chips = document.getElementById('chips');
+grid.innerHTML = FORMATS.map(cardHtml).join('');
+let type = 'all';
+chips.innerHTML = ['all', ...Object.keys(TYPE_LABELS)].map((t) => `<button class="chip" data-type="${t}" aria-pressed="${t === 'all'}">${t === 'all' ? 'All files' : TYPE_LABELS[t]}</button>`).join('');
+function filter() {
+  const words = q.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  let shown = 0;
+  grid.querySelectorAll('.fmt').forEach((card) => {
+    const ok = (type === 'all' || card.dataset.types.split(' ').includes(type)) && words.every((w) => card.dataset.search.includes(w));
+    card.hidden = !ok; if (ok) shown++;
+  });
+  document.getElementById('count').textContent = `${shown} of ${FORMATS.length} report layouts`;
+  document.getElementById('empty').classList.toggle('show', !shown);
+}
+chips.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-type]'); if (!b) return;
+  type = b.dataset.type;
+  chips.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', String(c === b)));
+  filter();
+});
+q.addEventListener('input', filter);
+filter();
+</script>
+</body>
+</html>
