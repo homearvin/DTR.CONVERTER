@@ -1,20 +1,21 @@
 {
-  "latest": "1.20.3",
-  "released": "2026-10-29",
+  "latest": "1.22.0",
+  "released": "2026-11-02",
   "download_url": "https://homearvin.github.io/DTR.CONVERTER/#get",
   "changes": [
-    "Reads Bio-office Timesheet Reports with employee names, IDs and up to six recorded IN/OUT pairs per day.",
-    "Keeps missing times and employees without attendance; recognizes renamed files by their contents."
+    "Pro DTR layouts: customize school headers, logos, time headings, verification and signature wording.",
+    "Save reusable layouts for selected employees or all employees; keep past months unchanged.",
+    "Print sizes, Pictures and locked Excel downloads; Employee Attendance Record and Abnormal Report support."
   ],
   "package": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.20.3/DTR-Converter-1.20.3-portable.zip",
-    "sha256": "74f411820c0e102a6556cca104081d0a4271357cedc6b0aafb35ce4a0195ab33",
-    "size": 13183013,
-    "signature": "lI/dnXi9zE2ShodIUVxyM3Nh/R/UGzhC8C0PHiPyEDMoKkWvhGFKH39nziFr09c97AodOQOIgVotV3GFmpdGBg=="
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.22.0/DTR-Converter-1.22.0-portable.zip",
+    "sha256": "84a2f677daf701f669bb28fec62033683085869b9cbb4f4084d3eefde1d3dc42",
+    "size": 13208853,
+    "signature": "++uLN69FBzPC6dwcPjtrEsNDQgRuKuvnPGWlPaURD0VNcU/XIaqKY4ArsFeC8+DIVQo4Y6oNzxU5cOEEZpvZDA=="
   },
   "installer": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.20.3/DTR-Converter-1.20.3-setup.exe",
-    "sha256": "150c6a8b9e28ee99598539d78f884d6a325355fbcfb11dd1b957675da5190260",
-    "size": 15116533
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.22.0/DTR-Converter-1.22.0-setup.exe",
+    "sha256": "29c69d51fee5620b3996730e4a9cce96ced1928e6c0f2caa0b7862fe2591b3fb",
+    "size": 15141646
   }
 }

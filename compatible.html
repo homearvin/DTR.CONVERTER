@@ -216,6 +216,29 @@
  */
 const FORMATS = [
   {
+    name: 'Employee Attendance Record', brand: null, types: ['xls', 'xlsx'],
+    lookFor: '<code>Employee Attendance Record</code>, <code>Attendance date:</code>, employee <code>User ID / Name / Department</code>, and days across columns.',
+    sample: [
+      [['Employee Attendance Record', 'ti'], '', '', ''],
+      ['Attendance date:2025-04-01~2025-04-30', '', '', ''],
+      ['User ID: 1001', 'Name: Juan Dela Cruz', '', ''],
+      [['Day', 'hd'], ['1', 'hd'], ['2', 'hd'], ['3', 'hd']],
+      ['', ['07:59 12:01', 'tm'], ['08:00 12:00', 'tm'], ['08:10', 'tm']],
+      ['', ['13:00 17:00', 'tm'], ['13:00 17:00', 'tm'], '']
+    ],
+    reads: ['Every employee and clock, including times split over several rows', 'Names and the month/year come from the contents', 'Use this complete report for the full month. Empty employees are retained.']
+  },
+  {
+    name: 'Abnormal Report (exceptions only)', brand: null, types: ['xls', 'xlsx'],
+    lookFor: '<code>Abnormal Report</code> with <code>User ID / Name / Date</code>, <code>Before Noon / After Noon</code> IN/OUT columns and exception totals.',
+    sample: [
+      [['User ID', 'hd'], ['Name', 'hd'], ['Date', 'hd'], ['In', 'hd'], ['Out', 'hd']],
+      ['1001', 'Juan Dela Cruz', '04/02/2025', ['08:00', 'tm'], ['None', 'mu']],
+      ['1002', 'Maria Santos', '04/02/2025', '', '']
+    ],
+    reads: ['Partial report: upload Employee Attendance Record for the complete month', 'Adds only recorded clocks without erasing attendance already saved', 'None and blank cells stay empty. Source exception totals remain notes only.']
+  },
+  {
     name: 'Bio-office Timesheet Report', brand: 'Mustard Seed Systems Bio-office', types: ['xls', 'xlsx'],
     lookFor: '<code>TIMESHEET REPORT</code>, a <code>From ... to ...</code> date range, <code>Employee: Name (ID)</code>, and numbered <code>In 1 / Out 1</code> through <code>In 6 / Out 6</code> columns.',
     sample: [

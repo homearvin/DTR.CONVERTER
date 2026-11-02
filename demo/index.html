@@ -611,6 +611,36 @@ button.home-review-item:hover { box-shadow: inset 0 0 0 1px var(--line-2); }
 .print-sheets svg { color: var(--blue-600); }
 .print-sheets--none { color: var(--amber-700); font-weight: 600; }
 .print-ut-btn { margin-right: auto; }
+.sub-label-note { margin-left: 6px; font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--ink-3); }
+
+/* Size on paper: four cards, each with a small to-scale drawing of the sheet */
+.size-options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.size-option { position: relative; display: flex; flex-direction: column; align-items: center; gap: 1px; min-width: 0; padding: 10px 6px 9px; border-radius: var(--radius-lg); background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); text-align: center; cursor: pointer; transition: box-shadow 0.15s, background 0.15s; }
+.size-option:hover { box-shadow: inset 0 0 0 1px var(--blue-dash); }
+.size-option:has(input:checked) { background: var(--blue-50); box-shadow: inset 0 0 0 2px var(--blue-600); }
+.size-option input { position: absolute; opacity: 0; pointer-events: none; }
+.size-option:has(input:focus-visible) { outline: 2px solid var(--blue-500); outline-offset: 2px; }
+.size-option strong { margin-top: 6px; font-size: 13px; color: var(--navy-800); }
+.size-option small { font-size: 11.5px; line-height: 1.3; color: var(--ink-3); }
+.size-thumb { width: 34px; height: 48px; overflow: visible; }
+.size-thumb rect { fill: var(--blue-100, #dbe7ff); stroke: var(--blue-600); stroke-width: 0.8; }
+.size-thumb .size-thumb-paper { fill: #fff; stroke: var(--line-2); stroke-width: 1; }
+.size-scale { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 8px 12px; border-radius: 12px; background: var(--surface-2); font-size: 12.5px; color: var(--ink-3); }
+.size-scale[hidden] { display: none; }
+.size-scale input { flex: 1; accent-color: var(--blue-600); }
+.size-scale b { min-width: 40px; text-align: right; font-size: 14px; color: var(--navy-800); }
+
+/* Save a copy: PDF · Pictures · Excel */
+.save-as { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.save-as-btn { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 10px 12px; border: 0; border-radius: 12px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line-2); font: inherit; text-align: left; cursor: pointer; }
+.save-as-btn:hover:not(:disabled) { box-shadow: inset 0 0 0 1px var(--blue-600); }
+.save-as-btn:disabled { opacity: 0.55; cursor: progress; }
+.save-as-btn svg { flex: none; width: 20px; height: 20px; color: var(--blue-600); }
+.save-as-btn span { display: flex; flex-direction: column; min-width: 0; }
+.save-as-btn b { font-size: 13.5px; color: var(--navy-800); }
+.save-as-btn small { overflow: hidden; font-size: 11.5px; color: var(--ink-3); text-overflow: ellipsis; white-space: nowrap; }
+.save-as-btn.is-busy { opacity: 1; box-shadow: inset 0 0 0 2px var(--blue-600); }
+.save-as-btn.is-busy b::after { content: " · making…"; font-weight: 500; color: var(--ink-3); }
 
 /* Update available (ui/update.js) */
 .update-banner { display: flex; align-items: center; gap: 14px; padding: 14px 18px; box-shadow: var(--shadow-card), inset 0 0 0 2px var(--blue-100, #dbe7ff); }
@@ -655,6 +685,7 @@ button.home-review-item:hover { box-shadow: inset 0 0 0 1px var(--line-2); }
 .print-tips .home-step-num { width: 26px; height: 26px; border-radius: 8px; font-size: 13px; }
 .print-tips b { display: block; font-size: 13px; color: var(--navy-800); }
 .print-tips small { display: block; font-size: 12px; line-height: 1.35; color: var(--ink-3); }
+.print-tips--two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
 /* tabs look like the Home menu: soft pills, the chosen one white */
 .tabs { display: flex; gap: 4px; margin-bottom: 16px; padding: 4px; border-radius: 12px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); }
@@ -962,6 +993,12 @@ button.home-review-item:hover { box-shadow: inset 0 0 0 1px var(--line-2); }
  * form48.css — CSC Form No. 48, two copies per sheet, on A4 or long bond.
  * Real-world units (mm / in / pt) so the printout matches the paper form.
  * Each paper size only sets the variables below; everything else is shared.
+ *
+ * Print sizes (config.PRINT_SIZES, a class on the sheet):
+ *   .size-full    two copies filling the page (the default since 1.21.0)
+ *   .size-card    two 3.5 × 7.5 in cut cards (A4's only layout before 1.21.0)
+ *   .size-large   one copy per sheet, wider and with bigger text
+ *   .size-custom  Full page shrunk to --f48-scale (0.70–1.00)
  */
 
 .sheet {
@@ -975,7 +1012,7 @@ button.home-review-item:hover { box-shadow: inset 0 0 0 1px var(--line-2); }
   --sheet-pad-top: 0.32in;
   --sheet-pad-x: 0.34in;
   --copy-w: 3.62in;
-  --f48-row-h: 0.192in;
+  --f48-row-h: 0.205in;
 
   box-sizing: border-box;
   width: var(--sheet-w);
@@ -995,17 +1032,17 @@ button.home-review-item:hover { box-shadow: inset 0 0 0 1px var(--line-2); }
   --sheet-pad-top: 0.38in;
   --sheet-pad-x: 0.4in;
   --copy-w: 3.72in;
-  --f48-row-h: 0.205in;
+  --f48-row-h: 0.245in;     /* taller rows so the form reaches the bottom of the long page */
 }
 
 .copy { width: var(--copy-w); }
 
 /*
- * A4: each copy is a CUT CARD — 3.5 × 7.5 in inside a thin black border, two
+ * Small card: each copy is a CUT CARD — 3.5 × 7.5 in inside a thin black border, two
  * side by side. The whole form is drawn at normal size, then shrunk to fit the
  * card with zoom; the rows and gaps are tightened so all 31 days fit the height.
  */
-.sheet--a4 {
+.size-card {
   --sheet-pad-top: 0.45in;
   --sheet-pad-x: 0in;
   --copy-w: 3.5in;
@@ -1019,21 +1056,53 @@ button.home-review-item:hover { box-shadow: inset 0 0 0 1px var(--line-2); }
   justify-content: center;
   gap: var(--card-gap);
 }
-.sheet--a4 .copy {
+.size-card .copy {
   height: var(--card-h);
   padding: var(--card-pad);
   border: var(--card-border);
   overflow: hidden;
 }
-.sheet--a4 .f48 { zoom: var(--f48-zoom); }
-.sheet--a4 .f48-title { margin-top: 6pt; }
-.sheet--a4 .f48-name { margin-top: 8pt; }
-.sheet--a4 .f48-group,
-.sheet--a4 .f48-subhead th { height: 0.26in; }
-.sheet--a4 .f48-total td { height: 0.2in; }
-.sheet--a4 .f48-cert { margin-top: 5pt; }
-.sheet--a4 .f48-sign-employee { height: 18pt; }
-.sheet--a4 .f48-incharge { margin-top: 16pt; }
+.size-card .f48 { zoom: var(--f48-zoom); }
+
+/* Small card and Large: tighter gaps, so the taller rows / bigger text still fit the page */
+.size-card .f48-title, .size-large .f48-title { margin-top: 6pt; }
+.size-card .f48-name, .size-large .f48-name { margin-top: 8pt; }
+.size-card .f48-group, .size-large .f48-group,
+.size-card .f48-subhead th, .size-large .f48-subhead th { height: 0.26in; }
+.size-card .f48-total td, .size-large .f48-total td { height: 0.2in; }
+.size-card .f48-cert, .size-large .f48-cert { margin-top: 5pt; }
+.size-card .f48-sign-employee, .size-large .f48-sign-employee { height: 18pt; }
+.size-card .f48-incharge, .size-large .f48-incharge { margin-top: 16pt; }
+
+/*
+ * Large: ONE copy per sheet (form48.sheet() makes two sheets — original and duplicate).
+ * Drawn wider, then enlarged with zoom; --copy-w and --f48-row-h are before the zoom.
+ */
+.size-large {
+  --sheet-pad-top: 0.4in;
+  --f48-zoom: 1.2;
+  --copy-w: 6.05in;          /* × 1.2 = 7.26 in of an 8.27 in A4 sheet */
+  --f48-row-h: 0.163in;      /* × 1.2 = 0.196 in */
+  --f48-double: 2.5px double var(--f48-ink);
+  justify-content: center;
+}
+.size-large.sheet--long {
+  --sheet-pad-top: 0.42in;
+  --f48-zoom: 1.28;
+  --copy-w: 5.8in;           /* × 1.28 = 7.42 in of 8.5 in */
+  --f48-row-h: 0.18in;       /* × 1.28 = 0.23 in */
+}
+.size-large .f48 { zoom: var(--f48-zoom); }
+.size-large .copy { width: calc(var(--copy-w) * var(--f48-zoom)); }
+
+/* Custom: the Full page layout, shrunk evenly; the two copies stay together in the middle. */
+.size-custom {
+  --f48-scale: 0.9;
+  justify-content: center;
+  gap: calc(var(--sheet-pad-x) * var(--f48-scale));
+}
+.size-custom .copy { width: calc(var(--copy-w) * var(--f48-scale)); }
+.size-custom .f48 { width: var(--copy-w); zoom: var(--f48-scale); }
 
 .f48 { position: relative; font-size: 9.5pt; line-height: 1.2; }
 
@@ -1048,7 +1117,7 @@ button.home-review-item:hover { box-shadow: inset 0 0 0 1px var(--line-2); }
   border-radius: 50%;
   object-fit: cover;
 }
-.sheet--a4 .f48-logo { top: 1pt; }
+.size-card .f48-logo { top: 1pt; }
 
 /* Online demo only (form48.js copyHtml): a diagonal mark across each copy — shows on screen and prints. */
 .f48-demo-mark {
@@ -1067,7 +1136,7 @@ button.home-review-item:hover { box-shadow: inset 0 0 0 1px var(--line-2); }
   pointer-events: none;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
-}   /* the card's form is zoomed (0.78): prints about 0.44 in */
+}
 
 .f48-formno { font-style: italic; font-size: 8pt; }
 
@@ -1237,6 +1306,58 @@ button.home-review-item:hover { box-shadow: inset 0 0 0 1px var(--line-2); }
 
 </style>
   <style>
+/* DTR layout editor: blue controls, one form, no decorative paper frame. */
+.modal--layouts { width: min(1160px, 96vw); max-width: 96vw; }
+.modal--layouts .modal-body { padding: 0; overflow: hidden; }
+.layout-top { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 16px 24px; border-bottom: 1px solid #dbe7f6; background: #f5f9ff; }
+.layout-top label,.layout-controls label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; color: #173e70; }
+.layout-top input,.layout-top select,.layout-controls input:not([type=checkbox]),.layout-controls textarea,.layout-controls select { width: 100%; min-width: 0; border: 1px solid #b9cde7; border-radius: 6px; padding: 8px 10px; font: 14px "Segoe UI",sans-serif; color: #15355c; background: white; }
+.layout-controls textarea { resize: vertical; }
+.layout-editor { display: grid; grid-template-columns: minmax(360px,1fr) 410px; height: min(580px,64vh); }
+.layout-preview-pane { overflow: auto; padding: 16px 24px; background: #fff; }
+.layout-preview-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; color: #1e4677; margin-bottom: 16px; font-size: 14px; }
+.layout-preview-heading span { color: #647891; font-size: 12px; }
+#layout-preview .sheet { padding: 0; width: var(--copy-w); height: auto; margin: 0 auto; }
+#layout-preview .copy { width: 100%; }
+#layout-preview [data-layout-region] { cursor: pointer; }
+#layout-preview .layout-active-region { background: #edf5ff; outline: 1px solid #b7d6ff; outline-offset: 2px; }
+.layout-controls { border-left: 1px solid #dbe7f6; overflow: auto; background: #f8faff; }
+.layout-tabs { display: flex; padding: 8px; gap: 4px; position: sticky; top: 0; background: #edf4ff; z-index: 1; }
+.layout-tabs button { flex: 1; padding: 10px 5px; font: 600 12px "Segoe UI",sans-serif; border: 0; border-radius: 6px; background: transparent; color: #345c8c; cursor: pointer; }
+.layout-tabs button[aria-selected=true] { color: white; background: #1767ca; }
+#layout-fields { padding: 18px; display: grid; gap: 14px; }
+.layout-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.layout-type,.layout-logo { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; border: 1px solid #d2dfef; padding: 12px; border-radius: 8px; }
+.layout-logo { grid-template-columns: 1fr; }
+.layout-type legend,.layout-logo legend { padding: 0 5px; color: #345c8c; font-size: 12px; }
+.layout-controls .layout-check { flex-direction: row; align-items: center; gap: 8px; font-weight: 400; }
+.layout-check input { accent-color: #1767ca; }
+.layout-apply { padding: 18px; border-top: 1px solid #d2dfef; display: grid; gap: 14px; }
+#layout-employees { max-height: 130px; overflow: auto; display: grid; gap: 8px; }
+#layout-employees[hidden] { display: none; }
+#layout-error { color: #a32916; font-size: 13px; margin-right: auto; max-width: 440px; }
+.modal--layouts .modal-foot { gap: 12px; }
+.modal--layouts :focus-visible { outline: 3px solid #5f9ef0; outline-offset: 2px; }
+@media(max-width:800px) {
+  .layout-editor { grid-template-columns: 1fr; overflow: auto; }
+  .layout-preview-pane { max-height: 300px; flex-shrink: 0; }
+  .layout-controls { overflow: visible; }
+  .layout-top { gap: 10px; padding: 12px; }
+  .modal--layouts .modal-foot { flex-wrap: wrap; }
+  #layout-error { order: -1; width: 100%; max-width: none; }
+}
+
+/* Export styles are shared by print, PDF and Pictures. The attendance grid stays intact. */
+.f48-custom-layout .f48-table tbody td { line-height: 1; height: max(9pt, calc(var(--f48-row-h) - var(--layout-row-reduction, 0pt))); }
+.f48-school-header { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.3; margin-bottom: 5pt; }
+.f48-custom-layout .f48-cert { white-space: pre-wrap; overflow-wrap: anywhere; }
+.f48-verification,.f48-footer-note { white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 5pt; line-height: 1.3; }
+.f48-employee-caption,.f48-signer-caption { width: 2.45in; margin-left: auto; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.3; }
+.f48-layout-top { position: relative; }
+.f48-custom-layout .f48-logo { border-radius: 0; object-fit: contain; }
+
+</style>
+  <style>
 /*
  * print.css — only the Form 48 sheets reach the paper; each sheet is one page
  * with no margins (the sheet carries its own).
@@ -1400,6 +1521,8 @@ button.home-review-item:hover { box-shadow: inset 0 0 0 1px var(--line-2); }
       <symbol id="i-logo" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M14 3v4h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12h6M9 15.5h6M9 19h3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
       <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5M4 15v3.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M4 15v3.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="9" cy="9.5" r="1.6" fill="currentColor"/><path d="m4 17 5-5 4 4 2.5-2.5L20 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+      <symbol id="i-table" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 9.5h17M3.5 14.5h17M9.5 9.5v10" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
       <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3.5 7.5A1.5 1.5 0 0 1 5 6h4l2 2h8a1.5 1.5 0 0 1 1.5 1.5v8A1.5 1.5 0 0 1 19 19H5a1.5 1.5 0 0 1-1.5-1.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
       <symbol id="i-printer" viewBox="0 0 24 24"><path d="M7 9V4h10v5M7 17H5a1.5 1.5 0 0 1-1.5-1.5v-5A1.5 1.5 0 0 1 5 9h14a1.5 1.5 0 0 1 1.5 1.5v5A1.5 1.5 0 0 1 19 17h-2M7 14h10v6H7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
       <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
@@ -1492,7 +1615,7 @@ window.DTR = window.DTR || {};
 DTR.config = Object.freeze({
   APP_NAME: 'DTR Converter',
   APP_SUBTITLE: 'Biometric Timecard → CSC Form No. 48',
-  APP_VERSION: '1.20.3',
+  APP_VERSION: '1.22.0',
 
   /* Where clients ask for help and keys (same as desktop/licensing.py CONTACT_*). */
   CONTACT: Object.freeze({ email: 'azmarketingservicesbicol@gmail.com', facebook: 'AZ Digital Marketing' }),
@@ -1528,10 +1651,11 @@ DTR.config = Object.freeze({
    * printing / Download PDF asks to print without them or get Pro. The Undertaking list can be
    * viewed but only printed with Pro.
    */
-  PRO_FEATURES: Object.freeze({ UNDERTIME: 'undertime', LOGO: 'logo', UNDERTAKING: 'undertaking' }),
+  PRO_FEATURES: Object.freeze({ UNDERTIME: 'undertime', LOGO: 'logo', LAYOUT: 'layout', UNDERTAKING: 'undertaking' }),
   PRO_FEATURE_LABELS: Object.freeze({
     undertime: 'Under Time computed from your official time',
     logo: 'School logo on the form',
+    layout: 'Custom DTR layout',
     undertaking: 'Undertaking list'
   }),
 
@@ -1663,7 +1787,7 @@ DTR.config = Object.freeze({
     MONTHLY_STATEMENT: 'monthly-statement',
     EMPLOYEE_TABLE: 'employee-table',
     ATTENDANCE_RECORDS: 'attendance-records',
-    STAFF_TIMETABLE: 'staff-timetable', TIMESHEET: 'timesheet', DAILY_SUMMARY: 'daily-summary', DAILY_PAIRS: 'daily-pairs',
+    STAFF_TIMETABLE: 'staff-timetable', TIMESHEET: 'timesheet', ABNORMAL_REPORT: 'abnormal-report', DAILY_SUMMARY: 'daily-summary', DAILY_PAIRS: 'daily-pairs',
     PUNCH_LOG: 'punch-log'
   }),
   FILE_FORMAT_LABELS: Object.freeze({
@@ -1676,6 +1800,7 @@ DTR.config = Object.freeze({
     'attendance-records': 'Attendance Records',
     'staff-timetable': 'Staff On-Duty/Off-Duty Timetable',
     'timesheet': 'Bio-office Timesheet Report',
+    'abnormal-report': 'Abnormal Report (exceptions only)',
     'daily-summary': 'Daily Attendance Summary',
     'daily-pairs': 'Daily Attendance TXT / CSV',
     'punch-log': 'Attendance log (one row per tap)'
@@ -1737,16 +1862,33 @@ DTR.config = Object.freeze({
   }),
 
   /*
-   * Paper the DTR prints on (two copies per sheet). `pxWidth` is the width on
-   * screen at 100% (96 px per inch), used to fit the preview to the window.
-   * The matching layout lives in css/form48.css under .sheet--<key>.
+   * Paper the DTR prints on. `widthIn`/`heightIn` size the pictures (export/picture.js);
+   * `excelPaper` is Excel's paper number (export/excel.js).
+   * The matching layout lives in css/form48.css under .sheet--<key> (and .size-<print size>).
    */
   PAPER_SIZES: Object.freeze({
     a4:   Object.freeze({ label: 'A4 (210 × 297 mm)', short: 'A4', pageSize: 'A4', pxWidth: 794,
-                          copies: 'two 3.5 × 7.5 in cards — cut along the black borders' }),
+                          widthIn: 8.27, heightIn: 11.69, excelPaper: 9, copies: 'two copies side by side' }),
     long: Object.freeze({ label: 'Long / Folio (8.5 × 13 in)', short: 'long bond (8.5 × 13)', pageSize: '8.5in 13in', pxWidth: 816,
-                          copies: 'two copies side by side' })
+                          widthIn: 8.5, heightIn: 13, excelPaper: 14, copies: 'two copies side by side' })
   }),
+
+  /*
+   * How big the DTR prints (Print window → Size on paper). Each size is a .size-<key> layout
+   * in css/form48.css; `perSheet` = copies on one sheet (Large puts each copy on its own sheet).
+   * Used by Print, Download PDF, Pictures and Excel alike.
+   */
+  PRINT_SIZES: Object.freeze({
+    full:   Object.freeze({ label: 'Full page', hint: 'Fills the paper', perSheet: 2 }),
+    card:   Object.freeze({ label: 'Small card', hint: '3.5 × 7.5 in cards to cut', perSheet: 2 }),
+    large:  Object.freeze({ label: 'Large', hint: '1 copy per sheet, bigger text', perSheet: 1 }),
+    custom: Object.freeze({ label: 'Custom', hint: 'Pick a size', perSheet: 2 })
+  }),
+  /* Custom size, in % of Full page (Full page is the biggest that still fits two copies). */
+  PRINT_SCALE: Object.freeze({ MIN: 70, MAX: 100, STEP: 5 }),
+
+  /* Download pictures: one PNG per employee, the whole sheet at this sharpness (dots per inch). */
+  IMAGE_DPI: 200,
 
   TIME_FORMATS: Object.freeze({
     AS_RECORDED: 'as-recorded', // 16:26 stays 16:26
@@ -1777,6 +1919,8 @@ DTR.config = Object.freeze({
     otherSigners: [],   // [{ id, name, title, employeeId }] — e.g. who signs the Principal's DTR (signers.js)
     timeFormat: 'as-recorded',
     paperSize: 'a4', // key of PAPER_SIZES
+    printSize: 'full',   // key of PRINT_SIZES (since 1.21.0; before, A4 always printed the small card)
+    printScale: 90,      // Custom size only, % of Full page (PRINT_SCALE)
     tapPlacement: 'time-of-day',   // value of TAP_PLACEMENTS (default since 1.12.0; older offices keep their saved choice)
     tapPlacementChosen: false,     // true once the admin has picked it (stops the suggestion)
     defaultRegularDays: '',
@@ -2316,12 +2460,12 @@ DTR.readers.standardReport = (function () {
   const { FILE_FORMATS } = DTR.config;
   const { isBlank, pad2, daysInMonth, parseIsoDate } = DTR.util;
   const cells = DTR.readers.cells;
-  const TITLE = /^attendance\s+record\s+report$/i;
-  const PERIOD_LABEL = /^att\.?\s*time:?$/i;
+  const TITLE = /^(?:attendance\s+record\s+report|employee\s+attendance\s+record)$/i;
+  const PERIOD_LABEL = /^(?:att\.?\s*time:?$|attendance\s+date\s*:)/i;
   const PERIOD = /^(\d{4}-\d{1,2}-\d{1,2})\s*~\s*(\d{4}-\d{1,2}-\d{1,2})$/;
-  const ID_LABEL = /^ID\s*:$/i;
+  const ID_LABEL = /^(?:User\s+)?ID\s*:$/i;
   const NAME_LABEL = /^Name\s*:$/i;
-  const DEPT_LABEL = /^Dept\.?\s*:$/i;
+  const DEPT_LABEL = /^(?:Dept\.?|Department)\s*:$/i;
   const DAY = /^(?:[1-9]|[12]\d|3[01])$/;
   const TIME_TOKEN = /\d{1,2}:\d{2}(?::\d{2})?(?:\s*[AP]M)?/gi;
   const text = (v) => isBlank(v) ? '' : String(v).trim();
@@ -2346,7 +2490,9 @@ DTR.readers.standardReport = (function () {
 
   function periodFor(rows) {
     const periods = rows.filter((r) => column(r, PERIOD_LABEL) !== -1).map((r) => {
-      const match = PERIOD.exec(text(valueAfter(r, column(r, PERIOD_LABEL))));
+      const col = column(r, PERIOD_LABEL);
+      const inline = text(r[col]).replace(/^attendance\s+date\s*:/i, '').trim();
+      const match = PERIOD.exec(/^attendance\s+date/i.test(text(r[col])) && inline ? inline : text(valueAfter(r, col)));
       const start = match && validDate(match[1]);
       const end = match && validDate(match[2]);
       if (!start || !end || start > end || start.slice(0, 7) !== end.slice(0, 7)) {
@@ -2384,6 +2530,7 @@ DTR.readers.standardReport = (function () {
     const result = { format: FILE_FORMATS.STANDARD_REPORT, periodText: null, employees: [], warnings: [] };
     const byId = new Map();
     sheets.filter(matches).forEach((sheet) => {
+      const employeeRecord = sheet.rows.some(r => r.some(v => /^employee\s+attendance\s+record$/i.test(text(v))));
       const period = periodFor(sheet.rows);
       if (result.periodText && (result.periodText.start !== period.start || result.periodText.end !== period.end)) {
         throw new Error('These Attendance Record Report sheets have different attendance periods. Export one month per file.');
@@ -2402,10 +2549,11 @@ DTR.readers.standardReport = (function () {
         if (idCol !== -1) {
           const nameCol = column(row, NAME_LABEL);
           const deptCol = column(row, DEPT_LABEL);
-          const id = text(valueAfter(row, idCol, nameCol));
-          if (!days || !id || nameCol <= idCol || deptCol <= nameCol) {
+          const id = cells.employeeId(valueAfter(row, idCol, nameCol));
+          if ((!days && !employeeRecord) || !id || nameCol <= idCol || deptCol <= nameCol) {
             throw new Error(`${location}: the employee ID, name labels or day headings could not be read.`);
           }
+          if (employeeRecord) days = null; // This variant puts each day heading AFTER its employee header.
           employee = byId.get(id);
           if (!employee) {
             const rawName = text(valueAfter(row, nameCol, deptCol)).replace(/\s+/g, ' ');
@@ -2424,7 +2572,7 @@ DTR.readers.standardReport = (function () {
         }
         row.forEach((value, col) => {
           if (isBlank(value)) return;
-          const day = days[col];
+          const day = days && days[col];
           if (!day || day > lastDay) throw new Error(`${location}, column ${col + 1}: taps have no valid day in this month.`);
           const iso = isoFor(day);
           if (iso < period.start || iso > period.end) throw new Error(`${location}, day ${day}: taps fall outside the attendance period.`);
@@ -2860,6 +3008,85 @@ DTR.readers.dailySummary = (function () {
     return result;
   }
   return { id: FILE_FORMATS.DAILY_SUMMARY, detect: sheets => sheets.some(matches), read };
+})();
+
+</script>
+  <script>
+/* Exception reports are partial: add actual clocks without replacing a saved month. */
+window.DTR = window.DTR || {};
+DTR.readers = DTR.readers || {};
+DTR.readers.abnormalReport = (function () {
+  const { FILE_FORMATS, TAP_KINDS } = DTR.config;
+  const { isBlank, parseIsoDate, daysInMonth } = DTR.util;
+  const cells = DTR.readers.cells;
+  const text = v => isBlank(v) ? '' : String(v).trim();
+  const label = v => text(v).toLowerCase().replace(/\s+/g, ' ');
+  function header(row) {
+    const labels = row.map(label);
+    return ['user id', 'name', 'department', 'date', 'before noon', 'after noon'].every(v => labels.includes(v)) ? labels : null;
+  }
+  const matches = s => s.rows.some(r => r.some(v => label(v) === 'abnormal report')) && s.rows.some(header);
+  function validDate(v) {
+    const iso = cells.date(v), d = iso && parseIsoDate(iso);
+    return d && d.month >= 1 && d.month <= 12 && d.day >= 1 && d.day <= daysInMonth(d.year, d.month) ? iso : null;
+  }
+  function read(sheets) {
+    const result = { format: FILE_FORMATS.ABNORMAL_REPORT, periodText: null, employees: [], warnings: [
+      'This Abnormal Report lists exceptions only, not the complete month. Upload the Employee Attendance Record for all recorded times. These listed clocks are added without clearing attendance already saved.'
+    ] };
+    const employees = new Map();
+    for (const sheet of sheets.filter(matches)) {
+      const ranges = sheet.rows.flatMap(r => r.map(v => /^Date:\s*(\d{4}-\d{1,2}-\d{1,2})\s*~\s*(\d{4}-\d{1,2}-\d{1,2})$/i.exec(text(v))).filter(Boolean));
+      if (!ranges.length) throw new Error('The Abnormal Report has no readable date range.');
+      for (const m of ranges) {
+        const start = validDate(m[1]), end = validDate(m[2]);
+        if (!start || !end || start > end || start.slice(0, 7) !== end.slice(0, 7)) throw new Error('The Abnormal Report needs a valid date range within one month.');
+        if (result.periodText && (result.periodText.start !== start || result.periodText.end !== end)) throw new Error('The Abnormal Report contains conflicting periods.');
+        result.periodText = { start, end };
+      }
+      let columns = null, clocks = null;
+      for (let index = 0; index < sheet.rows.length; index++) {
+        const row = sheet.rows[index], next = header(row), location = `${sheet.name} row ${index + 1}`;
+        if (next) { columns = next; clocks = null; continue; }
+        if (!columns) continue;
+        if (row.every(isBlank)) continue;
+        if (row.some(v => /total late\/early leave count/i.test(text(v)))) { columns = null; continue; }
+        if (!clocks) {
+          const am = columns.indexOf('before noon'), pm = columns.indexOf('after noon');
+          clocks = [{ col: am, kind: TAP_KINDS.IN }, { col: am + 1, kind: TAP_KINDS.OUT }, { col: pm, kind: TAP_KINDS.IN }, { col: pm + 1, kind: TAP_KINDS.OUT }];
+          if (!clocks.every(c => label(row[c.col]) === c.kind)) throw new Error(`${location}: the Abnormal Report IN/OUT headings are unreadable.`);
+          continue;
+        }
+        const get = key => row[columns.indexOf(key)];
+        const id = cells.employeeId(get('user id')), rawName = text(get('name')), date = validDate(get('date'));
+        if (!id || !date || date < result.periodText.start || date > result.periodText.end) throw new Error(`${location}: an employee number or attendance date is unreadable.`);
+        let employee = employees.get(id);
+        if (employee && employee.rawName !== rawName) throw new Error(`${location}: one employee number has conflicting names.`);
+        if (!employee) { employee = { id, rawName, days: {}, kinds: {}, notes: {} }; employees.set(id, employee); result.employees.push(employee); }
+        employee.days[date] ||= []; employee.kinds[date] ||= [];
+        for (const { col, kind } of clocks) {
+          const value = row[col];
+          if (isBlank(value) || label(value) === 'none') continue;
+          const displayed = text(sheet.displayRows?.[index]?.[col]);
+          const clockValue = typeof value === 'number' && /^\d{1,2}:\d{2}(?:\s*[AP]M)?$/i.test(displayed) ? displayed : value;
+          const clock = cells.time(clockValue), parts = /^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AP]M)?$/i.exec(text(clockValue));
+          if (!clock || (typeof value === 'number' && (!Number.isFinite(value) || value < 0 || value >= 1))
+            || (parts && (+parts[3] > 59 || (parts[4] && (+parts[1] < 1 || +parts[1] > 12))))) throw new Error(`${location}: a recorded IN/OUT clock is unreadable.`);
+          employee.days[date].push(clock); employee.kinds[date].push(kind);
+        }
+        for (const key of ['late (minute)', 'early (minute)', 'total (minute)', 'remark']) {
+          const value = get(key);
+          if (!isBlank(value)) (employee.notes[date] ||= []).push(`Abnormal Report ${key}: ${text(value)}`);
+        }
+      }
+    }
+    for (const e of result.employees) for (const [date, times] of Object.entries(e.days)) {
+      const taps = times.map((time, i) => ({ time, kind: e.kinds[date][i] })).sort((a, b) => a.time.localeCompare(b.time));
+      e.days[date] = taps.map(t => t.time); e.kinds[date] = taps.map(t => t.kind);
+    }
+    return result;
+  }
+  return { id: FILE_FORMATS.ABNORMAL_REPORT, detect: sheets => sheets.some(matches), read };
 })();
 
 </script>
@@ -3441,7 +3668,7 @@ DTR.parser = (function () {
   const R = DTR.readers;
 
   /* Most specific first: the Timecard Report also contains dates and times. */
-  const READERS = [R.timecard, R.clockTable, R.standardReport, R.punchReport, R.monthlyStatement, R.employeeTable, R.attendanceRecords, R.timesheet, R.dailySummary, R.dailyPairs, R.staffTimetable, R.punchLog];
+  const READERS = [R.timecard, R.clockTable, R.standardReport, R.punchReport, R.monthlyStatement, R.employeeTable, R.attendanceRecords, R.timesheet, R.abnormalReport, R.dailySummary, R.dailyPairs, R.staffTimetable, R.punchLog];
   const TEXT_FILE = /\.(csv|txt|dat)$/i;
 
   class SourceFormatError extends Error {}
@@ -3533,7 +3760,7 @@ DTR.parser = (function () {
     const sheets = toSheets(buffer, fileName);
     const reader = READERS.find((r) => r.detect(sheets));
     if (!reader) {
-      throw new SourceFormatError('This file\'s layout is not recognised. It needs a "Timecard Report", an "Attendance Clock Table", an "Attendance Record Report", a monthly "Punch" report, a "Monthly Statement Report", an "Employee Attendance Table", "Attendance Records", a daily "Clock In / Clock Out" summary, a "Staff\'s On-Duty/Off-Duty Timetable", a "Timesheet Report", or an attendance log with an employee number and the date and time of each tap.');
+      throw new SourceFormatError('This file\'s layout is not recognised. It needs a "Timecard Report", an "Attendance Clock Table", an "Attendance Record Report", a monthly "Punch" report, a "Monthly Statement Report", an "Employee Attendance Table", "Attendance Records", a daily "Clock In / Clock Out" summary, a "Staff\'s On-Duty/Off-Duty Timetable", a "Timesheet Report", an "Abnormal Report", or an attendance log with an employee number and the date and time of each tap.');
     }
     const result = reader.read(sheets, fileName, options);
     if (!result.employees.length) {
@@ -4048,7 +4275,7 @@ DTR.store = (function () {
   /** { edits: { [employeeId]: { cells: { 'day.slot': text }, labels: { day: text }, header: { field: text } } }, checked: { [employeeId]: true } } */
   function getWork(key) {
     const work = read(KEYS.monthWork(key), null) || {};
-    return { edits: work.edits || {}, checked: work.checked || {} };
+    return { edits: work.edits || {}, checked: work.checked || {}, layouts: work.layouts || {}, layoutTemplates: work.layoutTemplates || {} };
   }
   const saveWork = (key, work) => write(KEYS.monthWork(key), work);
 
@@ -4754,9 +4981,80 @@ DTR.review = (function () {
 
 </script>
   <script>
+/* Layout text is separate from attendance. Snapshots keep saved months unchanged.
+ * Plain text only: no HTML, remote images or scripts in saved templates. */
+window.DTR = window.DTR || {};
+DTR.layouts = (function () {
+  const T = DTR.config.FORM_TEXT;
+  const LIMITS = Object.freeze({ name: 50, header: 160, am: 16, pm: 16,
+    amIn: 16, amOut: 16, pmIn: 16, pmOut: 16, certification: 360,
+    employeeCaption: 60, verification: 140, signerCaption: 60, footer: 160 });
+  const original = () => ({ version: 1, name: 'Original Form 48', header: '',
+    am: T.AM, pm: T.PM, amIn: T.ARRIVAL, amOut: T.DEPARTURE.join('\n'),
+    pmIn: T.ARRIVAL, pmOut: T.DEPARTURE.join('\n'), certification: T.CERTIFY,
+    employeeCaption: '', verification: '', signerCaption: '', footer: '',
+    showLogo: true, logoPosition: 'right', logoSize: 0.56, logoData: '',
+    headerStyle: { align: 'center', size: 9, bold: true, italic: false },
+    footerStyle: { align: 'left', size: 8.5, bold: false, italic: true } });
+  const imageOK = value => /^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(String(value || ''));
+  const style = (value, base) => ({ align: ['left', 'center', 'right'].includes(value?.align) ? value.align : base.align,
+    size: [8, 8.5, 9, 10, 11].includes(Number(value?.size)) ? Number(value.size) : base.size,
+    bold: typeof value?.bold === 'boolean' ? value.bold : base.bold,
+    italic: typeof value?.italic === 'boolean' ? value.italic : base.italic });
+  function normalize(value) {
+    const base = original(), v = value || {};
+    Object.keys(LIMITS).forEach(k => { if (typeof v[k] === 'string') base[k] = v[k].replace(/\r\n?/g, '\n').replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, ''); });
+    base.showLogo = v.showLogo !== false;
+    base.logoPosition = v.logoPosition === 'left' ? 'left' : 'right';
+    base.logoSize = [0.4, 0.56, 0.7].includes(Number(v.logoSize)) ? Number(v.logoSize) : 0.56;
+    base.logoData = imageOK(v.logoData) ? v.logoData : '';
+    base.headerStyle = style(v.headerStyle, base.headerStyle);
+    base.footerStyle = style(v.footerStyle, base.footerStyle);
+    return base;
+  }
+  function validate(value) {
+    const v = normalize(value);
+    for (const [k, max] of Object.entries(LIMITS)) {
+      if (v[k].length > max) return `${k.replace(/([A-Z])/g, ' $1')}: use ${max} characters or fewer.`;
+    }
+    if (!v.name.trim()) return 'Give this layout a name.';
+    if (v.header.split('\n').length > 3) return 'Use at most three header lines.';
+    for (const k of ['am', 'pm', 'amIn', 'amOut', 'pmIn', 'pmOut']) if (!v[k].trim()) return 'Keep a label in every time heading.';
+    return '';
+  }
+  function isCustom(value) {
+    if (!value) return false;
+    const a = normalize(value), b = original();
+    delete a.name; delete b.name; delete a.logoData; delete b.logoData;
+    return JSON.stringify(a) !== JSON.stringify(b);
+  }
+  function preset(key) {
+    const v = original();
+    if (key === 'verification') { v.name = 'Form 48 with verification'; v.verification = 'VERIFIED as to the prescribed office hours:'; v.signerCaption = 'In Charge'; }
+    if (key === 'school') { v.name = 'Custom school layout'; v.header = 'SAMPLE NATIONAL HIGH SCHOOL\nSchool address'; }
+    return v;
+  }
+  const css = s => `text-align:${s.align};font-size:${s.size}pt;font-weight:${s.bold ? 700 : 400};font-style:${s.italic ? 'italic' : 'normal'}`;
+  // Reserve space for additions by shortening the day rows, never changing their values.
+  const lines = (text, width = 48) => String(text).split('\n').reduce((n, x) => n + Math.max(1, Math.ceil(x.length / width)), 0);
+  function extraHeight(value) {
+    const v = normalize(value), f = v.footerStyle.size * 1.3;
+    return (v.header ? lines(v.header, v.showLogo && v.logoData ? 32 : 48) * v.headerStyle.size * 1.3 + 5 : 0)
+      + (v.verification ? lines(v.verification) * f + 5 : 0)
+      + (v.employeeCaption ? lines(v.employeeCaption, 34) * f : 0)
+      + (v.signerCaption ? lines(v.signerCaption, 34) * f : 0)
+      + (v.footer ? lines(v.footer) * f + 5 : 0)
+      + Math.max(0, lines(v.certification) * f - 42);
+  }
+  return { original, normalize, validate, isCustom, preset, css, lines, extraHeight, LIMITS, imageOK };
+})();
+
+</script>
+  <script>
 /*
  * form48.js — draws one sheet of paper (A4 or long bond) holding two identical
- * copies of CSC Form No. 48, from a model made by converter.build().
+ * copies of CSC Form No. 48, from a model made by converter.build(). The print size
+ * (Full page, Small card, Large, Custom — config.PRINT_SIZES) is a class on the sheet.
  *
  * With { editable: true } the left copy carries data-* hooks the editor uses.
  * The right copy is always a plain mirror. Screen-only marks (edited, extra taps,
@@ -4789,11 +5087,17 @@ DTR.form48 = (function () {
   const isLogo = (src) => /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(String(src || ''));
 
   function headerHtml(model, opts) {
+    const l = model.layout && DTR.layouts.normalize(model.layout);
+    const logoStyle = l ? ` style="width:${l.logoSize}in;height:${l.logoSize}in;${l.logoPosition === 'left' ? 'left:0;right:auto' : ''}"` : '';
+    const topStyle = l && model.logo && !l.header ? ` style="padding-${l.logoPosition}:${l.logoSize + 0.06}in;min-height:${l.logoSize}in"` : '';
     return `
-      ${isLogo(model.logo) ? `<img class="f48-logo" src="${model.logo}" alt="">` : ''}
+      <div class="f48-layout-top"${topStyle}>
+      ${isLogo(model.logo) ? `<img class="f48-logo"${logoStyle} src="${model.logo}" alt="">` : ''}
+      ${l && l.header ? `<div class="f48-school-header" style="${DTR.layouts.css(l.headerStyle)};${model.logo ? `padding-${l.logoPosition}:${l.logoSize + 0.06}in;min-height:${l.logoSize}in` : ''}">${esc(l.header)}</div>` : ''}
       <div class="f48-formno">${esc(T.FORM_NO)}</div>
       <div class="f48-title">${esc(T.TITLE)}</div>
       <div class="f48-title-rule"></div>
+      </div>
       <div class="${cls('f48-name', nameSize(model.name), opts.editable && 'is-editable', opts.marks && !model.name && 'is-placeholder')}"${attr(opts.editable, 'data-name', '1')}${attr(opts.marks && !model.name, 'data-placeholder', `No name yet — employee no. ${model.employeeId}`)}>${esc(model.name)}</div>
       <div class="f48-caption">${esc(T.NAME_CAPTION)}</div>
       <div class="f48-month">
@@ -4810,18 +5114,20 @@ DTR.form48 = (function () {
       </div>`;
   }
 
-  function tableHead() {
+  function tableHead(model) {
+    const l = DTR.layouts.normalize(model.layout);
+    const label = text => esc(text).replace(/\n/g, '<br>');
     return `
       <thead>
         <tr>
           <th rowspan="2" class="f48-col-day f48-th-days">${esc(T.DAYS)}</th>
-          <th colspan="2" class="f48-group">${esc(T.AM)}</th>
-          <th colspan="2" class="f48-group f48-g-start">${esc(T.PM)}</th>
+          <th colspan="2" class="f48-group">${esc(l.am)}</th>
+          <th colspan="2" class="f48-group f48-g-start">${esc(l.pm)}</th>
           <th colspan="2" class="f48-group f48-g-start f48-th-ut">${esc(T.UNDERTIME[0])}<br>${esc(T.UNDERTIME[1])}</th>
         </tr>
         <tr class="f48-subhead">
-          <th>${esc(T.ARRIVAL)}</th><th>${esc(T.DEPARTURE[0])}<br>${esc(T.DEPARTURE[1])}</th>
-          <th class="f48-g-start">${esc(T.ARRIVAL)}</th><th>${esc(T.DEPARTURE[0])}<br>${esc(T.DEPARTURE[1])}</th>
+          <th>${label(l.amIn)}</th><th>${label(l.amOut)}</th>
+          <th class="f48-g-start">${label(l.pmIn)}</th><th>${label(l.pmOut)}</th>
           <th class="f48-g-start">${esc(T.HOURS)}</th><th>${esc(T.MINUTES)}</th>
         </tr>
       </thead>`;
@@ -4883,28 +5189,35 @@ DTR.form48 = (function () {
   }
 
   function footerHtml(model) {
+    const l = model.layout && DTR.layouts.normalize(model.layout);
+    const style = l ? ` style="${DTR.layouts.css(l.footerStyle)}"` : '';
+    const text = (key, className) => l && l[key] ? `<div class="${className}"${style}>${esc(l[key])}</div>` : '';
     return `
-      <p class="f48-cert">${esc(T.CERTIFY)}</p>
+      <p class="f48-cert"${style}>${esc(l ? l.certification : T.CERTIFY)}</p>
       <div class="f48-sign-employee"></div>
+      ${text('employeeCaption', 'f48-employee-caption')}
       <div class="f48-rule-thick"></div>
+      ${text('verification', 'f48-verification')}
       <div class="f48-incharge">
         <div class="${cls('f48-incharge-name', nameSize(model.inChargeName))}">${esc(model.inChargeName)}</div>
         ${model.inChargeTitle
           ? `<div class="${cls('f48-incharge-title', nameSize(model.inChargeTitle))}">${esc(model.inChargeTitle)}</div>`
-          : `<div class="f48-incharge-caption">${esc(T.IN_CHARGE)}</div>`}
-      </div>`;
+          : `<div class="f48-incharge-caption">${esc(l && l.signerCaption ? '' : T.IN_CHARGE)}</div>`}
+      </div>
+      ${text('signerCaption', 'f48-signer-caption')}
+      ${text('footer', 'f48-footer-note')}`;
   }
 
   function copyHtml(model, opts) {
     // Online demo only (js/demo.js): every copy, on screen and on paper, says it is not for submission.
     const watermark = DTR.config.DEMO_MODE ? `<div class="f48-demo-mark" aria-hidden="true">${esc(DTR.config.DEMO_WATERMARK)}</div>` : '';
     return `
-      <div class="f48">
+      <div class="f48${model.layout ? ' f48-custom-layout' : ''}"${model.layout ? ` style="--layout-row-reduction:${DTR.layouts.extraHeight(model.layout) / 31}pt"` : ''}>
         ${watermark}
         ${headerHtml(model, opts)}
         <table class="f48-table">
           <colgroup><col class="c-day"><col><col><col><col><col><col></colgroup>
-          ${tableHead()}
+          ${tableHead(model)}
           <tbody>${model.rows.map((row) => rowHtml(row, opts)).join('')}</tbody>
           ${totalRow(model, opts)}
         </table>
@@ -4912,15 +5225,33 @@ DTR.form48 = (function () {
       </div>`;
   }
 
+  /** The print size to use: a known PRINT_SIZES key, and for Custom a % kept inside PRINT_SCALE. */
+  function sizeOf(settings) {
+    const { PRINT_SIZES, PRINT_SCALE, DEFAULT_SETTINGS } = DTR.config;
+    const s = settings || {};
+    const size = PRINT_SIZES[s.printSize] ? s.printSize : DEFAULT_SETTINGS.printSize;
+    const pct = Math.round(Number(s.printScale) / PRINT_SCALE.STEP) * PRINT_SCALE.STEP;
+    const scale = Math.min(PRINT_SCALE.MAX, Math.max(PRINT_SCALE.MIN, Number.isFinite(pct) ? pct : DEFAULT_SETTINGS.printScale));
+    return { size, scale };
+  }
+
   /**
+   * One employee's paper: usually ONE sheet with two copies; Large prints each copy on its own sheet.
    * @param model  from DTR.converter.build()
-   * @param opts   { paper: key of config.PAPER_SIZES, editable: bool, selectedDay: number|null }
+   * @param opts   { paper: key of config.PAPER_SIZES, size: key of config.PRINT_SIZES, scale: % (Custom),
+   *                 editable: bool, selectedDay: number|null }
    */
   function sheet(model, opts) {
     const o = Object.assign({ paper: DTR.config.DEFAULT_SETTINGS.paperSize, editable: false, selectedDay: null }, opts);
+    const { size, scale } = sizeOf({ printSize: o.size, printScale: o.scale });
     const left = Object.assign({}, o, { marks: o.editable });
     const right = { editable: false, marks: false, selectedDay: null };
-    return `<div class="sheet sheet--${esc(o.paper)}"><div class="copy">${copyHtml(model, left)}</div><div class="copy">${copyHtml(model, right)}</div></div>`;
+    const style = size === 'custom' ? ` style="--f48-scale:${scale / 100}"` : '';
+    const open = `<div class="sheet sheet--${esc(o.paper)} size-${size}"${style}>`;
+    const copy = (copyOpts) => `<div class="copy">${copyHtml(model, copyOpts)}</div>`;
+    return DTR.config.PRINT_SIZES[size].perSheet === 1
+      ? `${open}${copy(left)}</div>${open}${copy(right)}</div>`
+      : `${open}${copy(left)}${copy(right)}</div>`;
   }
 
   /** Tells the printer which paper to use (CSS @page cannot read variables). */
@@ -4935,7 +5266,650 @@ DTR.form48 = (function () {
     style.textContent = `@page { size: ${paper.pageSize}; margin: 0; }`;
   }
 
-  return { sheet, applyPageSize };
+  function checkFit(model, opts) {
+    if (!model.layout) return '';
+    const box = document.createElement('div');
+    box.style.cssText = 'position:fixed;left:-20000px;top:0;visibility:hidden;pointer-events:none';
+    box.innerHTML = sheet(model, opts); document.body.appendChild(box);
+    let error = '';
+    try {
+      const paper = box.querySelector('.sheet'), copy = paper.querySelector('.copy'), form = copy.querySelector('.f48');
+      const bottom = opts.size === 'card' ? copy.getBoundingClientRect().bottom - 8 : paper.getBoundingClientRect().bottom - 24;
+      if (form.getBoundingClientRect().bottom > bottom) error = 'This layout is too tall for this print size. Shorten the header or footer, or choose Full page.';
+      for (const el of form.querySelectorAll('.f48-school-header,.f48-cert,.f48-verification,.f48-footer-note,.f48-employee-caption,.f48-signer-caption,th')) {
+        if (el.scrollWidth > el.clientWidth + 2) error = 'Some layout text is too wide. Shorten the text or reduce its font size.';
+      }
+    } finally { box.remove(); }
+    return error;
+  }
+  return { sheet, sizeOf, applyPageSize, checkFit };
+})();
+
+</script>
+  <script>
+/*
+ * export/zip.js — puts several files into one .zip (pictures of many DTRs; an Excel .xlsx
+ * is itself a zip). Files are stored as they are, not compressed: PNG pictures are already
+ * compressed, and an .xlsx of DTRs is small. Plain browser code, no library.
+ */
+window.DTR = window.DTR || {};
+
+DTR.zip = (function () {
+  const CRC_TABLE = (() => {
+    const table = new Uint32Array(256);
+    for (let n = 0; n < 256; n++) {
+      let c = n;
+      for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
+      table[n] = c >>> 0;
+    }
+    return table;
+  })();
+
+  /** The checksum every zip entry carries (CRC-32). */
+  function crc32(bytes) {
+    let c = 0xFFFFFFFF;
+    for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+
+  const toBytes = (data) => (typeof data === 'string' ? new TextEncoder().encode(data) : new Uint8Array(data));
+
+  /** Date and time in the old MS-DOS form zip uses. */
+  function dosTime(d) {
+    return {
+      time: (d.getHours() << 11) | (d.getMinutes() << 5) | Math.floor(d.getSeconds() / 2),
+      date: ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate()
+    };
+  }
+
+  /**
+   * @param files  [{ name: 'folder/file.png', data: string | Uint8Array | ArrayBuffer }]
+   * @returns Uint8Array — the whole .zip file
+   */
+  function make(files, when) {
+    const { time, date } = dosTime(when || new Date());
+    const UTF8_NAMES = 0x0800;
+    const locals = [];
+    const centrals = [];
+    let offset = 0;
+    files.forEach((file) => {
+      const name = toBytes(file.name);
+      const data = toBytes(file.data);
+      const crc = crc32(data);
+      const local = new DataView(new ArrayBuffer(30));
+      local.setUint32(0, 0x04034b50, true);    // local file header
+      local.setUint16(4, 20, true);            // version needed
+      local.setUint16(6, UTF8_NAMES, true);
+      local.setUint16(8, 0, true);             // stored (no compression)
+      local.setUint16(10, time, true);
+      local.setUint16(12, date, true);
+      local.setUint32(14, crc, true);
+      local.setUint32(18, data.length, true);
+      local.setUint32(22, data.length, true);
+      local.setUint16(26, name.length, true);
+      local.setUint16(28, 0, true);
+      locals.push(new Uint8Array(local.buffer), name, data);
+
+      const central = new DataView(new ArrayBuffer(46));
+      central.setUint32(0, 0x02014b50, true);  // central directory entry
+      central.setUint16(4, 20, true);
+      central.setUint16(6, 20, true);
+      central.setUint16(8, UTF8_NAMES, true);
+      central.setUint16(10, 0, true);
+      central.setUint16(12, time, true);
+      central.setUint16(14, date, true);
+      central.setUint32(16, crc, true);
+      central.setUint32(20, data.length, true);
+      central.setUint32(24, data.length, true);
+      central.setUint16(28, name.length, true);
+      central.setUint32(42, offset, true);     // where its local header starts
+      centrals.push(new Uint8Array(central.buffer), name);
+      offset += 30 + name.length + data.length;
+    });
+    const centralSize = centrals.reduce((n, part) => n + part.length, 0);
+    const end = new DataView(new ArrayBuffer(22));
+    end.setUint32(0, 0x06054b50, true);        // end of central directory
+    end.setUint16(8, files.length, true);
+    end.setUint16(10, files.length, true);
+    end.setUint32(12, centralSize, true);
+    end.setUint32(16, offset, true);
+
+    const parts = locals.concat(centrals, [new Uint8Array(end.buffer)]);
+    const out = new Uint8Array(parts.reduce((n, part) => n + part.length, 0));
+    let at = 0;
+    parts.forEach((part) => { out.set(part, at); at += part.length; });
+    return out;
+  }
+
+  return { make, crc32 };
+})();
+
+</script>
+  <script>
+/*
+ * export/picture.js — turns one printed sheet (form48.sheet() HTML) into a PNG picture of the
+ * whole page, at config.IMAGE_DPI. The browser draws the HTML itself (an SVG "foreignObject"),
+ * so the picture matches the printout exactly; nothing leaves the computer.
+ */
+window.DTR = window.DTR || {};
+
+DTR.picture = (function () {
+  const XHTML = 'http://www.w3.org/1999/xhtml';
+  const CSS_PX_PER_INCH = 96;
+
+  /** HTML → well-formed XHTML (SVG accepts only that), with the styles it needs inside. */
+  function xhtml(html, css, widthPx, heightPx) {
+    const box = document.createElementNS(XHTML, 'div');
+    box.setAttribute('style', `width:${widthPx}px;height:${heightPx}px;background:#fff;overflow:hidden`);
+    const style = document.createElementNS(XHTML, 'style');
+    style.textContent = css;
+    box.appendChild(style);
+    const holder = document.createElementNS(XHTML, 'div');
+    holder.innerHTML = html;
+    box.appendChild(holder);
+    return new XMLSerializer().serializeToString(box);
+  }
+
+  function loadImage(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('The picture could not be drawn.'));
+      img.src = src;
+    });
+  }
+
+  /**
+   * Writes the sharpness into the PNG (a "pHYs" block right after the header), so Word and
+   * photo printing know the picture is exactly one page — not a giant 96-dpi poster.
+   */
+  async function withDpi(blob, dpi) {
+    const png = new Uint8Array(await blob.arrayBuffer());
+    const IHDR_END = 8 + 25;                         // signature (8) + IHDR block (4 length, 4 type, 13 data, 4 crc)
+    const perMetre = Math.round(dpi / 0.0254);
+    const block = new DataView(new ArrayBuffer(21));
+    block.setUint32(0, 9);                           // data length
+    [0x70, 0x48, 0x59, 0x73].forEach((c, i) => block.setUint8(4 + i, c));   // "pHYs"
+    block.setUint32(8, perMetre);
+    block.setUint32(12, perMetre);
+    block.setUint8(16, 1);                           // unit: metre
+    block.setUint32(17, DTR.zip.crc32(new Uint8Array(block.buffer, 4, 13)));
+    return new Blob([png.subarray(0, IHDR_END), new Uint8Array(block.buffer), png.subarray(IHDR_END)], { type: 'image/png' });
+  }
+
+  /**
+   * @param html      one sheet, as form48.sheet() draws it
+   * @param css       the page's styles (form48.css is what matters)
+   * @param paperKey  key of config.PAPER_SIZES — the picture is that page, edge to edge
+   * @returns Promise<Blob> image/png
+   */
+  async function sheetPng(html, css, paperKey) {
+    const { PAPER_SIZES, DEFAULT_SETTINGS, IMAGE_DPI } = DTR.config;
+    const paper = PAPER_SIZES[paperKey] || PAPER_SIZES[DEFAULT_SETTINGS.paperSize];
+    const w = Math.round(paper.widthIn * CSS_PX_PER_INCH);
+    const h = Math.round(paper.heightIn * CSS_PX_PER_INCH);
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><foreignObject x="0" y="0" width="${w}" height="${h}">${xhtml(html, css, w, h)}</foreignObject></svg>`;
+    const img = await loadImage(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`);
+    const scale = IMAGE_DPI / CSS_PX_PER_INCH;
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(w * scale);
+    canvas.height = Math.round(h * scale);
+    const g = canvas.getContext('2d');
+    g.fillStyle = '#fff';
+    g.fillRect(0, 0, canvas.width, canvas.height);
+    g.drawImage(img, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('The picture could not be saved.'))), 'image/png'));
+    return withDpi(blob, IMAGE_DPI);
+  }
+
+  return { sheetPng, withDpi };
+})();
+
+</script>
+  <script>
+/*
+ * export/xlsx.js — writes a real Excel workbook (.xlsx) with the few things a printed form
+ * needs: fonts, borders, merged cells, column widths, row heights, page setup (paper, fit to
+ * one page), sheet protection and a picture (the Pro logo). The bundled SheetJS cannot write
+ * borders or fonts, so this small writer makes the XML itself; DTR.zip packs it.
+ *
+ * A sheet is described as plain data (rows and columns are 0-based):
+ *   { name, cells: [{ r, c, v, s }], merges: [[r1, c1, r2, c2]], colWidths: [chars],
+ *     rowHeights: { r: points }, paper: 9 (A4) | 14 (8.5 × 13), margins: inches,
+ *     protect: true, images: [{ bytes, ext, r, c, sizeIn, offsetIn }] }
+ * A style `s`: { sz, b, i, h: 'left'|'center'|'right', v: 'top'|'center'|'bottom', wrap,
+ *   indent, border: { l, r, t, b: 'thin'|'medium'|'dashed'|'double' } }
+ */
+window.DTR = window.DTR || {};
+
+DTR.xlsx = (function () {
+  const NS = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+  const NS_R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+  const NS_PKG = 'http://schemas.openxmlformats.org/package/2006/relationships';
+  const REL = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+  const XML_HEAD = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
+  const FONT = 'Calibri';
+  const EMU_PER_INCH = 914400;
+  const IMAGE_TYPES = Object.freeze({ jpeg: 'image/jpeg', png: 'image/png' });
+
+  const xml = (text) => String(text)
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+  /** 0 → A, 25 → Z, 26 → AA */
+  function colName(c) {
+    let name = '';
+    for (let n = c + 1; n > 0; n = Math.floor((n - 1) / 26)) name = String.fromCharCode(65 + ((n - 1) % 26)) + name;
+    return name;
+  }
+  const ref = (r, c) => `${colName(c)}${r + 1}`;
+
+  /** Excel's old sheet-password hash (enough to stop casual edits; not real security). */
+  function passwordHash(password) {
+    let hash = 0;
+    for (let i = password.length - 1; i >= 0; i--) {
+      hash = ((hash >> 14) & 0x01) | ((hash << 1) & 0x7FFF);
+      hash ^= password.charCodeAt(i);
+    }
+    hash = ((hash >> 14) & 0x01) | ((hash << 1) & 0x7FFF);
+    hash ^= password.length;
+    hash ^= 0xCE4B;
+    return hash.toString(16).toUpperCase().padStart(4, '0');
+  }
+
+  /** A password nobody knows: the sheet is view-and-print only (DTRs are changed in the app). */
+  function randomPassword() {
+    const bytes = new Uint8Array(12);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes, (b) => (b % 36).toString(36)).join('');
+  }
+
+  /* ---------- styles: every different style object becomes one numbered "xf" ---------- */
+
+  function styleBook() {
+    const fonts = [`<font><sz val="11"/><name val="${FONT}"/></font>`];
+    const borders = ['<border><left/><right/><top/><bottom/><diagonal/></border>'];
+    const xfs = ['<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'];
+    const seen = { font: new Map(), border: new Map(), xf: new Map() };
+    const remember = (kind, list, key, make) => {
+      if (!seen[kind].has(key)) { seen[kind].set(key, list.length); list.push(make()); }
+      return seen[kind].get(key);
+    };
+
+    function fontId(s) {
+      const key = `${s.sz || 11}|${s.b ? 1 : 0}|${s.i ? 1 : 0}`;
+      return remember('font', fonts, key, () => `<font>${s.b ? '<b/>' : ''}${s.i ? '<i/>' : ''}<sz val="${s.sz || 11}"/><name val="${FONT}"/></font>`);
+    }
+    function borderId(border) {
+      const b = border || {};
+      const side = (tag, style) => (style ? `<${tag} style="${style}"><color auto="1"/></${tag}>` : `<${tag}/>`);
+      const key = `${b.l || ''}|${b.r || ''}|${b.t || ''}|${b.b || ''}`;
+      return remember('border', borders, key, () => `<border>${side('left', b.l)}${side('right', b.r)}${side('top', b.t)}${side('bottom', b.b)}<diagonal/></border>`);
+    }
+    function id(s) {
+      if (!s) return 0;
+      const f = fontId(s);
+      const bd = borderId(s.border);
+      const align = [s.h && `horizontal="${s.h}"`, `vertical="${s.v || 'bottom'}"`, s.wrap && 'wrapText="1"', s.indent && `indent="${s.indent}"`].filter(Boolean).join(' ');
+      const key = `${f}|${bd}|${align}`;
+      return remember('xf', xfs, key, () => `<xf numFmtId="0" fontId="${f}" fillId="0" borderId="${bd}" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment ${align}/></xf>`);
+    }
+    function toXml() {
+      return `${XML_HEAD}<styleSheet xmlns="${NS}">`
+        + `<fonts count="${fonts.length}">${fonts.join('')}</fonts>`
+        + '<fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>'
+        + `<borders count="${borders.length}">${borders.join('')}</borders>`
+        + '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
+        + `<cellXfs count="${xfs.length}">${xfs.join('')}</cellXfs>`
+        + '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+    }
+    return { id, toXml };
+  }
+
+  /* ---------- one worksheet ---------- */
+
+  function sheetXml(sheet, styles, hasDrawing) {
+    const rows = new Map();
+    let maxR = 0;
+    let maxC = sheet.colWidths.length - 1;
+    sheet.cells.forEach((cell) => {
+      if (!rows.has(cell.r)) rows.set(cell.r, new Map());
+      rows.get(cell.r).set(cell.c, cell);       // a later cell at the same place wins
+      maxR = Math.max(maxR, cell.r);
+      maxC = Math.max(maxC, cell.c);
+    });
+    Object.keys(sheet.rowHeights || {}).forEach((r) => { maxR = Math.max(maxR, Number(r)); if (!rows.has(Number(r))) rows.set(Number(r), new Map()); });
+
+    const cellXml = (cell) => {
+      const s = styles.id(cell.s);
+      const sAttr = s ? ` s="${s}"` : '';
+      if (cell.v === undefined || cell.v === null || cell.v === '') return `<c r="${ref(cell.r, cell.c)}"${sAttr}/>`;
+      if (typeof cell.v === 'number') return `<c r="${ref(cell.r, cell.c)}"${sAttr}><v>${cell.v}</v></c>`;
+      return `<c r="${ref(cell.r, cell.c)}"${sAttr} t="inlineStr"><is><t xml:space="preserve">${xml(cell.v)}</t></is></c>`;
+    };
+    const rowXml = Array.from(rows.keys()).sort((a, b) => a - b).map((r) => {
+      const height = (sheet.rowHeights || {})[r];
+      const ht = height ? ` ht="${height}" customHeight="1"` : '';
+      const cells = Array.from(rows.get(r).values()).sort((a, b) => a.c - b.c).map(cellXml).join('');
+      return `<row r="${r + 1}"${ht}>${cells}</row>`;
+    }).join('');
+
+    const cols = sheet.colWidths.map((w, c) => `<col min="${c + 1}" max="${c + 1}" width="${w}" customWidth="1"/>`).join('');
+    const merges = (sheet.merges || []).map(([r1, c1, r2, c2]) => `<mergeCell ref="${ref(r1, c1)}:${ref(r2, c2)}"/>`).join('');
+    const m = sheet.margins === undefined ? 0.3 : sheet.margins;
+    const protect = sheet.protect ? `<sheetProtection password="${passwordHash(randomPassword())}" sheet="1" objects="1" scenarios="1"/>` : '';
+    return `${XML_HEAD}<worksheet xmlns="${NS}" xmlns:r="${NS_R}">`
+      + '<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>'
+      + `<dimension ref="A1:${ref(maxR, maxC)}"/>`
+      + '<sheetViews><sheetView workbookViewId="0" showGridLines="0"/></sheetViews>'
+      + '<sheetFormatPr defaultRowHeight="15"/>'
+      + `<cols>${cols}</cols>`
+      + `<sheetData>${rowXml}</sheetData>`
+      + protect
+      + (merges ? `<mergeCells count="${sheet.merges.length}">${merges}</mergeCells>` : '')
+      + '<printOptions horizontalCentered="1"/>'
+      + `<pageMargins left="${m}" right="${m}" top="${m}" bottom="${m}" header="0" footer="0"/>`
+      + `<pageSetup paperSize="${sheet.paper || 9}" orientation="portrait" fitToWidth="1" fitToHeight="1"/>`
+      + (hasDrawing ? '<drawing r:id="rId1"/>' : '')
+      + '</worksheet>';
+  }
+
+  /** Pictures on a sheet (each sits at a cell, nudged by offsetIn, sizeIn square, drawn round). */
+  function drawingXml(images, mediaIds) {
+    const pics = images.map((img, i) => {
+      const size = Math.round(img.sizeIn * EMU_PER_INCH);
+      const off = (img.offsetIn || [0, 0]).map((v) => Math.round(v * EMU_PER_INCH));
+      return '<xdr:oneCellAnchor>'
+        + `<xdr:from><xdr:col>${img.c}</xdr:col><xdr:colOff>${off[0]}</xdr:colOff><xdr:row>${img.r}</xdr:row><xdr:rowOff>${off[1]}</xdr:rowOff></xdr:from>`
+        + `<xdr:ext cx="${size}" cy="${size}"/>`
+        + `<xdr:pic><xdr:nvPicPr><xdr:cNvPr id="${i + 2}" name="Picture ${i + 1}"/><xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr></xdr:nvPicPr>`
+        + `<xdr:blipFill><a:blip r:embed="rId${mediaIds[i]}"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill>`
+        + `<xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${size}" cy="${size}"/></a:xfrm><a:prstGeom prst="ellipse"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic>`
+        + '<xdr:clientData/></xdr:oneCellAnchor>';
+    }).join('');
+    return `${XML_HEAD}<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="${NS_R}">${pics}</xdr:wsDr>`;
+  }
+
+  const rels = (list) => `${XML_HEAD}<Relationships xmlns="${NS_PKG}">${list.map((x, i) => `<Relationship Id="rId${i + 1}" Type="${REL}/${x.type}" Target="${x.target}"/>`).join('')}</Relationships>`;
+
+  /** Sheet names: at most 31 letters, none of : \ / ? * [ ], and no two alike. */
+  function sheetNames(names) {
+    const used = new Set();
+    return names.map((raw, i) => {
+      const base = String(raw || `Sheet ${i + 1}`).replace(/[:\\/?*[\]]+/g, ' ').replace(/^'+|'+$/g, '').replace(/\s+/g, ' ').trim().slice(0, 31) || `Sheet ${i + 1}`;
+      let name = base;
+      for (let n = 2; used.has(name.toLowerCase()); n++) name = `${base.slice(0, 31 - String(n).length - 1)} ${n}`;
+      used.add(name.toLowerCase());
+      return name;
+    });
+  }
+
+  /**
+   * @param sheets  sheet descriptions (see the top of this file)
+   * @returns Uint8Array — the .xlsx file
+   */
+  function workbook(sheets) {
+    const styles = styleBook();
+    const names = sheetNames(sheets.map((s) => s.name));
+    const files = [];
+    const media = new Map();          // same picture bytes → one file, shared by every sheet
+    let drawingCount = 0;
+    const overrides = [];
+
+    sheets.forEach((sheet, i) => {
+      const images = sheet.images || [];
+      files.push({ name: `xl/worksheets/sheet${i + 1}.xml`, data: sheetXml(sheet, styles, images.length > 0) });
+      overrides.push(`<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`);
+      if (!images.length) return;
+      drawingCount += 1;
+      const d = drawingCount;
+      const imageRels = images.map((img) => {
+        if (!media.has(img.bytes)) {
+          media.set(img.bytes, `media${media.size + 1}.${img.ext}`);
+          files.push({ name: `xl/media/${media.get(img.bytes)}`, data: img.bytes });
+        }
+        return { type: 'image', target: `../media/${media.get(img.bytes)}` };
+      });
+      files.push({ name: `xl/drawings/drawing${d}.xml`, data: drawingXml(images, images.map((_, k) => k + 1)) });
+      files.push({ name: `xl/drawings/_rels/drawing${d}.xml.rels`, data: rels(imageRels) });
+      files.push({ name: `xl/worksheets/_rels/sheet${i + 1}.xml.rels`, data: rels([{ type: 'drawing', target: `../drawings/drawing${d}.xml` }]) });
+      overrides.push(`<Override PartName="/xl/drawings/drawing${d}.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>`);
+    });
+
+    const printAreas = sheets.map((sheet, i) => {
+      const lastRow = Math.max(...sheet.cells.map((cell) => cell.r));
+      const lastCol = sheet.colWidths.length - 1;
+      return `<definedName name="_xlnm.Print_Area" localSheetId="${i}">'${names[i].replace(/'/g, "''")}'!$A$1:$${colName(lastCol)}$${lastRow + 1}</definedName>`;
+    }).join('');
+    files.unshift(
+      { name: '[Content_Types].xml', data: `${XML_HEAD}<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">`
+        + '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+        + '<Default Extension="xml" ContentType="application/xml"/>'
+        + Object.entries(IMAGE_TYPES).map(([ext, type]) => `<Default Extension="${ext}" ContentType="${type}"/>`).join('')
+        + '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
+        + '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'
+        + overrides.join('') + '</Types>' },
+      { name: '_rels/.rels', data: rels([{ type: 'officeDocument', target: 'xl/workbook.xml' }]) },
+      { name: 'xl/workbook.xml', data: `${XML_HEAD}<workbook xmlns="${NS}" xmlns:r="${NS_R}"><sheets>`
+        + names.map((name, i) => `<sheet name="${xml(name)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('')
+        + `</sheets><definedNames>${printAreas}</definedNames></workbook>` },
+      { name: 'xl/_rels/workbook.xml.rels', data: rels(sheets.map((_, i) => ({ type: 'worksheet', target: `worksheets/sheet${i + 1}.xml` }))
+        .concat([{ type: 'styles', target: 'styles.xml' }])) }
+    );
+    files.push({ name: 'xl/styles.xml', data: styles.toXml() });   // last: every sheet has added its styles
+    return DTR.zip.make(files);
+  }
+
+  return { workbook, colName, passwordHash, sheetNames, IMAGE_TYPES };
+})();
+
+</script>
+  <script>
+/*
+ * export/excel.js — Download Excel: every chosen DTR as a ready-to-print CSC Form No. 48 in
+ * one workbook, one worksheet per employee (two copies side by side, or one bigger copy for
+ * the Large size). Each sheet is set to the office's paper, fits one page, and is LOCKED:
+ * it can be opened and printed but not changed — DTRs are corrected in DTR Converter.
+ * Draws from the same model as the printout (converter.build / state.model); export/xlsx.js writes the file.
+ */
+window.DTR = window.DTR || {};
+
+DTR.excel = (function () {
+  const { FORM_TEXT: T, TIME_SLOTS, UNDERTIME_SLOTS } = DTR.config;
+
+  /*
+   * One copy is 7 columns: Days · A.M. arrival, departure · P.M. arrival, departure · Under time hours, minutes.
+   * Widths are in Excel's character units; LAYOUTS.k enlarges text and rows (Large), `wide` the columns.
+   */
+  const COLS = Object.freeze([5.5, 8.6, 8.6, 8.6, 8.6, 7.4, 7.4]);
+  const GAP_COL = 3;
+  const LAYOUTS = Object.freeze({
+    two: Object.freeze({ copies: 2, k: 1, wide: 1 }),
+    one: Object.freeze({ copies: 1, k: 1.08, wide: 1.75 })   // ~25% bigger than two-up once Excel fits the width
+  });
+  /*
+   * Excel's "fit to one page" only shrinks, so the day rows are made just tall enough for the form
+   * to reach the bottom of the paper. PX_PER_CHAR: one width unit on screen (measured in Excel 365).
+   */
+  const MARGIN_IN = 0.3;
+  const PX_PER_CHAR = 7.55;
+  const FILL = 0.97;                       // a little room so rounding never spills onto a 2nd page
+  const DAY_ROW_PT = Object.freeze({ MIN: 13, MAX: 30 });
+  const LOGO_IN = 0.5;
+  // Short remarks are spread out (S A T) as on the printed form; longer ones stay as typed.
+  const SPREAD_UP_TO = 14;
+
+  const spread = (text) => (String(text).length <= SPREAD_UP_TO ? String(text).split('').join(' ') : String(text));
+
+  /** data:image/jpeg;base64,… → { bytes, ext } (only pictures the app made: ui/logo.js). */
+  function logoFile(dataUrl) {
+    const m = /^data:image\/(png|jpeg);base64,([A-Za-z0-9+/=]+)$/.exec(String(dataUrl || ''));
+    if (!m) return null;
+    const raw = atob(m[2]);
+    const bytes = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+    return { bytes, ext: m[1] };
+  }
+
+  /**
+   * Adds one copy of the form to `out` (cells, merges, row heights), its left column at c0.
+   * Rows are the same for every copy, so the two copies line up.
+   */
+  function addCopy(out, model, c0, layout) {
+    const l = model.layout && DTR.layouts.normalize(model.layout);
+    const k = layout.k;
+    const sz = (pt) => Math.round(pt * k * 2) / 2;
+    const ht = (pt) => Math.round(pt * k * 10) / 10;
+    const put = (r, c, v, s) => out.cells.push({ r, c: c0 + c, v, s });
+    /** A merged block; the style goes on every cell so its borders show along the whole block. */
+    const block = (r1, c1, r2, c2, v, s) => {
+      for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) put(r, c, r === r1 && c === c1 ? v : '', s);
+      if (r1 !== r2 || c1 !== c2) out.merges.push([r1, c0 + c1, r2, c0 + c2]);
+    };
+    const height = (r, pt) => { out.rowHeights[r] = ht(pt); };
+    const LAST = COLS.length - 1;
+    let r = 0;
+
+    const styledText = (text, textStyle, from = 0, to = LAST, minHeight = 0) => {
+      const widthPt = COLS.slice(from, to + 1).reduce((sum, n) => sum + n, 0) * layout.wide * PX_PER_CHAR * 0.75 / k - 12;
+      // Excel does not auto-fit merged cells. Reserve enough height for every wrapped line.
+      let measure = text => String(text).length * textStyle.size;
+      if (typeof document !== 'undefined') {
+        const ctx = document.createElement('canvas').getContext('2d');
+        ctx.font = `${textStyle.italic ? 'italic ' : ''}${textStyle.bold ? 'bold ' : ''}${textStyle.size * 96 / 72}px Calibri`;
+        measure = text => ctx.measureText(text).width * 0.75;
+      }
+      let count = 0;
+      String(text).split('\n').forEach(paragraph => {
+        let line = ''; count++;
+        for (const word of paragraph.split(/(\s+)/)) {
+          if (line && measure(line + word) > widthPt) { count++; line = ''; }
+          for (const ch of word) {
+            if (line && measure(line + ch) > widthPt) { count++; line = ''; }
+            line += ch;
+          }
+        }
+      });
+      block(r, from, r, to, text, { sz: sz(textStyle.size), b: textStyle.bold, i: textStyle.italic, h: textStyle.align, wrap: true, v: 'center' });
+      height(r++, Math.max(minHeight, count * textStyle.size * 1.5 + 8));
+    };
+    // --- top of the form ---
+    if (l && model.logo && !l.header) { height(r++, l.logoSize * 72 + 4); }
+    if (l && l.header) {
+      const left = model.logo && l.logoPosition === 'left' ? 1 : 0;
+      const right = model.logo && l.logoPosition === 'right' ? LAST - 1 : LAST;
+      styledText(l.header, l.headerStyle, left, right, model.logo ? l.logoSize * 72 : 0);
+    }
+    block(r, 0, r, LAST, T.FORM_NO, { sz: sz(8), i: true }); height(r++, 13);
+    block(r, 0, r, LAST, T.TITLE, { sz: sz(13), b: true, h: 'center' }); height(r++, 22);
+    height(r++, 6);
+    block(r, 0, r, LAST, model.name, { sz: sz(model.name.length > 30 ? 9 : 10.5), b: true, h: 'center', border: { b: 'dashed' } }); height(r++, 17);
+    block(r, 0, r, LAST, T.NAME_CAPTION, { sz: sz(9), b: true, i: true, h: 'center', v: 'top' }); height(r++, 13);
+    block(r, 0, r, 1, T.MONTH_LEAD, { sz: sz(9.5), i: true });
+    block(r, 2, r, 4, model.monthName, { sz: sz(9.5), b: true, h: 'center', border: { b: 'thin' } });
+    block(r, 5, r, LAST, model.year, { sz: sz(9.5), b: true, h: 'center', border: { b: 'thin' } }); height(r++, 15);
+    block(r, 0, r, 2, T.OFFICIAL_HOURS[0], { sz: sz(9.5), i: true });
+    block(r, 3, r, 4, T.REGULAR_DAYS, { sz: sz(9.5), i: true, h: 'right' });
+    block(r, 5, r, LAST, model.header.regularDays, { sz: sz(8.5), b: true, h: 'center', border: { b: 'thin' } }); height(r++, 15);
+    block(r, 0, r, 2, T.OFFICIAL_HOURS[1], { sz: sz(9.5), i: true, indent: 4 });
+    block(r, 3, r, 4, T.SATURDAYS, { sz: sz(9.5), i: true, h: 'right' });
+    block(r, 5, r, LAST, model.header.saturdays, { sz: sz(8.5), b: true, h: 'center', border: { b: 'thin' } }); height(r++, 15);
+    height(r++, 5);
+
+    // --- column headings (double line where P.M. and Under Time start) ---
+    const leftLine = (c) => (c === 0 ? undefined : c === 3 || c === 5 ? 'double' : 'thin');
+    const head = { sz: sz(9.5), b: true, h: 'center', v: 'center' };
+    block(r, 0, r + 1, 0, T.DAYS, Object.assign({}, head, { h: 'left', border: { t: 'medium', b: 'thin' } }));
+    block(r, 1, r, 2, l ? l.am : T.AM, Object.assign({}, head, { border: { t: 'medium', b: 'thin', l: 'thin' } }));
+    block(r, 3, r, 4, l ? l.pm : T.PM, Object.assign({}, head, { border: { t: 'medium', b: 'thin', l: 'double' } }));
+    block(r, 5, r, 6, `${T.UNDERTIME[0]}\n${T.UNDERTIME[1]}`, Object.assign({}, head, { sz: sz(9), wrap: true, border: { t: 'medium', b: 'thin', l: 'double' } }));
+    height(r++, 22);
+    const sub = l ? [l.amIn, l.amOut, l.pmIn, l.pmOut, T.HOURS, T.MINUTES] : [T.ARRIVAL, T.DEPARTURE.join('\n'), T.ARRIVAL, T.DEPARTURE.join('\n'), T.HOURS, T.MINUTES];
+    sub.forEach((text, i) => put(r, i + 1, text, { sz: sz(6.5), b: true, i: true, h: 'center', v: 'center', wrap: true, border: { l: leftLine(i + 1), b: 'thin' } }));
+    height(r++, 22);
+
+    // --- one row per day ---
+    const cell = (c, extra) => Object.assign({ sz: sz(9), b: true, h: 'center', border: { l: leftLine(c), b: 'dashed' } }, extra);
+    model.rows.forEach((row) => {
+      put(r, 0, row.inMonth ? row.day : '', { sz: sz(9.5), b: true, h: 'right' });
+      const value = (slot) => (row.inMonth ? row.values[slot] || '' : '');
+      if (row.showLabel) {
+        block(r, 1, r, 4, spread(row.label), cell(1));
+      } else {
+        const [amIn, amOut, pmIn, pmOut] = TIME_SLOTS;
+        if (row.amLabel) block(r, 1, r, 2, row.amLabel, cell(1, { sz: sz(7) }));
+        else { put(r, 1, value(amIn), cell(1)); put(r, 2, value(amOut), cell(2)); }
+        if (row.pmLabel) block(r, 3, r, 4, row.pmLabel, cell(3, { sz: sz(7) }));
+        else { put(r, 3, value(pmIn), cell(3)); put(r, 4, value(pmOut), cell(4)); }
+      }
+      UNDERTIME_SLOTS.forEach((slot, i) => put(r, 5 + i, value(slot), cell(5 + i)));
+      out.dayRows.add(r);                 // its height is set by fillPage()
+      r += 1;
+    });
+
+    // --- total, certification, signatures ---
+    put(r, 0, T.TOTAL, { sz: sz(8), b: true, h: 'center', border: { t: 'medium' } });
+    block(r, 1, r, 4, '', { border: { t: 'medium', b: 'thin' } });
+    put(r, 5, model.header.totalHours, cell(5, { border: { t: 'medium', b: 'thin', l: 'double' } }));
+    put(r, 6, model.header.totalMinutes, cell(6, { border: { t: 'medium', b: 'thin', l: 'thin' } }));
+    height(r++, 17);
+    if (l) styledText(l.certification, l.footerStyle);
+    else { block(r, 0, r, LAST, `      ${T.CERTIFY}`, { sz: sz(8.5), i: true, wrap: true, v: 'top' }); height(r++, 38); }
+    block(r, 3, r, LAST, '', { border: { b: 'thin' } }); height(r++, 22);
+    if (l && l.employeeCaption) styledText(l.employeeCaption, l.footerStyle, 3);
+    block(r, 0, r, LAST, '', { border: { b: 'medium' } }); height(r++, 6);
+    if (l && l.verification) styledText(l.verification, l.footerStyle);
+    height(r++, 22);
+    block(r, 3, r, LAST, model.inChargeName, { sz: sz(9.5), b: true, h: 'center', border: { b: 'thin' } }); height(r++, 15);
+    if (model.inChargeTitle) block(r, 3, r, LAST, model.inChargeTitle, { sz: sz(9), h: 'center', v: 'top' });
+    else block(r, 3, r, LAST, l && l.signerCaption ? '' : T.IN_CHARGE, { sz: sz(9), b: true, i: true, h: 'right', v: 'top' });
+    height(r++, 14);
+
+    if (l && l.signerCaption) styledText(l.signerCaption, l.footerStyle, 3);
+    if (l && l.footer) styledText(l.footer, l.footerStyle);
+    const logo = out.logo;
+    if (logo) out.images.push({ bytes: logo.bytes, ext: logo.ext, r: 0, c: c0 + (l && l.logoPosition === 'left' ? 0 : LAST - 1), sizeIn: (l ? l.logoSize : LOGO_IN) * k, offsetIn: [0.12 * layout.wide, 0.02] });
+  }
+
+  /** Day-row height that makes the form fill the page once Excel fits its width to the paper. */
+  function fillPage(out, colWidths, paperSize) {
+    const widthPx = colWidths.reduce((n, w) => n + w, 0) * PX_PER_CHAR;
+    const shrink = Math.min(1, ((paperSize.widthIn - 2 * MARGIN_IN) * 96) / widthPx);
+    const pagePt = ((paperSize.heightIn - 2 * MARGIN_IN) * 72 * FILL) / shrink;
+    const otherPt = Object.keys(out.rowHeights).reduce((n, r) => n + (out.dayRows.has(Number(r)) ? 0 : out.rowHeights[r]), 0);
+    const dayPt = Math.min(DAY_ROW_PT.MAX, Math.max(DAY_ROW_PT.MIN, (pagePt - otherPt) / out.dayRows.size));
+    out.dayRows.forEach((r) => { out.rowHeights[r] = Math.floor(dayPt * 10) / 10; });
+  }
+
+  /** One worksheet for one employee. */
+  function sheetFor(model, { paper, perSheet }, logoCache) {
+    const layout = perSheet === 1 ? LAYOUTS.one : LAYOUTS.two;
+    const paperSize = DTR.config.PAPER_SIZES[paper] || DTR.config.PAPER_SIZES.a4;
+    const copyCols = COLS.map((w) => Math.round(w * layout.wide * 10) / 10);
+    const colWidths = layout.copies === 2 ? copyCols.concat([GAP_COL], copyCols) : copyCols;
+    const out = { cells: [], merges: [], rowHeights: {}, dayRows: new Set(), images: [], logo: model.logo ? logoCache(model.logo) : null };
+    for (let i = 0; i < layout.copies; i++) addCopy(out, model, i * (COLS.length + 1), layout);
+    fillPage(out, colWidths, paperSize);
+    return {
+      name: model.name || model.rawName || model.employeeId,
+      cells: out.cells, merges: out.merges, rowHeights: out.rowHeights, images: out.images,
+      colWidths, paper: paperSize.excelPaper, margins: MARGIN_IN,
+      protect: true
+    };
+  }
+
+  /**
+   * @param models  state.model() of each chosen employee (Pro features already removed if needed)
+   * @param opts    { paper: key of PAPER_SIZES, perSheet: 1 | 2 }
+   * @returns Uint8Array — the .xlsx file
+   */
+  function workbook(models, opts) {
+    const logos = new Map();
+    const logoCache = (url) => { if (!logos.has(url)) logos.set(url, logoFile(url)); return logos.get(url); };
+    return DTR.xlsx.workbook(models.map((m) => sheetFor(m, opts, logoCache)));
+  }
+
+  return { workbook, spread };
 })();
 
 </script>
@@ -5062,7 +6036,7 @@ DTR.state = (function () {
 
   /** Edits and checks of several saved parts → one. Later parts win on the same box. */
   function joinWork(keys, changedIds) {
-    const joined = { edits: {}, checked: {} };
+    const joined = { edits: {}, checked: {}, layouts: {}, layoutTemplates: {} };
     keys.forEach((key) => {
       const w = store.getWork(key);
       Object.entries(w.edits).forEach(([id, e]) => {
@@ -5073,6 +6047,8 @@ DTR.state = (function () {
         if (e.covered) into.covered = Object.assign(into.covered || {}, e.covered);
       });
       Object.assign(joined.checked, w.checked);
+      Object.assign(joined.layouts, w.layouts);
+      Object.assign(joined.layoutTemplates, w.layoutTemplates);
     });
     changedIds.forEach((id) => { delete joined.checked[id]; });   // their DTR changed: check again
     return joined;
@@ -5090,11 +6066,17 @@ DTR.state = (function () {
     const merged = parts.map((p) => store.getMonth(p.key)).filter(Boolean).concat([data])
       .reduce((older, newer) => (older ? DTR.monthmerge.combine(older, newer) : newer), null);
     const oldKeys = parts.map((p) => p.key);
-    const work = oldKeys.length ? joinWork(oldKeys, data.employees.map((e) => e.id)) : null;
+    const work = oldKeys.length ? joinWork(oldKeys, data.employees.map((e) => e.id)) : { edits: {}, checked: {}, layouts: {}, layoutTemplates: {} };
+    // Only a NEW month inherits the default. Reuploads and older months keep their snapshots.
+    if (!oldKeys.length && s.settings.defaultLayout) {
+      const snapshot = DTR.layouts.normalize(s.settings.defaultLayout);
+      work.layoutTemplates.default = snapshot;
+      merged.employees.forEach(e => { work.layouts[e.id] = 'default'; });
+    }
     const fileNames = [...new Set(parts.map((p) => p.fileName).filter(Boolean).concat([fileName]))].join(' + ');
     const key = store.saveMonth(merged, fileNames);
     if (!key) throw new Error('The file was read, but this browser could not save it. Free up space by deleting old months in Settings, then try again.');
-    if (work) store.saveWork(key, work);
+    if (!store.saveWork(key, work)) throw new Error('The layout and edits could not be saved. Free browser storage and try again.');
     oldKeys.filter((k) => k !== key).forEach((k) => store.deleteMonth(k));
     if (oldKeys.includes(s.settings.recentMonthKey) && s.settings.recentMonthKey !== key) saveSettings({ recentMonthKey: key });
     const newNames = registerEmployees(merged.employees);
@@ -5157,7 +6139,44 @@ DTR.state = (function () {
     const e = employee(id);
     if (!e) return null;
     const plain = Boolean(opts && opts.plain);
-    return build({ employee: e, period: s.data.period, person: person(id), settings: s.settings, edit: s.work.edits[id], timeRules: timeRulesFor(id, plain), logo: logoFor(plain) });
+    const result = build({ employee: e, period: s.data.period, person: person(id), settings: s.settings, edit: s.work.edits[id], timeRules: timeRulesFor(id, plain), logo: logoFor(plain) });
+    const layout = !withoutPro(plain) && layoutFor(id);
+    if (layout) { if (DTR.layouts.isCustom(layout)) result.layout = layout; result.logo = layout.showLogo ? layout.logoData : ''; }
+    return result;
+  }
+
+  /** The saved layout for this employee/month, never a live reference to the default. */
+  function layoutFor(id) {
+    const w = s.work;
+    const key = w && w.layouts && w.layouts[id];
+    return key && w.layoutTemplates[key] ? DTR.layouts.normalize(w.layoutTemplates[key]) : null;
+  }
+
+  /** Save one reusable template, and optionally apply a frozen copy to this month. */
+  function saveLayout(value, ids, makeDefault) {
+    const error = DTR.layouts.validate(value);
+    if (error) throw new Error(error);
+    const snapshot = DTR.layouts.normalize(value);
+    const templates = (s.settings.dtrLayouts || []).filter(x => x.name !== snapshot.name);
+    if (templates.length >= 20) throw new Error('You have 20 layouts. Reuse an existing layout name to replace it.');
+    templates.push(snapshot);
+    const settings = Object.assign({}, s.settings, { dtrLayouts: templates });
+    if (makeDefault) settings.defaultLayout = snapshot;
+    // Persist before changing the live state. Storage errors must not look like success.
+    if (!store.saveSettings(settings)) throw new Error('Could not save the layout. Free browser storage and try again.');
+    s.settings = settings;
+    if (s.work && ids.length) {
+      const w = JSON.parse(JSON.stringify(s.work));
+      w.layouts = w.layouts || {}; w.layoutTemplates = w.layoutTemplates || {};
+      const key = `layout-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+      w.layoutTemplates[key] = snapshot;
+      ids.filter(id => employee(id)).forEach(id => { w.layouts[id] = key; delete w.checked[id]; });
+      const used = new Set(Object.values(w.layouts));
+      Object.keys(w.layoutTemplates).forEach(k => { if (!used.has(k)) delete w.layoutTemplates[k]; });
+      if (!store.saveWork(s.monthKey, w)) throw new Error('The template was saved, but this month could not be updated. Free browser storage and apply it again.');
+      s.work = w;
+    }
+    noteSave(true); emit('layout');
   }
 
   /** The school logo for the form ('' when none, or a plain Standard printout). */
@@ -5168,7 +6187,8 @@ DTR.state = (function () {
     const { PRO_FEATURES: F } = DTR.config;
     const used = [];
     if ((s.settings.schedules || []).some((x) => DTR.timecalc.scheduleMinutes(x))) used.push(F.UNDERTIME);
-    if (s.settings.schoolLogo) used.push(F.LOGO);
+    if (s.settings.schoolLogo || (s.data && s.data.employees.some(e => layoutFor(e.id)?.logoData && layoutFor(e.id).showLogo))) used.push(F.LOGO);
+    if (s.data && s.data.employees.some(e => DTR.layouts.isCustom(layoutFor(e.id)))) used.push(F.LAYOUT);
     return used;
   }
 
@@ -5332,7 +6352,7 @@ DTR.state = (function () {
     get: () => s,
     subscribe: (fn) => listeners.add(fn),
     openMonth, importMonth, closeMonth, reloadFromStore, importNames, unnamedCount, shortDayShare,
-    person, orderedEmployees, employee, editFor, model, proFeaturesInUse, reviewOf, printableEmployees, scheduleFor, timeRulesFor,
+    person, orderedEmployees, employee, editFor, model, layoutFor, saveLayout, proFeaturesInUse, reviewOf, printableEmployees, scheduleFor, timeRulesFor,
     setCell, setLabel, skipDayMark, setHeader, setHeaderForAll, restoreDay, resetEmployee, setChecked, setCheckedMany,
     setInactive, setCovered, setSchedule, setSigner, savePerson, saveDirectory, saveSettings, select
   };
@@ -5473,7 +6493,8 @@ DTR.ui.getPro = (function () {
     ['Under Time and TOTAL fill in by themselves', 'From your official time: late arrivals and early departures, every DTR, every month.'],
     ['Incomplete days flagged, never guessed', 'Mark Locator Slip / Undertaking days as Covered.'],
     ['Undertaking list', 'One page of who left before the official end — ready to collect Undertakings.'],
-    ['Your school logo on every DTR', 'Framed in a small circle in the top-right corner.']
+    ['Your school logo on every DTR', 'Choose its position and size in DTR layouts.'],
+    ['Custom DTR layouts', 'School headers, time headings, verification and signature wording. Save layouts for future months.']
   ]);
 
   /* ---------- the Pro key (moved here from Settings so every "Get Pro" can use it) ---------- */
@@ -5511,7 +6532,7 @@ DTR.ui.getPro = (function () {
           <div class="getpro-left">
             <span class="pro-chip pro-chip--big">PRO</span>
             <ul class="getpro-benefits">${BENEFITS.map(([b, s]) => `<li><svg><use href="#i-check"/></svg><span><b>${esc(b)}</b><small>${esc(s)}</small></span></li>`).join('')}</ul>
-            <p class="field-hint">You can try all of these now — they show on screen. With Pro, they print and go into Download PDF too.</p>
+            <p class="field-hint">You can try all of these now — they show on screen. With Pro, they print and go into saved copies (PDF, pictures, Excel) too.</p>
           </div>
           <div class="getpro-right">
             ${lead ? `<p class="getpro-lead">${lead}</p>` : ''}
@@ -5583,7 +6604,7 @@ DTR.ui.getPro = (function () {
     const pass = gate().pass();
     if (!pass || (!pass.expired && pass.days_left > PASS_REMIND_DAYS)) return '';
     const text = pass.expired
-      ? `<b>Your Pro pass ended on ${esc(dateText(pass.expires))}.</b> You can still open and check your DTRs. Printing and Download PDF need a new pass or Pro for life.`
+      ? `<b>Your Pro pass ended on ${esc(dateText(pass.expires))}.</b> You can still open and check your DTRs. Printing and saving copies (PDF, pictures, Excel) need a new pass or Pro for life.`
       : `<b>Your Pro pass ends in ${pass.days_left} day${pass.days_left === 1 ? '' : 's'}</b> (${esc(dateText(pass.expires))}). Print what you need, or renew so nothing stops.`;
     return `<div class="pass-banner${pass.expired ? ' is-ended' : ''}"><span class="pro-chip">PRO</span><span>${text}</span>
       <button class="btn btn-primary btn-sm" data-get-pro>${pass.expired ? 'Renew or get Pro for life' : 'Renew'}</button></div>`;
@@ -5595,7 +6616,7 @@ DTR.ui.getPro = (function () {
     return `
       <div class="try-pro">
         <span class="pro-chip">PRO</span>
-        <span><b>Try it free.</b> ${esc(what)} works on screen now. Printing and Download PDF with it need Pro — from ${esc(PRICES.PASS)} for ${PASS_DAYS} days.</span>
+        <span><b>Try it free.</b> ${esc(what)} works on screen now. Printing or saving a copy with it needs Pro — from ${esc(PRICES.PASS)} for ${PASS_DAYS} days.</span>
         <button class="btn btn-primary btn-sm" data-get-pro>Get Pro</button>
       </div>`;
   }
@@ -6095,8 +7116,9 @@ DTR.ui.workspace = (function () {
     if (view.zoom !== 'fit') return view.zoom;
     const pad = getComputedStyle(els.canvas);
     const available = els.canvas.clientWidth - parseFloat(pad.paddingLeft) - parseFloat(pad.paddingRight);
-    const paper = DTR.config.PAPER_SIZES[state.get().settings.paperSize] || DTR.config.PAPER_SIZES.a4;
-    return Math.max(0.45, Math.min(1.5, available / (state.get().settings.paperSize === 'long' ? 357.12 : 336)));
+    const sheet = els.canvas.querySelector('.sheet');
+    const formWidth = sheet ? parseFloat(getComputedStyle(sheet).getPropertyValue('--copy-w')) * 96 : 348;   // inches → px
+    return Math.max(0.45, Math.min(1.5, available / formWidth));
   }
 
   function applyZoom() {
@@ -6130,10 +7152,12 @@ DTR.ui.workspace = (function () {
         <span class="tb-hint">Click any box to edit · click a day number for details</span>
       </div>
       <div class="tb-group">
+        <button class="btn btn-secondary btn-sm" id="edit-layout">DTR layout <span class="pro-chip">PRO</span></button>
         <button class="icon-btn" id="zoom-out" title="Zoom out"><svg><use href="#i-minus"/></svg></button>
         <button class="tb-zoom" id="zoom-fit" title="Fit to window"><span id="zoom-label"></span></button>
         <button class="icon-btn" id="zoom-in" title="Zoom in"><svg><use href="#i-plus"/></svg></button>
       </div>`;
+    els.toolbar.querySelector('#edit-layout').onclick = () => DTR.ui.layouts.open();
     els.toolbar.querySelector('#employee-select').onchange = e => state.select(e.target.value);
     els.toolbar.querySelector('#employee-list-toggle').onclick = () => { const open = els.root.classList.toggle('show-employee-list'); els.toolbar.querySelector('#employee-list-toggle').setAttribute('aria-expanded', String(open)); };
     els.toolbar.querySelector('#emp-prev').addEventListener('click', () => prev && state.select(prev.id));
@@ -6626,8 +7650,9 @@ DTR.ui.workspace = (function () {
 </script>
   <script>
 /*
- * ui/print.js — choose who to print, then send clean Form 48 sheets to the printer
- * (or to "Save as PDF"). One employee = one sheet (A4 or long bond) with two copies.
+ * ui/print.js — choose who to print and how big (Size on paper), then send clean Form 48 sheets
+ * to the printer, or save a copy: one PDF, pictures (PNG) or an Excel workbook.
+ * One employee = one sheet (A4 or long bond) with two copies; the Large size uses two sheets.
  * Pro: also the Undertaking checklist (days each employee left before the official end).
  * Standard "trying Pro": Pro features show on screen; Print / Download PDF ask first (ui/getpro.js)
  * and can print the plain DTR; the Undertaking list can be viewed, printed only with Pro.
@@ -6642,8 +7667,11 @@ DTR.ui.print = (function () {
   const dialogs = DTR.ui.dialogs;
 
   const SCOPES = Object.freeze({ CURRENT: 'current', CHECKED: 'checked', ALL: 'all' });
+  const { PRINT_SIZES, PRINT_SCALE } = DTR.config;
 
   const currentPaper = () => DTR.config.PAPER_SIZES[state.get().settings.paperSize] || DTR.config.PAPER_SIZES.a4;
+  const currentSize = () => DTR.form48.sizeOf(state.get().settings);
+  const sheetsPerEmployee = () => (PRINT_SIZES[currentSize().size].perSheet === 1 ? 2 : 1);
 
   function employeesFor(scope) {
     const s = state.get();
@@ -6673,7 +7701,9 @@ DTR.ui.print = (function () {
     if (unchecked) notes.push(`<b>${unchecked}</b> not yet marked as checked`);
     if (unconfirmed) notes.push(`<b>${unconfirmed}</b> with a name not yet confirmed`);
     if (!state.get().settings.inChargeName.trim()) notes.push('<b>In-Charge name</b> is blank — set it in Settings → General');
-    const head = `<p class="print-sheets"><svg><use href="#i-printer"/></svg><span><strong>${count} sheet${count > 1 ? 's' : ''}</strong> of ${esc(currentPaper().short)} paper, each with ${esc(currentPaper().copies)}.</span></p>`;
+    const sheets = count * sheetsPerEmployee();
+    const layout = sheetsPerEmployee() === 2 ? 'one copy on each sheet' : 'each with two copies';
+    const head = `<p class="print-sheets"><svg><use href="#i-printer"/></svg><span><strong>${sheets} sheet${sheets > 1 ? 's' : ''}</strong> of ${esc(currentPaper().short)} paper, ${layout}.</span></p>`;
     const body = notes.length
       ? `<ul class="home-review">${notes.map((n) => `<li><div class="home-review-item is-todo"><i></i><span>${n}</span></div></li>`).join('')}</ul>`
       : '<p class="home-all-good"><svg><use href="#i-check"/></svg>Everything is checked.</p>';
@@ -6688,6 +7718,48 @@ DTR.ui.print = (function () {
               title="Days each employee left before the official end — to collect Undertakings">
               <svg><use href="#i-checklist"/></svg>Undertaking list (${count})${DTR.licenseGate.isPro() ? '' : ' <span class="pro-chip">PRO</span>'}</button>`;
   }
+
+  /* ---------- Size on paper ---------- */
+
+  /** A small drawing of the sheet: where the copies sit, to scale (sizes from css/form48.css). */
+  function sizeThumb(size, scale) {
+    const W = 34, H = 48;
+    const box = (x, y, w, h) => `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="1"/>`;
+    const two = (w, h, y) => box(W / 2 - w - 1, y, w, h) + box(W / 2 + 1, y, w, h);
+    const shapes = {
+      full: two(14.5, 41, 2.5),
+      card: two(13.5, 30, 3.5),
+      large: box(3, 2.5, 28, 41),
+      custom: two(14.5 * scale / 100, 41 * scale / 100, 2.5)
+    };
+    return `<svg class="size-thumb" viewBox="0 0 ${W} ${H}" aria-hidden="true"><rect class="size-thumb-paper" x="0.5" y="0.5" width="${W - 1}" height="${H - 1}" rx="2"/>${shapes[size]}</svg>`;
+  }
+
+  function sizeHtml() {
+    const { size, scale } = currentSize();
+    const choice = (key) => `
+      <label class="size-option">
+        <input type="radio" name="print-size" value="${key}" ${key === size ? 'checked' : ''}>
+        ${sizeThumb(key, scale)}
+        <strong>${esc(PRINT_SIZES[key].label)}</strong>
+        <small>${esc(PRINT_SIZES[key].hint)}</small>
+      </label>`;
+    return `
+      <div class="size-options" role="radiogroup" aria-label="Size on paper">${Object.keys(PRINT_SIZES).map(choice).join('')}</div>
+      <div class="size-scale" ${size === 'custom' ? '' : 'hidden'}>
+        <span>Smaller</span>
+        <input type="range" id="print-scale" min="${PRINT_SCALE.MIN}" max="${PRINT_SCALE.MAX}" step="${PRINT_SCALE.STEP}" value="${scale}" aria-label="Custom size">
+        <span>Full page</span>
+        <b id="print-scale-label">${scale}%</b>
+      </div>`;
+  }
+
+  /** Each download: the button shows it is working; the dialog closes once the file is saved. */
+  const SAVE_AS = Object.freeze([
+    { id: 'pdf', icon: 'i-download', label: 'PDF', sub: 'One file, all DTRs', run: (list) => downloadPdf(list) },
+    { id: 'pictures', icon: 'i-image', label: 'Pictures', sub: 'PNG, one per employee', run: (list) => downloadPictures(list) },
+    { id: 'excel', icon: 'i-table', label: 'Excel', sub: 'Locked, ready to print', run: (list) => downloadExcel(list) }
+  ]);
 
   function openDialog() {
     const s = state.get();
@@ -6718,19 +7790,49 @@ DTR.ui.print = (function () {
           ${option(SCOPES.ALL, 'i-checklist', allCount, 'All employees', setAside ? `${setAside} set aside not included` : 'Everyone in this month')}
         </div>
         <div class="print-notice" id="print-notice">${noticeHtml(defaultScope)}</div>
+        <div class="sub-label">Size on paper <span class="sub-label-note">saved for next time</span></div>
+        <div id="print-size">${sizeHtml()}</div>
+        <div class="sub-label">Save a copy <span class="sub-label-note">to your Downloads folder</span></div>
+        <div class="save-as">
+          ${SAVE_AS.map((b) => `<button class="save-as-btn" data-save="${b.id}"><svg><use href="#${b.icon}"/></svg><span><b>${b.label}</b><small>${b.sub}</small></span></button>`).join('')}
+        </div>
         <div class="sub-label">In the print window</div>
-        <ol class="print-tips">
+        <ol class="print-tips print-tips--two">
           ${tip(1, 'Paper size', `<strong>${esc(currentPaper().label)}</strong> · change in Settings`)}
           ${tip(2, 'Margins: None', 'Scale: <strong>100%</strong>, not "Fit to page"')}
-          ${tip(3, 'Need a softcopy?', '<strong>Download PDF</strong> saves them all in one file')}
         </ol>`,
       footer: `${undertakingButton()}<button class="btn btn-ghost" data-close>Cancel</button>
-               <button class="btn btn-secondary" id="pdf-go" title="One PDF file with the chosen DTRs, saved to Downloads"><svg><use href="#i-download"/></svg>Download PDF</button>
                <button class="btn btn-primary" id="print-go"><svg><use href="#i-printer"/></svg>Print</button>`,
       onMount: (el, close) => {
         const scope = () => el.querySelector('input[name="print-scope"]:checked').value;
-        el.querySelectorAll('input[name="print-scope"]').forEach((r) => r.addEventListener('change', () => {
-          el.querySelector('#print-notice').innerHTML = noticeHtml(scope());
+        const refreshNotice = () => { el.querySelector('#print-notice').innerHTML = noticeHtml(scope()); };
+        el.querySelectorAll('input[name="print-scope"]').forEach((r) => r.addEventListener('change', refreshNotice));
+
+        // Size on paper: saved at once (every print, PDF, picture and Excel uses it).
+        const sizeBox = el.querySelector('#print-size');
+        sizeBox.addEventListener('change', (e) => {
+          if (e.target.name === 'print-size') state.saveSettings({ printSize: e.target.value });
+          else if (e.target.id === 'print-scale') state.saveSettings({ printScale: Number(e.target.value) });
+          else return;
+          sizeBox.innerHTML = sizeHtml();
+          refreshNotice();
+        });
+        sizeBox.addEventListener('input', (e) => {
+          if (e.target.id !== 'print-scale') return;
+          sizeBox.querySelector('#print-scale-label').textContent = `${e.target.value}%`;
+          sizeBox.querySelector('.size-option input[value="custom"]').parentElement.querySelector('.size-thumb').outerHTML = sizeThumb('custom', Number(e.target.value));
+        });
+
+        el.querySelectorAll('[data-save]').forEach((button) => button.addEventListener('click', async () => {
+          const list = employeesFor(scope());
+          if (!list.length) return;
+          const job = SAVE_AS.find((b) => b.id === button.dataset.save);
+          el.querySelectorAll('[data-save]').forEach((b) => { b.disabled = true; });
+          button.classList.add('is-busy');
+          const done = await job.run(list).catch((err) => { dialogs.toast(err.message || 'Could not save the file.', 'error'); return false; });
+          button.classList.remove('is-busy');
+          el.querySelectorAll('[data-save]').forEach((b) => { b.disabled = false; });
+          if (done) close();
         }));
         const ut = el.querySelector('#print-undertaking');
         if (ut) ut.addEventListener('click', () => { close(); if (DTR.licenseGate.isPro()) printUndertakingList(); else viewUndertakingList(); });
@@ -6739,17 +7841,6 @@ DTR.ui.print = (function () {
           if (!list.length) return;
           close();
           await printEmployees(list);
-        });
-        el.querySelector('#pdf-go').addEventListener('click', async (ev) => {
-          const list = employeesFor(scope());
-          if (!list.length) return;
-          const button = ev.currentTarget;
-          button.disabled = true;
-          button.lastChild.textContent = 'Making the PDF…';
-          const done = await downloadPdf(list);
-          button.disabled = false;
-          button.lastChild.textContent = 'Download PDF';
-          if (done) close();
         });
       }
     });
@@ -6827,18 +7918,41 @@ DTR.ui.print = (function () {
     return list.length === 1 ? `DTR ${state.model(list[0].id).name} ${month}` : `DTR ${month} (${list.length} employees)`;
   }
 
-  /** The printed sheets; `plain` = Standard printing without the Pro features it tried. */
-  const sheetsHtml = (list, paper, plain) => list.map((e) => DTR.form48.sheet(state.model(e.id, { plain }), { paper, editable: false })).join('');
+  /** One employee's sheet(s) at the chosen paper and size; `plain` = Standard without the Pro features it tried. */
+  function employeeSheets(id, plain) {
+    const { size, scale } = currentSize();
+    return DTR.form48.sheet(state.model(id, { plain }), { paper: state.get().settings.paperSize, size, scale, editable: false });
+  }
+  const sheetsHtml = (list, plain) => list.map((e) => employeeSheets(e.id, plain)).join('');
 
-  /** Pro, or Standard without Pro features in use → as shown. Otherwise asks (ui/getpro.js). Resolves false if cancelled. */
+  /**
+   * Before anything reaches paper or a file: a Pro pass that has ended can only view; Standard
+   * trying Pro features chooses "without them" or Get Pro (ui/getpro.js).
+   * Resolves { plain } to go ahead, or null if stopped.
+   */
+  async function readyToPrint(verb, list) {
+    if (!(await DTR.ui.getPro.canPrint())) return null;
+    const choice = await DTR.ui.getPro.choosePrint(state.proFeaturesInUse(), verb);
+    if (!choice) return null;
+    const plain = choice === 'plain';
+    const options = Object.assign({ paper: state.get().settings.paperSize }, currentSize());
+    for (const e of list) {
+      const error = DTR.form48.checkFit(state.model(e.id, { plain }), options);
+      if (error) { dialogs.toast(error, 'error'); return null; }
+    }
+    return { plain };
+  }
+
   async function printEmployees(list) {
-    if (!(await DTR.ui.getPro.canPrint())) return false;        // a Pro pass that has ended: view only
-    const choice = await DTR.ui.getPro.choosePrint(state.proFeaturesInUse(), 'Print');
-    if (!choice) return false;
+    const go = await readyToPrint('Print', list);
+    if (!go) return false;
     const paper = state.get().settings.paperSize;
-    sendToPrinter(sheetsHtml(list, paper, choice === 'plain'), paper, titleFor(list));   // the title becomes the suggested PDF name
+    sendToPrinter(sheetsHtml(list, go.plain), paper, titleFor(list));   // the title becomes the suggested PDF name
     return true;
   }
+
+  /** A name Windows accepts for a file. */
+  const fileName = (text) => text.replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim();
 
   /** Every style rule of this page (inline in the shipped single file, linked while developing). */
   function pageCss() {
@@ -6854,10 +7968,10 @@ DTR.ui.print = (function () {
    */
   /** The complete page the PDF is made from: the sheets, this app's styles, the paper size. */
   function pdfHtml(list, plain) {
-    const paper = DTR.config.PAPER_SIZES[state.get().settings.paperSize] || DTR.config.PAPER_SIZES.a4;
+    const paper = currentPaper();
     return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(titleFor(list))}</title>
       <style>${pageCss()}</style><style>@page { size: ${paper.pageSize}; margin: 0; }</style></head>
-      <body><div id="print-area">${sheetsHtml(list, state.get().settings.paperSize, plain)}</div></body></html>`;
+      <body><div id="print-area">${sheetsHtml(list, plain)}</div></body></html>`;
   }
 
   async function downloadPdf(list) {
@@ -6865,16 +7979,15 @@ DTR.ui.print = (function () {
       dialogs.toast('Download PDF is in the full app (one click, all DTRs). In the demo, use Print → "Save as PDF".', 'info');
       return false;
     }
-    if (!(await DTR.ui.getPro.canPrint())) return false;        // a Pro pass that has ended: view only
-    const choice = await DTR.ui.getPro.choosePrint(state.proFeaturesInUse(), 'Download');
-    if (!choice) return false;
+    const go = await readyToPrint('Download', list);
+    if (!go) return false;
     const title = titleFor(list);
-    const html = pdfHtml(list, choice === 'plain');
+    const html = pdfHtml(list, go.plain);
     dialogs.toast(`Making the PDF of ${list.length} DTR${list.length === 1 ? '' : 's'}…`, 'info');
     try {
       const response = await fetch('/pdf', { method: 'POST', body: html, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
       if ((response.headers.get('Content-Type') || '').includes('application/pdf')) {
-        downloadBlob(`${title.replace(/[\\/:*?"<>|]+/g, ' ').trim()}.pdf`, await response.blob());
+        downloadBlob(`${fileName(title)}.pdf`, await response.blob());
         dialogs.toast('PDF saved to your Downloads folder.', 'success');
         return true;
       }
@@ -6886,7 +7999,54 @@ DTR.ui.print = (function () {
     return false;
   }
 
-  return { openDialog, printEmployees, printUndertakingList, viewUndertakingList, undertakingRows, undertakingHtml, downloadPdf, pdfHtml, employeesFor, SCOPES };
+  /**
+   * Pictures: one PNG per employee — the first sheet, exactly as printed (Large: the original copy).
+   * One employee saves the PNG itself; several are saved together in one .zip.
+   */
+  async function downloadPictures(list) {
+    const go = await readyToPrint('Download', list);
+    if (!go) return false;
+    const css = pageCss();
+    const paper = state.get().settings.paperSize;
+    const month = titleFor(list).replace(/^DTR\s+/, '');
+    const used = new Set();
+    const files = [];
+    for (let i = 0; i < list.length; i++) {
+      if (list.length > 1 && i % 5 === 0) dialogs.toast(`Making pictures… ${i + 1} of ${list.length}`, 'info');
+      const m = state.model(list[i].id, { plain: go.plain });
+      const sheets = document.createElement('template');
+      sheets.innerHTML = employeeSheets(list[i].id, go.plain);
+      const blob = await DTR.picture.sheetPng(sheets.content.firstElementChild.outerHTML, css, paper);
+      let name = fileName(`DTR ${m.name || m.rawName || m.employeeId}`);
+      if (used.has(name.toLowerCase())) name = `${name} (${m.employeeId})`;
+      used.add(name.toLowerCase());
+      files.push({ name: `${name}.png`, data: new Uint8Array(await blob.arrayBuffer()) });
+    }
+    if (files.length === 1) {
+      downloadBlob(files[0].name, new Blob([files[0].data], { type: 'image/png' }));
+    } else {
+      downloadBlob(`${fileName(`DTR pictures ${month}`)}.zip`, new Blob([DTR.zip.make(files)], { type: 'application/zip' }));
+    }
+    dialogs.toast(files.length === 1 ? 'Picture saved to your Downloads folder.' : `${files.length} pictures saved in one .zip in your Downloads folder.`, 'success');
+    return true;
+  }
+
+  /** Excel: one locked worksheet per employee, set to the paper and fitting one page (export/excel.js). */
+  async function downloadExcel(list) {
+    if (DTR.config.DEMO_MODE) {
+      dialogs.toast('Download Excel is in the full app. In the demo, try Print or Pictures.', 'info');
+      return false;
+    }
+    const go = await readyToPrint('Download', list);
+    if (!go) return false;
+    const models = list.map((e) => state.model(e.id, { plain: go.plain }));
+    const bytes = DTR.excel.workbook(models, { paper: state.get().settings.paperSize, perSheet: PRINT_SIZES[currentSize().size].perSheet });
+    downloadBlob(`${fileName(titleFor(list))}.xlsx`, new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+    dialogs.toast('Excel file saved to your Downloads folder. It opens locked: view and print only.', 'success');
+    return true;
+  }
+
+  return { openDialog, printEmployees, printUndertakingList, viewUndertakingList, undertakingRows, undertakingHtml, downloadPdf, downloadPictures, downloadExcel, pdfHtml, employeesFor, SCOPES };
 })();
 
 </script>
@@ -7357,6 +8517,148 @@ DTR.ui.logo = (function () {
 
 </script>
   <script>
+/* Pro layout editor: draft changes stay here until Save. No attendance edits. */
+window.DTR = window.DTR || {}; DTR.ui = DTR.ui || {};
+DTR.ui.layouts = (function () {
+  const L = DTR.layouts, state = DTR.state, dialogs = DTR.ui.dialogs;
+  const esc = DTR.util.escapeHtml;
+  const SECTIONS = [['header', 'Header & logo'], ['headings', 'Time headings'], ['footer', 'Footer & signatures']];
+  function example() {
+    return DTR.converter.build({ employee: { id: 'sample', rawName: 'Juan Dela Cruz', days: {} },
+      period: { year: 2026, month: 9, start: '2026-09-01', end: '2026-09-30' },
+      person: { last: 'DELA CRUZ', first: 'JUAN', middleInitial: '', extension: '' }, settings: state.get().settings });
+  }
+  function open() {
+    const s = state.get(), source = s.data ? state.model(s.selectedId) : example();
+    const currentLayout = s.data ? state.layoutFor(s.selectedId) : s.settings.defaultLayout;
+    let draft = L.normalize(currentLayout);
+    if (!currentLayout) draft.logoData = s.settings.schoolLogo || '';
+    let section = 'header', scope = s.data ? 'current' : 'template';
+    const selected = new Set(s.selectedId ? [s.selectedId] : []);
+    const saved = (s.settings.dtrLayouts || []).map(L.normalize);
+    const returnFocus = document.activeElement;
+    const field = (key, label, rows) => `<label class="layout-field"><span>${label}</span>${rows
+      ? `<textarea data-layout-key="${key}" rows="${rows}" maxlength="${L.LIMITS[key]}">${esc(draft[key])}</textarea>`
+      : `<input data-layout-key="${key}" maxlength="${L.LIMITS[key]}" value="${esc(draft[key])}">`}</label>`;
+    const choice = (key, values, current) => `<select data-layout-key="${key}">${values.map(([v,t]) => `<option value="${v}" ${String(v) === String(current) ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
+    function typography(key) {
+      const st = draft[key];
+      return `<fieldset class="layout-type"><legend>Text style</legend><label>Align${choice(key + '.align', [['left','Left'],['center','Center'],['right','Right']], st.align)}</label><label>Size${choice(key + '.size', [8,8.5,9,10,11].map(n => [n,`${n} pt`]),st.size)}</label>
+        <label class="layout-check"><input type="checkbox" data-layout-key="${key}.bold" ${st.bold ? 'checked' : ''}>Bold</label>
+        <label class="layout-check"><input type="checkbox" data-layout-key="${key}.italic" ${st.italic ? 'checked' : ''}>Italic</label></fieldset>`;
+    }
+    dialogs.open({ title: 'DTR layouts · Pro', className: 'modal--layouts', autoFocus: false,
+      body: `<div class="layout-top"><label>Start from<select id="layout-preset"><option value="draft">Current layout</option><option value="original">Original Form 48</option><option value="verification">Form 48 with verification</option><option value="school">Custom school layout</option>${saved.map((x,i) => `<option value="saved-${i}">${esc(x.name)}</option>`).join('')}</select></label>
+        <label>Layout name<input id="layout-name" maxlength="50" value="${esc(draft.name)}"></label></div>
+        ${DTR.ui.getPro.tryBanner('Custom DTR layouts')}
+        <div class="layout-editor"><section class="layout-preview-pane" aria-label="Layout preview">
+          <div class="layout-preview-heading"><strong>Live DTR preview</strong><span>Click a section to edit</span></div><div id="layout-preview"></div></section>
+          <section class="layout-controls"><div class="layout-tabs" role="tablist" aria-label="Layout section">${SECTIONS.map(([key,label],i) => `<button role="tab" id="layout-tab-${key}" aria-controls="layout-fields" aria-selected="${i === 0}" data-layout-tab="${key}">${label}</button>`).join('')}</div>
+          <div id="layout-fields" role="tabpanel" aria-labelledby="layout-tab-header"></div>
+          <div class="layout-apply"><label>Apply to<select id="layout-scope">${s.data ? '<option value="current">This employee, this month</option><option value="all">All employees, this month</option><option value="selected">Selected employees, this month</option>' : ''}<option value="template">Save template only</option></select></label>
+          <div id="layout-employees" hidden>${s.data ? state.orderedEmployees().map(e => `<label class="layout-check"><input type="checkbox" data-layout-employee="${esc(e.id)}" ${selected.has(e.id) ? 'checked' : ''}>${esc(DTR.names.format(state.person(e.id)) || e.rawName || e.id)}</label>`).join('') : ''}</div>
+          <label class="layout-check"><input type="checkbox" id="layout-default" ${!s.data ? 'checked' : ''}>Use as default for new months</label>
+          <p class="field-hint">Other saved months keep their own layout.</p></div></section></div>`,
+      footer: '<button class="btn btn-ghost" id="layout-reset">Restore original</button><span id="layout-error" role="status"></span><button class="btn btn-ghost" data-close>Cancel</button><button class="btn btn-primary" id="layout-save">Save layout</button>',
+      onClose: () => { if (returnFocus?.isConnected) returnFocus.focus(); },
+      onMount: (el, close) => {
+        const error = text => { el.querySelector('#layout-error').textContent = text; };
+        const withDraft = model => Object.assign({}, model, { layout: L.normalize(draft), logo: draft.showLogo ? draft.logoData : '' });
+        const options = () => Object.assign({ paper: state.get().settings.paperSize }, DTR.form48.sizeOf(state.get().settings));
+        function preview() {
+          const box = el.querySelector('#layout-preview');
+          box.innerHTML = DTR.form48.sheet(withDraft(source), { paper: s.settings.paperSize, size: 'full' });
+          box.querySelectorAll('.copy:nth-child(2),.sheet:nth-child(2)').forEach(x => x.remove());
+          const form = box.querySelector('.f48');
+          const table = form.querySelector('.f48-table');
+          table.querySelector('thead').dataset.layoutRegion = 'headings';
+          let after = false;
+          Array.from(form.children).forEach(x => { if (x === table) after = true; else if (!x.classList.contains('f48-demo-mark')) x.dataset.layoutRegion = after ? 'footer' : 'header'; });
+          box.querySelectorAll('[data-layout-region]').forEach(x => x.classList.toggle('layout-active-region', x.dataset.layoutRegion === section));
+          error(L.validate(draft) || DTR.form48.checkFit(withDraft(source), options()));
+        }
+        function fields() {
+          const pane = el.querySelector('#layout-fields');
+          pane.setAttribute('aria-labelledby', `layout-tab-${section}`);
+          if (section === 'header') pane.innerHTML = `${field('header','School header (up to three lines)',3)}${typography('headerStyle')}
+            <fieldset class="layout-logo"><legend>School logo</legend><label class="layout-check"><input type="checkbox" data-layout-key="showLogo" ${draft.showLogo ? 'checked' : ''}>Show logo</label>
+            <div class="layout-two"><label>Position${choice('logoPosition',[['left','Left'],['right','Right']],draft.logoPosition)}</label><label>Size${choice('logoSize',[[0.4,'Small'],[0.56,'Medium'],[0.7,'Large']],draft.logoSize)}</label></div>
+            <label class="layout-field"><span>${draft.logoData ? 'Replace logo' : 'Add logo'}</span><input type="file" id="layout-logo-file" accept="image/png,image/jpeg"></label>
+            ${draft.logoData ? '<button class="btn btn-ghost btn-sm" id="layout-remove-logo">Remove logo</button>' : ''}</fieldset>`;
+          if (section === 'headings') pane.innerHTML = `<div class="layout-two">${field('am','Morning heading')}${field('pm','Afternoon heading')}${field('amIn','Morning arrival')}${field('amOut','Morning departure')}${field('pmIn','Afternoon arrival')}${field('pmOut','Afternoon departure')}</div><p class="field-hint">Labels change here. Tap placement and calculations stay the same.</p>`;
+          if (section === 'footer') pane.innerHTML = `${field('certification','Employee certification',4)}${field('employeeCaption','Employee signature caption')}${field('verification','Verification statement',2)}${field('signerCaption','Approving officer caption')}${field('footer','Footer note',2)}${typography('footerStyle')}<p class="field-hint">Signer names and titles come from each employee’s “Signed by” choice.</p>`;
+          el.querySelectorAll('[data-layout-tab]').forEach(x => x.setAttribute('aria-selected', String(x.dataset.layoutTab === section)));
+          preview();
+        }
+        function choose(key, scroll) {
+          section = key; fields();
+          if (scroll) { const pane = el.querySelector('.layout-preview-pane'); if (key === 'footer') pane.scrollTop = pane.scrollHeight; else el.querySelector(`[data-layout-region="${key}"]`)?.scrollIntoView({ block: 'nearest' }); }
+        }
+        el.querySelectorAll('[data-layout-tab]').forEach(b => b.onclick = () => choose(b.dataset.layoutTab, true));
+        el.querySelector('#layout-preview').onclick = e => { const hit = e.target.closest('[data-layout-region]'); if (hit) choose(hit.dataset.layoutRegion); };
+        el.querySelector('#layout-fields').addEventListener('input', e => {
+          const key = e.target.dataset.layoutKey;
+          if (!key) return;
+          const [a,b] = key.split('.');
+          const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+          if (b) draft[a][b] = b === 'size' ? Number(value) : value;
+          else draft[a] = a === 'logoSize' ? Number(value) : value;
+          preview();
+        });
+        el.querySelector('#layout-fields').addEventListener('click', e => { if (e.target.id === 'layout-remove-logo') { draft.logoData = ''; fields(); } });
+        el.querySelector('#layout-fields').addEventListener('change', async e => {
+          if (e.target.id !== 'layout-logo-file' || !e.target.files[0]) return;
+          try {
+            const file = e.target.files[0];
+            if (!['image/png','image/jpeg'].includes(file.type) || file.size > 10 * 1024 * 1024) throw new Error('Choose a PNG or JPG up to 10 MB.');
+            const url = URL.createObjectURL(file), img = new Image();
+            try {
+              await new Promise((resolve,reject) => { img.onload = resolve; img.onerror = () => reject(new Error('This picture could not be opened.')); img.src = url; });
+              const canvas = document.createElement('canvas'); canvas.width = canvas.height = 240;
+              const ctx = canvas.getContext('2d'), scale = 240 / Math.max(img.width,img.height);
+              ctx.drawImage(img,(240-img.width*scale)/2,(240-img.height*scale)/2,img.width*scale,img.height*scale);
+              draft.logoData = canvas.toDataURL('image/png'); draft.showLogo = true;
+            } finally { URL.revokeObjectURL(url); }
+            fields();
+          } catch (err) { error(err.message); }
+        });
+        el.querySelector('#layout-name').oninput = e => { draft.name = e.target.value; preview(); };
+        function replace(value) { draft = L.normalize(value); el.querySelector('#layout-name').value = draft.name; fields(); }
+        el.querySelector('#layout-preset').onchange = e => {
+          if (e.target.value === 'draft') return;
+          const data = e.target.value.startsWith('saved-') ? saved[Number(e.target.value.slice(6))] : Object.assign(L.preset(e.target.value), { logoData: draft.logoData });
+          replace(data);
+        };
+        el.querySelector('#layout-reset').onclick = () => { replace(Object.assign(L.original(), { logoData: draft.logoData })); el.querySelector('#layout-preset').value = 'original'; };
+        el.querySelector('#layout-scope').onchange = e => { scope = e.target.value; el.querySelector('#layout-employees').hidden = scope !== 'selected'; };
+        el.querySelector('#layout-employees').onchange = e => { const id = e.target.dataset.layoutEmployee; if (id) e.target.checked ? selected.add(id) : selected.delete(id); };
+        el.querySelector('#layout-save').onclick = () => {
+          try {
+            const invalid = L.validate(draft); if (invalid) throw new Error(invalid);
+            const ids = scope === 'current' ? [s.selectedId] : scope === 'all' ? s.data.employees.map(e => e.id) : scope === 'selected' ? [...selected] : [];
+            if (scope === 'selected' && !ids.length) throw new Error('Select at least one employee.');
+            for (const m of ids.length ? ids.map(id => state.model(id)) : [source]) { const issue = DTR.form48.checkFit(withDraft(m), options()); if (issue) throw new Error(issue); }
+            state.saveLayout(draft, ids, el.querySelector('#layout-default').checked);
+            close(); dialogs.toast('Layout saved.', 'success');
+          } catch (err) { error(err.message); }
+        };
+        // Keep keyboard focus inside this editor, including when opened above Settings.
+        el.addEventListener('keydown', e => {
+          if (e.key !== 'Tab') return;
+          const list = [...el.querySelectorAll('button,input,select,textarea')].filter(x => !x.disabled && x.getClientRects().length);
+          const first = list[0], last = list[list.length-1];
+          if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+          else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        });
+        fields();
+      }
+    });
+  }
+  return { open };
+})();
+
+</script>
+  <script>
 /*
  * ui/settings.js — In-Charge name, form defaults, paper size, time display, the Employee List,
  * saved months, and backup / restore.
@@ -7473,6 +8775,10 @@ DTR.ui.settings = (function () {
         </div>
       </section>
 
+      <section class="settings-section"><h3>DTR layouts <span class="pro-chip">PRO</span></h3>
+        <p class="settings-hint">Your school header, time headings and signature wording.</p>
+        <button class="btn btn-secondary" id="settings-layout">Customize DTR layout</button>
+      </section>
       ${DTR.ui.logo.sectionHtml(settings)}
 
       <section class="settings-section">
@@ -7489,6 +8795,7 @@ DTR.ui.settings = (function () {
           <div class="choices">
             ${Object.entries(PAPER_SIZES).map(([key, paper]) => optionCard('set-paper', key, settings.paperSize === key, paper.label, paper.copies)).join('')}
           </div>
+          <p class="settings-hint">How big the DTR prints (Full page, Small card, Large, Custom): <b>Print → Size on paper</b>.</p>
         </div>
         <div>
           <h3>How times are written</h3>
@@ -7805,6 +9112,7 @@ DTR.ui.settings = (function () {
 
   function wireGeneral(pane) {
     wireSigners(pane);
+    pane.querySelector('#settings-layout').onclick = () => DTR.ui.layouts.open();
     pane.querySelector('#set-save').addEventListener('click', () => {
       const signers = readSigners(pane);
       // Employees whose signer was removed go back to the default.
@@ -8124,6 +9432,14 @@ DTR.ui.help = (function () {
 
   /* id: used by open(id) from other screens. pro: shown with a PRO mark. */
   const TOPICS = Object.freeze([
+    { id: 'layouts', title: 'Customize your DTR layout', sub: 'School header, logo and signature wording', pro: true,
+      body: () => `${steps([
+        'On a DTR, click <b>DTR layout</b>, or go to <b>Settings → Form &amp; taps → Customize DTR layout</b>.',
+        'Start from <b>Original Form 48</b>, <b>Form 48 with verification</b> or <b>Custom school layout</b>. Click Header, Time headings or Footer to change the wording and see it on the form.',
+        'Choose this employee, selected employees or everyone in this month. Tick <b>Use as default for new months</b> if you want to reuse it. Other saved months keep their own layout.',
+        'Give it a name and click <b>Save layout</b>. Saved names appear under Start from. Saving with the same name replaces that template, without changing past months.',
+        'Use <b>Restore original</b> to return to the usual form, then Save. If added text will not fit the chosen print size, shorten it or use Full page.'
+      ])}${tip('Custom layouts print and export with Pro. Standard can try them on screen, then print without Pro features. Attendance, calculations and each employee’s signer are unchanged.')}` },
     {
       id: 'start', title: 'Getting started', sub: 'First time only',
       body: () => `
@@ -8147,7 +9463,8 @@ DTR.ui.help = (function () {
           'When a DTR is right, click <b>Mark as checked</b>. The app moves to the next one.',
           '<b>No problems found</b> holds DTRs with a confirmed name and nothing unusual: open it, look quickly, then <b>Check all</b>.',
           '<b>Print</b> (top right, or Ctrl+P). Choose This employee, Checked employees or All employees.',
-          'Need a softcopy? In the same window click <b>Download PDF</b>: one PDF file with all the chosen DTRs is saved to your <b>Downloads</b> folder — no printing one by one.'
+          'Too small or too big? Pick the <b>Size on paper</b> in the same window: <b>Full page</b> (two copies filling the paper), <b>Small card</b> (3.5 × 7.5 in cards to cut), <b>Large</b> (one bigger copy per sheet) or <b>Custom</b>. It is remembered.',
+          'Need a softcopy? Under <b>Save a copy</b>: <b>PDF</b> (one file, all DTRs), <b>Pictures</b> (one PNG per employee, in a .zip) or <b>Excel</b> (one locked sheet per employee, ready to print). They go to your <b>Downloads</b> folder.'
         ])}
         ${tip('<b>Set aside</b> = no taps this month, or marked inactive. They are not printed and not counted.')}`
     },
@@ -8204,7 +9521,7 @@ DTR.ui.help = (function () {
       body: () => `
         <p>With a <b>Pro</b> key, the Under Time boxes and the TOTAL fill in by themselves.</p>
         ${tip('On <b>Standard</b> you can try all of this for free: it shows on screen. When you print or download, choose <b>without Pro features</b> (the plain DTR) or <b>Get Pro</b> to keep them.')}
-        ${tip('<b>30-day Pro pass (₱299):</b> full Pro for 30 days from the day you activate it. The top bar shows the days left. When it ends, your DTRs stay and you can still open and check them; printing and Download PDF need a new pass or a lifetime license.')}
+        ${tip('<b>30-day Pro pass (₱299):</b> full Pro for 30 days from the day you activate it. The top bar shows the days left. When it ends, your DTRs stay and you can still open and check them; printing and saving copies (PDF, pictures, Excel) need a new pass or a lifetime license.')}
         ${steps([
           '<b>Once:</b> Settings → <b>Official time</b>. Enter the schedule (e.g. 7:30–11:30, 12:30–4:30) and save. Add a second schedule only if some staff keep different hours, and choose it for them in Settings → Employee List.',
           '<b>Every month:</b> late arrivals and early departures fill Under Time. Lunch is never counted.',
