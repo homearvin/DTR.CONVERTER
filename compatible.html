@@ -216,6 +216,18 @@
  */
 const FORMATS = [
   {
+    name: 'Card Report', brand: null, types: ['xls', 'xlsx'],
+    lookFor: '<code>Card Report</code>, <code>WeekDate</code>, an employee number/name and paired <code>On-duty / Off-duty</code> or <code>Check-in / Check-out</code> columns.',
+    sample: [[['Card Report', 'ti'], '', ''], ['2026-09-01 ~ 2026-09-30', '', ''], ['No.: 1001', 'Name: Juan Dela Cruz', ''], [['WeekDate', 'hd'], ['On-duty', 'hd'], ['Off-duty', 'hd']], ['1', ['07:30', 'tm'], ['17:00', 'tm']]],
+    reads: ['Recorded clocks from monthly cards, including side-by-side employees', 'Missing or unreadable clocks stay blank; source remarks remain available for review', 'Derived statistics and signatures are not attendance taps']
+  },
+  {
+    name: 'Record Report', brand: null, types: ['xls', 'xlsx'],
+    lookFor: '<code>Record Report</code>, an employee per sheet, a monthly date range, and parallel day panels with paired <code>IN / OUT</code> columns.',
+    sample: [[['Record Report', 'ti'], '', '', ''], ['ID: 1001', 'Name: Juan Dela Cruz', '', ''], ['2026-09-01 ~ 2026-09-30', '', '', ''], [['Date Week', 'hd'], ['Segment 1', 'hd'], '', ['Work', 'hd']], ['', ['IN', 'hd'], ['OUT', 'hd'], ''], ['1 D2', ['07:30', 'tm'], ['17:00', 'tm'], '']],
+    reads: ['Employee names, numbers and every recorded IN / OUT clock', 'Blank days and repeated taps are preserved', 'Work hours, overtime and pay summaries are not copied as clocks']
+  },
+  {
     name: 'Employee Attendance Record', brand: null, types: ['xls', 'xlsx'],
     lookFor: '<code>Employee Attendance Record</code>, <code>Attendance date:</code>, employee <code>User ID / Name / Department</code>, and days across columns.',
     sample: [
@@ -295,7 +307,7 @@ const FORMATS = [
       [['1', 'hd'], ['2', 'hd'], ['3', 'hd'], ['4', 'hd'], ['5', 'hd'], ['…', 'mu']],
       [['07:2411:3112:2916:39', 'tm'], ['07:1716:41', 'tm'], ['07:2416:38', 'tm'], ['', 'tm'], '', '']
     ],
-    reads: ['Times joined in one cell are split correctly (07:24 11:31 …)', 'Schedule, statistics and exception sheets are ignored, so nothing is counted twice']
+    reads: ['Times joined in one cell are split correctly (07:24 11:31 …)', 'Schedule, statistics and exception sheets are ignored, so nothing is counted twice', 'Cropped exports with only day numbers and ID / Name / Dept blocks are supported: select the month and year when asked. Unreadable numeric entries stay blank with a warning.']
   },
   {
     name: 'Monthly Punch Report', brand: null, types: ['xls', 'xlsx'],

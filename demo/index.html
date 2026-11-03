@@ -987,6 +987,11 @@ button.home-review-item:hover { box-shadow: inset 0 0 0 1px var(--line-2); }
   .tb-legend { display: none; }
 }
 
+.dir-number-settings { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+.dir-number-settings label { font-weight: 600; }
+.dir-number-settings select { padding: 8px; border: 1px solid var(--line-2); border-radius: 7px; background: white; color: var(--ink); font: inherit; }
+.dir-col-number { width: 112px; }
+
 </style>
   <style>
 /*
@@ -1304,6 +1309,16 @@ button.home-review-item:hover { box-shadow: inset 0 0 0 1px var(--line-2); }
   }
 }
 
+/* Employee numbers belong to both editions. Separate flow prevents overlap with logos. */
+.f48-number-brand { position: relative; }
+.f48-employee-number { font-size: 8pt; font-weight: 400; letter-spacing: 0; overflow-wrap: anywhere; }
+.f48-number-top { text-align: right; margin-top: 3pt; line-height: 1.2; }
+.f48-name.f48-name-with-number { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 0 5pt; white-space: normal; overflow: visible; text-overflow: clip; }
+.f48-person-name { max-width: 100%; overflow-wrap: anywhere; }
+.f48-number-inline { max-width: 100%; }
+
+.sheet .f48-with-number .f48-table tbody td { line-height: 1; height: max(9pt, calc(var(--f48-row-h) - var(--layout-row-reduction, 0pt) - var(--number-row-reduction, 0pt))); }
+
 </style>
   <style>
 /* DTR layout editor: blue controls, one form, no decorative paper frame. */
@@ -1615,7 +1630,7 @@ window.DTR = window.DTR || {};
 DTR.config = Object.freeze({
   APP_NAME: 'DTR Converter',
   APP_SUBTITLE: 'Biometric Timecard → CSC Form No. 48',
-  APP_VERSION: '1.22.0',
+  APP_VERSION: '1.23.0',
 
   /* Where clients ask for help and keys (same as desktop/licensing.py CONTACT_*). */
   CONTACT: Object.freeze({ email: 'azmarketingservicesbicol@gmail.com', facebook: 'AZ Digital Marketing' }),
@@ -1788,7 +1803,7 @@ DTR.config = Object.freeze({
     EMPLOYEE_TABLE: 'employee-table',
     ATTENDANCE_RECORDS: 'attendance-records',
     STAFF_TIMETABLE: 'staff-timetable', TIMESHEET: 'timesheet', ABNORMAL_REPORT: 'abnormal-report', DAILY_SUMMARY: 'daily-summary', DAILY_PAIRS: 'daily-pairs',
-    PUNCH_LOG: 'punch-log'
+    CARD_REPORT: 'card-report', RECORD_REPORT: 'record-report', PUNCH_LOG: 'punch-log'
   }),
   FILE_FORMAT_LABELS: Object.freeze({
     timecard: 'Timecard Report',
@@ -1803,6 +1818,7 @@ DTR.config = Object.freeze({
     'abnormal-report': 'Abnormal Report (exceptions only)',
     'daily-summary': 'Daily Attendance Summary',
     'daily-pairs': 'Daily Attendance TXT / CSV',
+    'card-report': 'Card Report', 'record-report': 'Record Report',
     'punch-log': 'Attendance log (one row per tap)'
   }),
   /* File types accepted for upload. */
@@ -1912,7 +1928,10 @@ DTR.config = Object.freeze({
     ACCEPT: 'image/png,image/jpeg,image/webp,image/gif,image/bmp'
   }),
 
+  EMPLOYEE_NUMBER_MAX_LENGTH: 40,
+  EMPLOYEE_NUMBER_POSITIONS: Object.freeze({ hidden: 'Hidden', name: 'Beside the name', 'top-right': 'Upper right, below header / logo' }),
   DEFAULT_SETTINGS: Object.freeze({
+    employeeNumberPosition: 'hidden', // Both editions; machine ID stays the attendance matching key.
     inChargeName: '',   // set by each office in Settings; never ship a real person's name
     inChargeTitle: '',  // printed under the name instead of "In-Charge" (e.g. Principal I); blank = "In-Charge"
     inChargeEmployeeId: '',   // optional: the In-Charge's own machine ID, so their own DTR is flagged (signers.js)
@@ -2471,7 +2490,37 @@ DTR.readers.standardReport = (function () {
   const text = (v) => isBlank(v) ? '' : String(v).trim();
   const column = (row, pattern) => row.findIndex((v) => pattern.test(text(v)));
 
+  const NEEDS_PERIOD = 'STANDARD_REPORT_NEEDS_PERIOD';
+
+  // Cropped reports keep the day grid and labelled identities but lose their date header.
+  // Require consecutive headings and all three identity labels; never use the filename.
+  function croppedDays(sheet) {
+    if (sheet.rows.some(r => r.some(v => TITLE.test(text(v))) || column(r, PERIOD_LABEL) !== -1)) return null;
+    const first = sheet.rows.find(r => r.some(v => !isBlank(v)));
+    if (!first) return null;
+    const filled = first.filter(v => !isBlank(v));
+    if (filled.length < 7 || !filled.every((v, i) => DAY.test(text(v)) && +v === i + 1)) return null;
+    const identities = sheet.rows.filter(r => column(r, ID_LABEL) !== -1);
+    if (!identities.length || !identities.every(r => column(r, NAME_LABEL) > column(r, ID_LABEL)
+      && column(r, DEPT_LABEL) > column(r, NAME_LABEL))) return null;
+    return dayColumns(first);
+  }
+
+  function chosenPeriod(sheet, options) {
+    const days = croppedDays(sheet);
+    if (!days) return periodFor(sheet.rows);
+    const year = Number(options && options.year), month = Number(options && options.month);
+    if (!Number.isInteger(year) || year < 2000 || year > 2099 || !Number.isInteger(month) || month < 1 || month > 12) {
+      const error = new Error('This report has day numbers but no month or year. Choose its attendance period.');
+      error.code = NEEDS_PERIOD;
+      throw error;
+    }
+    return { start: `${year}-${pad2(month)}-01`,
+      end: `${year}-${pad2(month)}-${pad2(Math.min(Math.max(...days.filter(Boolean)), daysInMonth(year, month)))}` };
+  }
+
   function matches(sheet) {
+    if (croppedDays(sheet)) return true;
     return sheet.rows.some((r) => r.some((v) => TITLE.test(text(v))))
       && sheet.rows.some((r) => column(r, PERIOD_LABEL) !== -1)
       && sheet.rows.some((r) => column(r, ID_LABEL) !== -1 && column(r, NAME_LABEL) !== -1);
@@ -2526,12 +2575,14 @@ DTR.readers.standardReport = (function () {
     return times;
   }
 
-  function read(sheets) {
+  function read(sheets, fileName, options) {
     const result = { format: FILE_FORMATS.STANDARD_REPORT, periodText: null, employees: [], warnings: [] };
     const byId = new Map();
     sheets.filter(matches).forEach((sheet) => {
+      const cropped = !!croppedDays(sheet);
       const employeeRecord = sheet.rows.some(r => r.some(v => /^employee\s+attendance\s+record$/i.test(text(v))));
-      const period = periodFor(sheet.rows);
+      const period = chosenPeriod(sheet, options);
+      if (cropped) result.warnings.push(`The file has no month/year. Used your selected period: ${period.start} to ${period.end}.`);
       if (result.periodText && (result.periodText.start !== period.start || result.periodText.end !== period.end)) {
         throw new Error('These Attendance Record Report sheets have different attendance periods. Export one month per file.');
       }
@@ -2555,6 +2606,9 @@ DTR.readers.standardReport = (function () {
           }
           if (employeeRecord) days = null; // This variant puts each day heading AFTER its employee header.
           employee = byId.get(id);
+          if (employee && cropped && employee.rawName !== text(valueAfter(row, nameCol, deptCol)).replace(/\s+/g, ' ')) {
+            throw new Error(`${location}: the same employee ID has conflicting names. Check the source file.`);
+          }
           if (!employee) {
             const rawName = text(valueAfter(row, nameCol, deptCol)).replace(/\s+/g, ' ');
             employee = { id, rawName, days: {} };
@@ -2576,6 +2630,14 @@ DTR.readers.standardReport = (function () {
           if (!day || day > lastDay) throw new Error(`${location}, column ${col + 1}: taps have no valid day in this month.`);
           const iso = isoFor(day);
           if (iso < period.start || iso > period.end) throw new Error(`${location}, day ${day}: taps fall outside the attendance period.`);
+          if (cropped && typeof value === 'number' && (!Number.isFinite(value) || value < 0 || value >= 1
+            || (sheet.displayRows && !/^\d{1,2}:\d{2}(?::\d{2})?(?:\s*[AP]M)?$/i.test(text(sheet.displayRows[index][col]))))) {
+            const note = `Unreadable attendance number (${text(value)}); left blank for review.`;
+            employee.notes = employee.notes || {};
+            employee.notes[iso] = [...(employee.notes[iso] || []), note];
+            result.warnings.push(`${sheet.name}, employee ${employee.id}, ${iso}: ${note}`);
+            return;
+          }
           employee.days[iso].push(...timesIn(value, `${location}, day ${day}`));
         });
       });
@@ -2583,7 +2645,7 @@ DTR.readers.standardReport = (function () {
     return result;
   }
 
-  return { id: FILE_FORMATS.STANDARD_REPORT, detect: (sheets) => sheets.some(matches), read };
+  return { NEEDS_PERIOD, id: FILE_FORMATS.STANDARD_REPORT, detect: (sheets) => sheets.some(matches), read };
 })();
 
 </script>
@@ -2709,9 +2771,9 @@ DTR.readers = DTR.readers || {};
   const labelCol = (r, label) => r.findIndex(v => text(v).toLowerCase() === label);
   const clockColumns = r => r.flatMap((v, col) => /^(in|out)$/i.test(text(v)) ? [{col, kind:text(v).toLowerCase()}] : []);
 
-  // These report templates explicitly use month/day/year (also in their period headings).
+  // These report templates explicitly use month/day/year, including hyphen-separated exports.
   function mdy(value) {
-    const m = /^(\d{1,2})[/.](\d{1,2})[/.](\d{4})$/.exec(text(value));
+    const m = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/.exec(text(value));
     if (!m || +m[1] < 1 || +m[1] > 12 || +m[2] < 1 || +m[2] > daysInMonth(+m[3], +m[1])) return null;
     return cells.date(`${m[3]}-${pad2(+m[1])}-${pad2(+m[2])}`);
   }
@@ -3644,6 +3706,223 @@ DTR.readers.punchLog = (function () {
 
 </script>
   <script>
+/* Card Report: side-by-side monthly cards with recorded On-duty/Off-duty clocks.
+ * Statistics and signatures are not taps. Source remarks stay in Day details;
+ * unreadable clock text is retained there with a warning, never corrected by guessing.
+ */
+window.DTR = window.DTR || {};
+DTR.readers = DTR.readers || {};
+
+DTR.readers.cardReport = (function () {
+  const { FILE_FORMATS } = DTR.config;
+  const { isBlank, pad2, daysInMonth } = DTR.util;
+  const cells = DTR.readers.cells;
+  const text = v => isBlank(v) ? '' : String(v).trim().replace(/\s+/g, ' ');
+  const label = (row, name) => row.findIndex(v => text(v).toLowerCase() === name);
+  const after = (row, col, end = row.length) => row.slice(col + 1, end).find(v => !isBlank(v));
+  const matches = sheet => sheet.rows.some(r => r.some(v => /^card report$/i.test(text(v))))
+    && sheet.rows.some(r => label(r, 'weekdate') >= 0);
+  const CLOCK_KINDS = Object.freeze({ 'on-duty': 'in', 'off-duty': 'out', 'check-in': 'in', 'check-out': 'out' });
+
+  function period(value) {
+    const range = /^(\d{4}-\d{1,2}-\d{1,2})\s*~\s*(\d{4}-\d{1,2}-\d{1,2})$/.exec(text(value));
+    const dates = range && range.slice(1).map(v => {
+      const iso = cells.date(v);
+      if (!iso) return null;
+      const [y,m,d] = iso.split('-').map(Number);
+      return m >= 1 && m <= 12 && d >= 1 && d <= daysInMonth(y,m) ? iso : null;
+    });
+    if (!dates || dates.some(d => !d) || dates[0] > dates[1] || dates[0].slice(0,7) !== dates[1].slice(0,7)) {
+      throw new Error('The Card Report needs a valid date range within one month.');
+    }
+    return { start: dates[0], end: dates[1] };
+  }
+
+  function setPeriod(result, value) {
+    const next = period(value);
+    if (result.periodText && (next.start !== result.periodText.start || next.end !== result.periodText.end)) {
+      throw new Error('The Card Report cards have conflicting date ranges. Export one month per file.');
+    }
+    result.periodText = next;
+  }
+
+  function clockColumns(row) {
+    const columns = row.flatMap((v,col) => {
+      const heading = text(v).toLowerCase();
+      return CLOCK_KINDS[heading] ? [{ col, kind: CLOCK_KINDS[heading], heading: text(v) }] : [];
+    });
+    const count = name => columns.filter(c => c.heading.toLowerCase() === name).length;
+    if (count('on-duty') !== 2 || count('off-duty') !== 2
+      || count('check-in') !== count('check-out') || count('check-in') > 1) {
+      throw new Error('A Card Report card is missing its recorded On-duty/Off-duty clock headings.');
+    }
+    return columns;
+  }
+
+  function read(sheets) {
+    const result = { format: FILE_FORMATS.CARD_REPORT, periodText: null, employees: [], warnings: [] };
+    const byId = new Map();
+    let unreadable = 0;
+    sheets.filter(matches).forEach(sheet => {
+      const metadata = sheet.rows.findIndex(r => label(r,'date') >= 0 && label(r,'id') >= 0);
+      if (metadata < 0) throw new Error('The Card Report is missing its Date/ID headings.');
+      sheet.rows.forEach(row => {
+        const col = label(row,'att. date:');
+        if (col >= 0) setPeriod(result,after(row,col));
+      });
+      const meta = sheet.rows[metadata];
+      const starts = meta.flatMap((v,c) => text(v).toLowerCase() === 'date' ? [c] : []);
+      starts.forEach((start,i) => {
+        const end = starts[i+1] ?? meta.length;
+        const card = meta.slice(start,end), idCol = label(card,'id');
+        if (idCol < 0) throw new Error('A Card Report card has no employee ID heading.');
+        setPeriod(result,after(card,0,idCol));
+        const id = cells.employeeId(after(card,idCol));
+        const nameRow = sheet.rows.slice(0,metadata).reverse().find(r => label(r.slice(start,end),'name') >= 0);
+        if (!nameRow) throw new Error('A Card Report card has no Name heading.');
+        const nameCells = nameRow.slice(start,end), rawName = text(after(nameCells,label(nameCells,'name')));
+        const heading = sheet.rows.findIndex((r,n) => n > metadata && text(r[start]).toLowerCase() === 'weekdate');
+        if (heading < 0) throw new Error('A Card Report card has no WeekDate heading.');
+        const columns = clockColumns((sheet.rows[heading+1] || []).slice(start,end));
+        const [year,month] = result.periodText.start.split('-').map(Number);
+        const last = daysInMonth(year,month), seen = new Set();
+        let employee = null;
+        if (id || rawName) {
+          if (!id) throw new Error('A Card Report employee has no ID. No attendance was imported.');
+          if (byId.has(id)) throw new Error('An employee ID appears on more than one Card Report card. Check the duplicate card before importing.');
+          employee = { id, rawName, days: {}, kinds: {}, notes: {} };
+          for (let day=1; day<=last; day++) employee.days[cells.date(`${year}-${pad2(month)}-${pad2(day)}`)] = [];
+          byId.set(id,employee); result.employees.push(employee);
+        }
+        for (let n=heading+2; n<sheet.rows.length; n++) {
+          const row = sheet.rows[n].slice(start,end);
+          if (row.every(isBlank)) continue;
+          const dayMatch = /^(\d{1,2})\s+[A-Za-z]+\.?$/.exec(text(row[0]));
+          // Signature/name lines after the final report day are not attendance.
+          if (!dayMatch && seen.has(+result.periodText.end.slice(-2))) break;
+          if (!dayMatch) throw new Error('A Card Report card has an unreadable day row.');
+          const day = +dayMatch[1];
+          if (day < 1 || day > last || seen.has(day)) throw new Error('A Card Report card has an invalid or repeated day.');
+          seen.add(day);
+          const iso = cells.date(`${year}-${pad2(month)}-${pad2(day)}`);
+          const values = columns.filter(c => !isBlank(row[c.col]));
+          if (values.length && (!employee || iso < result.periodText.start || iso > result.periodText.end)) {
+            throw new Error('A Card Report contains attendance without an employee ID or outside its date range.');
+          }
+          if (!employee) continue;
+          values.forEach(({col,kind,heading:clockLabel}) => {
+            let value = row[col];
+            const displayed = sheet.displayRows?.[n]?.[start+col];
+            if (typeof value === 'number' && /^\d{1,2}:\d{2}$/.test(text(displayed))) value = displayed;
+            const clock = cells.time(value);
+            if (clock) {
+              employee.days[iso].push(clock); (employee.kinds[iso] ||= []).push(kind);
+            } else {
+              const raw = text(value), badClock = typeof value === 'number' || /\d\s*:/.test(raw);
+              (employee.notes[iso] ||= []).push(`${badClock ? 'Unreadable source time' : 'Source remark'} (${clockLabel}): ${raw}`);
+              if (badClock) unreadable++;
+            }
+          });
+        }
+        if (!seen.size) throw new Error('A Card Report card has no day rows.');
+      });
+    });
+    if (unreadable) result.warnings.push(`${unreadable} Card Report time cell${unreadable === 1 ? ' is' : 's are'} unreadable. No time was guessed; the original text is kept in Day details. Review before printing.`);
+    return result;
+  }
+  return { id: FILE_FORMATS.CARD_REPORT, detect: sheets => sheets.some(matches), read };
+})();
+
+</script>
+  <script>
+/* Record Report: one employee per sheet, days in parallel panels.
+ * Segment IN/OUT columns are recorded clocks; Work/EWork and pay are totals.
+ * Public support authorized by the owner on November 3, 2026.
+ */
+window.DTR = window.DTR || {};
+DTR.readers = DTR.readers || {};
+DTR.readers.recordReport = (function () {
+  const { FILE_FORMATS } = DTR.config;
+  const { isBlank, daysInMonth, pad2 } = DTR.util;
+  const cells = DTR.readers.cells;
+  const text = v => isBlank(v) ? '' : String(v).trim().replace(/\s+/g, ' ');
+  const label = v => text(v).toLowerCase().replace(/:$/, '');
+  const at = (row, value) => row.findIndex(v => label(v) === value);
+  const matches = sheet => sheet.rows.some(r => r.some(v => label(v) === 'record report'))
+    && sheet.rows.some(r => at(r, 'date week') >= 0 && r.some(v => /^segment\s+1$/i.test(text(v))));
+
+  function read(sheets) {
+    const result = { format: FILE_FORMATS.RECORD_REPORT, periodText: null, employees: [], warnings: [] };
+    const ids = new Set();
+    let reversedDays = 0;
+    sheets.filter(matches).forEach(sheet => {
+      const meta = sheet.rows.find(r => at(r, 'name') >= 0 && at(r, 'id') >= 0 && at(r, 'date') >= 0);
+      if (!meta) throw new Error('The Record Report needs Name, ID and Date headings.');
+      const value = name => {
+        const col = at(meta, name);
+        const end = meta.findIndex((v,i) => i > col && ['name','id','dept.','shift','date'].includes(label(v)));
+        return meta.slice(col+1, end < 0 ? meta.length : end).find(v => !isBlank(v));
+      };
+      const id = cells.employeeId(value('id')), rawName = text(value('name'));
+      if (!id || ids.has(id)) throw new Error('The Record Report has a missing or repeated employee ID. No attendance was imported.');
+      ids.add(id);
+      const monthMatch = /^(\d{4})-(\d{1,2})$/.exec(text(value('date')));
+      if (!monthMatch || +monthMatch[2] < 1 || +monthMatch[2] > 12) throw new Error('The Record Report needs a valid YYYY-MM date in its contents.');
+      const year = +monthMatch[1], month = +monthMatch[2], last = daysInMonth(year, month);
+      const iso = day => cells.date(`${year}-${pad2(month)}-${pad2(day)}`);
+      const period = { start: iso(1), end: iso(last) };
+      if (!period.start || !period.end) throw new Error('The Record Report date is unreadable.');
+      if (result.periodText && result.periodText.start !== period.start) throw new Error('The Record Report sheets have conflicting months. Export one month per workbook.');
+      result.periodText = period;
+      const heading = sheet.rows.findIndex(r => at(r,'date week') >= 0);
+      const top = sheet.rows[heading], sub = sheet.rows[heading+1] || [];
+      const starts = top.flatMap((v,c) => label(v) === 'date week' ? [c] : []);
+      const employee = { id, rawName, days: {}, kinds: {}, notes: {} }, seen = new Set();
+      for (let day=1; day<=last; day++) employee.days[iso(day)] = [];
+      starts.forEach((start,index) => {
+        const end = starts[index+1] ?? top.length;
+        const columns = sub.flatMap((v,col) => col > start && col < end && /^(in|out)$/.test(label(v))
+          ? [{col, kind:label(v)}] : []);
+        if (!columns.length || columns.length % 2 || columns.some((c,i) => c.kind !== (i%2 ? 'out' : 'in'))) {
+          throw new Error('A Record Report panel is missing its paired IN/OUT headings.');
+        }
+        for (let rowIndex=heading+2; rowIndex<sheet.rows.length; rowIndex++) {
+          const row = sheet.rows[rowIndex];
+          if (row.slice(start,end).every(isBlank)) continue;
+          const dayMatch = /^(\d{1,2})(?:\s+D[0-7])?$/i.exec(text(row[start]));
+          if (!dayMatch) throw new Error('The Record Report has an unreadable day row.');
+          const day = +dayMatch[1];
+          if (day < 1 || day > last || seen.has(day)) throw new Error('The Record Report has an invalid or repeated day.');
+          seen.add(day);
+          columns.forEach(({col,kind}) => {
+            let v = row[col];
+            if (isBlank(v)) return;
+            const display = sheet.displayRows?.[rowIndex]?.[col];
+            if (typeof v === 'number' && /^\d{1,2}:\d{2}$/.test(text(display))) v = display;
+            const time = cells.time(v);
+            if (!time) throw new Error('The Record Report contains an unreadable IN/OUT time. Check the source file; no attendance was imported.');
+            employee.days[iso(day)].push(time);
+            (employee.kinds[iso(day)] ||= []).push(kind);
+          });
+        }
+      });
+      if (!seen.size) throw new Error('The Record Report contains no day rows.');
+      Object.entries(employee.days).forEach(([date,taps]) => {
+        if (taps.some((time,i) => i > 0 && time < taps[i-1])) {
+          employee.notes[date] = ['Source IN/OUT clocks are not in chronological order. Kept as recorded; review the source before printing.'];
+          reversedDays++;
+        }
+      });
+      result.employees.push(employee);
+    });
+    if (reversedDays) result.warnings.push(`${reversedDays} Record Report day${reversedDays === 1 ? ' has' : 's have'} IN/OUT clocks out of chronological order. Times were kept as recorded; review Day details before printing.`);
+    return result;
+  }
+  return { id: FILE_FORMATS.RECORD_REPORT, detect: sheets => sheets.some(matches), read };
+})();
+
+</script>
+  <script>
 /*
  * parser.js — opens the machine's file and hands it to the reader that fits.
  *
@@ -3668,7 +3947,7 @@ DTR.parser = (function () {
   const R = DTR.readers;
 
   /* Most specific first: the Timecard Report also contains dates and times. */
-  const READERS = [R.timecard, R.clockTable, R.standardReport, R.punchReport, R.monthlyStatement, R.employeeTable, R.attendanceRecords, R.timesheet, R.abnormalReport, R.dailySummary, R.dailyPairs, R.staffTimetable, R.punchLog];
+  const READERS = [R.timecard, R.clockTable, R.standardReport, R.punchReport, R.monthlyStatement, R.employeeTable, R.attendanceRecords, R.timesheet, R.abnormalReport, R.dailySummary, R.dailyPairs, R.staffTimetable, R.cardReport, R.recordReport, R.punchLog];
   const TEXT_FILE = /\.(csv|txt|dat)$/i;
 
   class SourceFormatError extends Error {}
@@ -3793,7 +4072,7 @@ DTR.parser = (function () {
     const month = parsed.months.find((m) => m.key === monthKey) || parsed.months[0];
     const isReport = parsed.format === FILE_FORMATS.TIMECARD || parsed.format === FILE_FORMATS.CLOCK_TABLE
       || parsed.format === FILE_FORMATS.STANDARD_REPORT || parsed.format === FILE_FORMATS.PUNCH_REPORT
-      || parsed.format === FILE_FORMATS.MONTHLY_STATEMENT || parsed.format === FILE_FORMATS.EMPLOYEE_TABLE || parsed.format === FILE_FORMATS.STAFF_TIMETABLE || parsed.format === FILE_FORMATS.TIMESHEET || parsed.format === FILE_FORMATS.DAILY_SUMMARY || parsed.format === FILE_FORMATS.DAILY_PAIRS || parsed.format === FILE_FORMATS.ATTENDANCE_RECORDS;
+      || parsed.format === FILE_FORMATS.MONTHLY_STATEMENT || parsed.format === FILE_FORMATS.EMPLOYEE_TABLE || parsed.format === FILE_FORMATS.STAFF_TIMETABLE || parsed.format === FILE_FORMATS.TIMESHEET || parsed.format === FILE_FORMATS.DAILY_SUMMARY || parsed.format === FILE_FORMATS.DAILY_PAIRS || parsed.format === FILE_FORMATS.ATTENDANCE_RECORDS || parsed.format === FILE_FORMATS.CARD_REPORT || parsed.format === FILE_FORMATS.RECORD_REPORT;
 
     const periodText = parsed.periods?.[month.key] || parsed.periodText;
     let period;
@@ -3923,7 +4202,13 @@ DTR.names = (function () {
     return `${(parts.last || '').toUpperCase()}|${(parts.first || '').toUpperCase()}`;
   }
 
-  return { guess, parseFull, format, sortKey };
+  /** Display-only office number. Missing uses the machine ID; an explicitly blank value stays blank. */
+  function employeeNumber(person, machineId) {
+    const value = person && Object.prototype.hasOwnProperty.call(person, 'employeeNumber') ? person.employeeNumber : machineId;
+    return String(value == null ? '' : value).trim().slice(0, DTR.config.EMPLOYEE_NUMBER_MAX_LENGTH);
+  }
+
+  return { guess, parseFull, format, sortKey, employeeNumber };
 })();
 
 </script>
@@ -4891,6 +5176,9 @@ DTR.converter = (function () {
 
     return {
       employeeId: employee.id,
+      employeeNumber: DTR.names.employeeNumber(person, employee.id),
+      employeeNumberPosition: Object.prototype.hasOwnProperty.call(DTR.config.EMPLOYEE_NUMBER_POSITIONS, settings.employeeNumberPosition)
+        ? settings.employeeNumberPosition : 'hidden',
       rawName: employee.rawName,
       name: DTR.names.format(person),
       monthName: MONTH_NAMES[period.month - 1],
@@ -5089,16 +5377,21 @@ DTR.form48 = (function () {
   function headerHtml(model, opts) {
     const l = model.layout && DTR.layouts.normalize(model.layout);
     const logoStyle = l ? ` style="width:${l.logoSize}in;height:${l.logoSize}in;${l.logoPosition === 'left' ? 'left:0;right:auto' : ''}"` : '';
-    const topStyle = l && model.logo && !l.header ? ` style="padding-${l.logoPosition}:${l.logoSize + 0.06}in;min-height:${l.logoSize}in"` : '';
+    const number = model.employeeNumber && model.employeeNumberPosition !== 'hidden' ? model.employeeNumber : '';
+    const besideName = number && model.employeeNumberPosition === 'name';
+    const aboveTitle = number && model.employeeNumberPosition === 'top-right';
+    const topStyle = !aboveTitle && l && model.logo && !l.header ? ` style="padding-${l.logoPosition}:${l.logoSize + 0.06}in;min-height:${l.logoSize}in"` : '';
     return `
       <div class="f48-layout-top"${topStyle}>
+      ${aboveTitle ? `<div class="f48-number-brand" style="min-height:${isLogo(model.logo) ? (l ? l.logoSize : 0.56) : 0}in">` : ''}
       ${isLogo(model.logo) ? `<img class="f48-logo"${logoStyle} src="${model.logo}" alt="">` : ''}
       ${l && l.header ? `<div class="f48-school-header" style="${DTR.layouts.css(l.headerStyle)};${model.logo ? `padding-${l.logoPosition}:${l.logoSize + 0.06}in;min-height:${l.logoSize}in` : ''}">${esc(l.header)}</div>` : ''}
       <div class="f48-formno">${esc(T.FORM_NO)}</div>
+      ${aboveTitle ? `</div><div class="f48-employee-number f48-number-top">Employee No. ${esc(number)}</div>` : ''}
       <div class="f48-title">${esc(T.TITLE)}</div>
       <div class="f48-title-rule"></div>
       </div>
-      <div class="${cls('f48-name', nameSize(model.name), opts.editable && 'is-editable', opts.marks && !model.name && 'is-placeholder')}"${attr(opts.editable, 'data-name', '1')}${attr(opts.marks && !model.name, 'data-placeholder', `No name yet — employee no. ${model.employeeId}`)}>${esc(model.name)}</div>
+      <div class="${cls('f48-name', besideName && 'f48-name-with-number', nameSize(model.name), opts.editable && 'is-editable', opts.marks && !model.name && 'is-placeholder')}"${attr(opts.editable, 'data-name', '1')}${attr(opts.marks && !model.name, 'data-placeholder', `No name yet — employee no. ${model.employeeId}`)}>${besideName ? `<span class="f48-person-name">${esc(model.name)}</span> <span class="f48-employee-number f48-number-inline">· No. ${esc(number)}</span>` : esc(model.name)}</div>
       <div class="f48-caption">${esc(T.NAME_CAPTION)}</div>
       <div class="f48-month">
         <span>${esc(T.MONTH_LEAD)}</span>
@@ -5210,9 +5503,12 @@ DTR.form48 = (function () {
 
   function copyHtml(model, opts) {
     // Online demo only (js/demo.js): every copy, on screen and on paper, says it is not for submission.
+    const hasNumber = !!model.employeeNumber && ['name', 'top-right'].includes(model.employeeNumberPosition);
+    const numberSpace = !hasNumber ? 0 : model.employeeNumberPosition === 'name' ? 16
+      : 16 + (model.logo && !(model.layout && model.layout.header) ? 34 : 0);
     const watermark = DTR.config.DEMO_MODE ? `<div class="f48-demo-mark" aria-hidden="true">${esc(DTR.config.DEMO_WATERMARK)}</div>` : '';
     return `
-      <div class="f48${model.layout ? ' f48-custom-layout' : ''}"${model.layout ? ` style="--layout-row-reduction:${DTR.layouts.extraHeight(model.layout) / 31}pt"` : ''}>
+      <div class="f48${model.layout ? ' f48-custom-layout' : ''}${hasNumber ? ' f48-with-number' : ''}"${model.layout || hasNumber ? ` style="--layout-row-reduction:${model.layout ? DTR.layouts.extraHeight(model.layout) / 31 : 0}pt;--number-row-reduction:${numberSpace / 31}pt"` : ''}>
         ${watermark}
         ${headerHtml(model, opts)}
         <table class="f48-table">
@@ -5267,7 +5563,7 @@ DTR.form48 = (function () {
   }
 
   function checkFit(model, opts) {
-    if (!model.layout) return '';
+    if (!model.layout && !(model.employeeNumber && model.employeeNumberPosition !== 'hidden')) return '';
     const box = document.createElement('div');
     box.style.cssText = 'position:fixed;left:-20000px;top:0;visibility:hidden;pointer-events:none';
     box.innerHTML = sheet(model, opts); document.body.appendChild(box);
@@ -5275,8 +5571,8 @@ DTR.form48 = (function () {
     try {
       const paper = box.querySelector('.sheet'), copy = paper.querySelector('.copy'), form = copy.querySelector('.f48');
       const bottom = opts.size === 'card' ? copy.getBoundingClientRect().bottom - 8 : paper.getBoundingClientRect().bottom - 24;
-      if (form.getBoundingClientRect().bottom > bottom) error = 'This layout is too tall for this print size. Shorten the header or footer, or choose Full page.';
-      for (const el of form.querySelectorAll('.f48-school-header,.f48-cert,.f48-verification,.f48-footer-note,.f48-employee-caption,.f48-signer-caption,th')) {
+      if (form.getBoundingClientRect().bottom > bottom) error = 'This layout is too tall for this print size. Shorten the header, footer or employee number, or choose Full page.';
+      for (const el of form.querySelectorAll('.f48-school-header,.f48-cert,.f48-verification,.f48-footer-note,.f48-employee-caption,.f48-signer-caption,.f48-name-with-number,.f48-employee-number,th')) {
         if (el.scrollWidth > el.clientWidth + 2) error = 'Some layout text is too wide. Shorten the text or reduce its font size.';
       }
     } finally { box.remove(); }
@@ -5476,7 +5772,9 @@ DTR.picture = (function () {
  * A sheet is described as plain data (rows and columns are 0-based):
  *   { name, cells: [{ r, c, v, s }], merges: [[r1, c1, r2, c2]], colWidths: [chars],
  *     rowHeights: { r: points }, paper: 9 (A4) | 14 (8.5 × 13), margins: inches,
- *     protect: true, images: [{ bytes, ext, r, c, sizeIn, offsetIn }] }
+ *     protect: false | 'all' | 'values', images: [{ bytes, ext, r, c, sizeIn, offsetIn }] }
+ *   protect 'all'    = view and print only;
+ *   protect 'values' = every cell's text stays locked, but fonts, row heights and column widths may be changed.
  * A style `s`: { sz, b, i, h: 'left'|'center'|'right', v: 'top'|'center'|'bottom', wrap,
  *   indent, border: { l, r, t, b: 'thin'|'medium'|'dashed'|'double' } }
  */
@@ -5597,7 +5895,9 @@ DTR.xlsx = (function () {
     const cols = sheet.colWidths.map((w, c) => `<col min="${c + 1}" max="${c + 1}" width="${w}" customWidth="1"/>`).join('');
     const merges = (sheet.merges || []).map(([r1, c1, r2, c2]) => `<mergeCell ref="${ref(r1, c1)}:${ref(r2, c2)}"/>`).join('');
     const m = sheet.margins === undefined ? 0.3 : sheet.margins;
-    const protect = sheet.protect ? `<sheetProtection password="${passwordHash(randomPassword())}" sheet="1" objects="1" scenarios="1"/>` : '';
+    // In <sheetProtection>, formatCells="0" etc. means "this is still allowed while locked".
+    const allowFormatting = sheet.protect === 'values' ? ' formatCells="0" formatColumns="0" formatRows="0"' : '';
+    const protect = sheet.protect ? `<sheetProtection password="${passwordHash(randomPassword())}" sheet="1" objects="1" scenarios="1"${allowFormatting}/>` : '';
     return `${XML_HEAD}<worksheet xmlns="${NS}" xmlns:r="${NS_R}">`
       + '<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>'
       + `<dimension ref="A1:${ref(maxR, maxC)}"/>`
@@ -5708,8 +6008,9 @@ DTR.xlsx = (function () {
 /*
  * export/excel.js — Download Excel: every chosen DTR as a ready-to-print CSC Form No. 48 in
  * one workbook, one worksheet per employee (two copies side by side, or one bigger copy for
- * the Large size). Each sheet is set to the office's paper, fits one page, and is LOCKED:
- * it can be opened and printed but not changed — DTRs are corrected in DTR Converter.
+ * the Large size). Each sheet is set to the office's paper and fits one page. Every value is
+ * LOCKED (times, names, dates — DTRs are corrected in DTR Converter), but the office may change
+ * fonts, row heights and column widths to suit its printer.
  * Draws from the same model as the printout (converter.build / state.model); export/xlsx.js writes the file.
  */
 window.DTR = window.DTR || {};
@@ -5718,24 +6019,40 @@ DTR.excel = (function () {
   const { FORM_TEXT: T, TIME_SLOTS, UNDERTIME_SLOTS } = DTR.config;
 
   /*
-   * One copy is 7 columns: Days · A.M. arrival, departure · P.M. arrival, departure · Under time hours, minutes.
-   * Widths are in Excel's character units; LAYOUTS.k enlarges text and rows (Large), `wide` the columns.
+   * The form is as wide on paper as the app's printout (css/form48.css), so Excel never has to
+   * shrink it and every font prints at the same size as in the app (times 9 pt on Full page).
+   * One copy is 7 columns: Days · A.M. arrival, departure · P.M. arrival, departure · Under time
+   * hours, minutes; the Days column is 0.42 in of the 3.62 in copy, the other six share the rest.
+   *   copyIn  width of one copy on paper · gapIn  space between the two copies
+   *   k       text size against Full page (Large prints bigger text, like the app)
    */
-  const COLS = Object.freeze([5.5, 8.6, 8.6, 8.6, 8.6, 7.4, 7.4]);
-  const GAP_COL = 3;
-  const LAYOUTS = Object.freeze({
-    two: Object.freeze({ copies: 2, k: 1, wide: 1 }),
-    one: Object.freeze({ copies: 1, k: 1.08, wide: 1.75 })   // ~25% bigger than two-up once Excel fits the width
+  const GEOMETRY = Object.freeze({
+    a4:   Object.freeze({ two: { copies: 2, copyIn: 3.62, gapIn: 0.35, k: 1 }, one: { copies: 1, copyIn: 7.26, gapIn: 0, k: 1.2 } }),
+    long: Object.freeze({ two: { copies: 2, copyIn: 3.72, gapIn: 0.26, k: 1 }, one: { copies: 1, copyIn: 7.42, gapIn: 0, k: 1.28 } })
   });
+  const DAY_COL_SHARE = 0.42 / 3.62;
+  const COPY_COLS = 7;
   /*
-   * Excel's "fit to one page" only shrinks, so the day rows are made just tall enough for the form
-   * to reach the bottom of the paper. PX_PER_CHAR: one width unit on screen (measured in Excel 365).
+   * PX_PER_CHAR: one Excel width unit on paper, in 1/96 in (measured with Excel 365's printout).
+   * Excel's "fit to one page" only shrinks — it stays as a safety net for printers with wide margins —
+   * so the day rows are made just tall enough for the form to reach the bottom of the paper.
    */
-  const MARGIN_IN = 0.3;
+  const MARGIN_IN = 0.25;
   const PX_PER_CHAR = 7.55;
   const FILL = 0.97;                       // a little room so rounding never spills onto a 2nd page
   const DAY_ROW_PT = Object.freeze({ MIN: 13, MAX: 30 });
   const LOGO_IN = 0.5;
+  // Long names print smaller, as on the form (form48.js LONG_NAME_STEPS and css .f48-name sizes).
+  const NAME_SIZES = Object.freeze([{ over: 38, pt: 7.5 }, { over: 30, pt: 9 }]);
+  const nameSize = (name) => (NAME_SIZES.find((s) => String(name).length > s.over) || { pt: 10.5 }).pt;
+
+  /** Column widths (Excel units) for one copy: the Days column, then six equal ones. */
+  function copyColumns(copyIn) {
+    const chars = (copyIn * 96) / PX_PER_CHAR;
+    const day = chars * DAY_COL_SHARE;
+    const round = (n) => Math.round(n * 100) / 100;
+    return [round(day)].concat(Array(COPY_COLS - 1).fill(round((chars - day) / (COPY_COLS - 1))));
+  }
   // Short remarks are spread out (S A T) as on the printed form; longer ones stay as typed.
   const SPREAD_UP_TO = 14;
 
@@ -5767,11 +6084,11 @@ DTR.excel = (function () {
       if (r1 !== r2 || c1 !== c2) out.merges.push([r1, c0 + c1, r2, c0 + c2]);
     };
     const height = (r, pt) => { out.rowHeights[r] = ht(pt); };
-    const LAST = COLS.length - 1;
+    const LAST = COPY_COLS - 1;
     let r = 0;
 
     const styledText = (text, textStyle, from = 0, to = LAST, minHeight = 0) => {
-      const widthPt = COLS.slice(from, to + 1).reduce((sum, n) => sum + n, 0) * layout.wide * PX_PER_CHAR * 0.75 / k - 12;
+      const widthPt = layout.cols.slice(from, to + 1).reduce((sum, n) => sum + n, 0) * PX_PER_CHAR * 0.75 / k - 12;
       // Excel does not auto-fit merged cells. Reserve enough height for every wrapped line.
       let measure = text => String(text).length * textStyle.size;
       if (typeof document !== 'undefined') {
@@ -5793,7 +6110,10 @@ DTR.excel = (function () {
       block(r, from, r, to, text, { sz: sz(textStyle.size), b: textStyle.bold, i: textStyle.italic, h: textStyle.align, wrap: true, v: 'center' });
       height(r++, Math.max(minHeight, count * textStyle.size * 1.5 + 8));
     };
+    const number = model.employeeNumber && model.employeeNumberPosition !== 'hidden' ? model.employeeNumber : '';
+    const aboveTitle = number && model.employeeNumberPosition === 'top-right';
     // --- top of the form ---
+    if (aboveTitle && model.logo && !l) { height(r++, LOGO_IN * 72 + 4); }
     if (l && model.logo && !l.header) { height(r++, l.logoSize * 72 + 4); }
     if (l && l.header) {
       const left = model.logo && l.logoPosition === 'left' ? 1 : 0;
@@ -5801,9 +6121,15 @@ DTR.excel = (function () {
       styledText(l.header, l.headerStyle, left, right, model.logo ? l.logoSize * 72 : 0);
     }
     block(r, 0, r, LAST, T.FORM_NO, { sz: sz(8), i: true }); height(r++, 13);
-    block(r, 0, r, LAST, T.TITLE, { sz: sz(13), b: true, h: 'center' }); height(r++, 22);
+    if (aboveTitle) styledText(`Employee No. ${number}`, { size: 8, align: 'right' });
+    block(r, 0, r, LAST, T.TITLE, { sz: sz(13.5), b: true, h: 'center' }); height(r++, 22);
     height(r++, 6);
-    block(r, 0, r, LAST, model.name, { sz: sz(model.name.length > 30 ? 9 : 10.5), b: true, h: 'center', border: { b: 'dashed' } }); height(r++, 17);
+    if (number && model.employeeNumberPosition === 'name') {
+      styledText(`${model.name} · No. ${number}`, { size: nameSize(model.name), bold: true, align: 'center' });
+      out.cells.filter(cell => cell.r === r - 1 && cell.c >= c0 && cell.c <= c0 + LAST).forEach(cell => { cell.s.border = { b: 'dashed' }; });
+    } else {
+      block(r, 0, r, LAST, model.name, { sz: sz(nameSize(model.name)), b: true, h: 'center', border: { b: 'dashed' } }); height(r++, 17);
+    }
     block(r, 0, r, LAST, T.NAME_CAPTION, { sz: sz(9), b: true, i: true, h: 'center', v: 'top' }); height(r++, 13);
     block(r, 0, r, 1, T.MONTH_LEAD, { sz: sz(9.5), i: true });
     block(r, 2, r, 4, model.monthName, { sz: sz(9.5), b: true, h: 'center', border: { b: 'thin' } });
@@ -5868,7 +6194,7 @@ DTR.excel = (function () {
     if (l && l.signerCaption) styledText(l.signerCaption, l.footerStyle, 3);
     if (l && l.footer) styledText(l.footer, l.footerStyle);
     const logo = out.logo;
-    if (logo) out.images.push({ bytes: logo.bytes, ext: logo.ext, r: 0, c: c0 + (l && l.logoPosition === 'left' ? 0 : LAST - 1), sizeIn: (l ? l.logoSize : LOGO_IN) * k, offsetIn: [0.12 * layout.wide, 0.02] });
+    if (logo) out.images.push({ bytes: logo.bytes, ext: logo.ext, r: 0, c: c0 + (l && l.logoPosition === 'left' ? 0 : LAST - 1), sizeIn: (l ? l.logoSize : LOGO_IN) * k, offsetIn: [0.12 * (layout.copyIn / GEOMETRY.a4.two.copyIn), 0.02] });
   }
 
   /** Day-row height that makes the form fill the page once Excel fits its width to the paper. */
@@ -5883,18 +6209,20 @@ DTR.excel = (function () {
 
   /** One worksheet for one employee. */
   function sheetFor(model, { paper, perSheet }, logoCache) {
-    const layout = perSheet === 1 ? LAYOUTS.one : LAYOUTS.two;
+    const geometry = GEOMETRY[paper] || GEOMETRY.a4;
+    const shape = perSheet === 1 ? geometry.one : geometry.two;
+    const layout = Object.assign({ cols: copyColumns(shape.copyIn) }, shape);
     const paperSize = DTR.config.PAPER_SIZES[paper] || DTR.config.PAPER_SIZES.a4;
-    const copyCols = COLS.map((w) => Math.round(w * layout.wide * 10) / 10);
-    const colWidths = layout.copies === 2 ? copyCols.concat([GAP_COL], copyCols) : copyCols;
+    const gap = Math.round(((shape.gapIn * 96) / PX_PER_CHAR) * 100) / 100;
+    const colWidths = layout.copies === 2 ? layout.cols.concat([gap], layout.cols) : layout.cols;
     const out = { cells: [], merges: [], rowHeights: {}, dayRows: new Set(), images: [], logo: model.logo ? logoCache(model.logo) : null };
-    for (let i = 0; i < layout.copies; i++) addCopy(out, model, i * (COLS.length + 1), layout);
+    for (let i = 0; i < layout.copies; i++) addCopy(out, model, i * (COPY_COLS + 1), layout);
     fillPage(out, colWidths, paperSize);
     return {
       name: model.name || model.rawName || model.employeeId,
       cells: out.cells, merges: out.merges, rowHeights: out.rowHeights, images: out.images,
       colWidths, paper: paperSize.excelPaper, margins: MARGIN_IN,
-      protect: true
+      protect: 'values'
     };
   }
 
@@ -6861,21 +7189,48 @@ DTR.ui.upload = (function () {
     });
   }
 
-  /** parser.read, asking the AO for the year once if the file has none. Null = cancelled. */
-  async function readFile(buffer, fileName, year) {
+  /** Cropped reports need an explicit month AND year. Cancel leaves saved work alone. */
+  function askPeriod() {
+    return dialogDone({
+      title: 'Which month and year is this attendance for?',
+      body: `<p class="modal-text">This file has day numbers but no month or year.</p>
+        <label class="year-ask">Month <select id="ask-month"><option value="">Choose month</option>${MONTH_NAMES.map((m, i) => `<option value="${i + 1}">${esc(m)}</option>`).join('')}</select></label>
+        <label class="year-ask">Year <input id="ask-period-year" type="number" min="2000" max="2099" step="1" placeholder="e.g. 2026" inputmode="numeric"></label>`,
+      footer: '<button class="btn btn-ghost" data-close>Cancel</button><button class="btn btn-primary" id="period-go">Use this period</button>',
+      onMount: (el, close, setAnswer) => {
+        const monthInput = el.querySelector('#ask-month'), yearInput = el.querySelector('#ask-period-year');
+        const go = () => {
+          const month = Number(monthInput.value), year = Number(yearInput.value);
+          if (!Number.isInteger(month) || month < 1 || month > 12) { monthInput.focus(); return; }
+          if (!Number.isInteger(year) || year < 2000 || year > 2099) { yearInput.focus(); yearInput.select(); return; }
+          setAnswer({ month, year }); close();
+        };
+        el.querySelector('#period-go').addEventListener('click', go);
+        yearInput.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+        setTimeout(() => monthInput.focus(), 50);
+      }
+    });
+  }
+
+  /** Ask once for missing date information; a cancelled prompt imports nothing. */
+  async function readFile(buffer, fileName, options) {
     try {
-      return DTR.parser.read(buffer, fileName, year ? { year } : undefined);
+      return DTR.parser.read(buffer, fileName, options);
     } catch (err) {
-      if (err.code !== DTR.readers.clockTable.NEEDS_YEAR || year) throw err;
+      if (err.code === DTR.readers.standardReport.NEEDS_PERIOD && !(options.month && options.year)) {
+        const chosen = await askPeriod();
+        return chosen ? DTR.parser.read(buffer, fileName, chosen) : null;
+      }
+      if (err.code !== DTR.readers.clockTable.NEEDS_YEAR || options.year) throw err;
       const chosen = await askYear(err.month);
-      return chosen ? readFile(buffer, fileName, chosen) : null;
+      return chosen ? DTR.parser.read(buffer, fileName, { year: chosen }) : null;
     }
   }
 
   /** Reads the machine's file bytes and opens the month. Shared by the picker, drag & drop and tests. */
   async function importArrayBuffer(buffer, fileName, options) {
     const opts = Object.assign({ followUps: true }, options);
-    const parsed = await readFile(buffer, fileName, opts.year);
+    const parsed = await readFile(buffer, fileName, { year: opts.year, month: opts.month });
     if (!parsed) return null;
     const monthKey = parsed.months.length > 1 ? (opts.monthKey || await chooseMonth(parsed.months)) : parsed.months[0].key;
     if (!monthKey) return null;
@@ -8981,6 +9336,11 @@ DTR.ui.settings = (function () {
     }
     const pill = (value, label, count) => `<button class="dir-filter" data-filter="${value}">${esc(label)} <b>${count}</b></button>`;
     return `
+      <div class="dir-number-settings">
+        <label for="dir-number-position">Employee numbers on the DTR</label>
+        <select id="dir-number-position">${Object.entries(DTR.config.EMPLOYEE_NUMBER_POSITIONS).map(([value, label]) => `<option value="${value}" ${settings.employeeNumberPosition === value ? 'selected' : ''}>${esc(label)}</option>`).join('')}</select>
+        <span class="muted">Edit the number below. The machine ID stays unchanged.</span>
+      </div>
       <div class="dir-bar">
         <div class="search dir-search"><svg><use href="#i-search"/></svg><input id="dir-search" type="search" placeholder="Search name or ID"></div>
         <div class="dir-filters">
@@ -9002,17 +9362,18 @@ DTR.ui.settings = (function () {
         <button class="btn btn-secondary btn-sm" id="dir-bulk-signer-apply">Apply</button></div>` : ''}
       <div class="table-wrap">
         <table class="dir-table">
-          <thead><tr><th class="dir-col-emp">On the machine → prints as</th><th>Last name</th><th>First name</th><th class="dir-col-narrow">M.I.</th><th class="dir-col-narrow">Ext.</th>${withCategories ? '<th title="Used by Holidays &amp; suspensions">Category</th>' : ''}${withSchedules ? '<th>Schedule</th>' : ''}${withSigners ? '<th title="Who signs this DTR">Signed by</th>' : ''}<th class="dir-col-narrow" title="No longer working here: set aside every month">Inactive</th></tr></thead>
+          <thead><tr><th class="dir-col-emp">On the machine → prints as</th><th class="dir-col-number">Employee No.</th><th>Last name</th><th>First name</th><th class="dir-col-narrow">M.I.</th><th class="dir-col-narrow">Ext.</th>${withCategories ? '<th title="Used by Holidays &amp; suspensions">Category</th>' : ''}${withSchedules ? '<th>Schedule</th>' : ''}${withSigners ? '<th title="Who signs this DTR">Signed by</th>' : ''}<th class="dir-col-narrow" title="No longer working here: set aside every month">Inactive</th></tr></thead>
           <tbody>${ids.map((id) => {
             const p = directory[id];
             const inMonths = months[id] || [];
-            const searchText = `${id} ${p.rawName || ''} ${p.last} ${p.first}`.toLowerCase();
+            const searchText = `${id} ${p.rawName || ''} ${DTR.names.employeeNumber(p, id)} ${p.last} ${p.first}`.toLowerCase();
             return `<tr data-id="${esc(id)}" data-used="${inMonths.length ? 1 : 0}" data-search="${esc(searchText)}" class="${p.confirmed ? '' : 'is-unconfirmed'}">
               <td><div class="dir-emp">
                 <span class="dir-raw" title="${esc(p.rawName || '')}">${esc(p.rawName || '(no name in the file)')}</span>
                 <span class="dir-meta">ID ${esc(id)} · ${inMonths.length ? esc(inMonths.join(', ')) : 'not in any saved month'}</span>
                 <span class="dir-preview">${esc(DTR.names.format(p))}</span>
               </div></td>
+              <td><input data-k="employeeNumber" value="${esc(DTR.names.employeeNumber(p, id))}" maxlength="${DTR.config.EMPLOYEE_NUMBER_MAX_LENGTH}" aria-label="Employee number" autocomplete="off"></td>
               <td><input data-k="last" value="${esc(p.last)}" aria-label="Last name"></td>
               <td><input data-k="first" value="${esc(p.first)}" aria-label="First name"></td>
               <td><input data-k="middleInitial" class="narrow" maxlength="3" value="${esc(p.middleInitial)}" aria-label="Middle initial"></td>
@@ -9152,7 +9513,11 @@ DTR.ui.settings = (function () {
     };
     pane.addEventListener('input', (e) => {
       const tr = e.target.closest('tr[data-id]');
-      if (tr) tr.querySelector('.dir-preview').textContent = DTR.names.format(readRow(tr));
+      if (tr) {
+        const parts = readRow(tr);
+        tr.querySelector('.dir-preview').textContent = DTR.names.format(parts);
+        tr.dataset.search = `${tr.dataset.id} ${state.person(tr.dataset.id).rawName || ''} ${parts.last} ${parts.first} ${parts.employeeNumber}`.toLowerCase();
+      }
     });
     const saveBtn = pane.querySelector('#dir-save');
     if (!saveBtn) return;
@@ -9227,6 +9592,7 @@ DTR.ui.settings = (function () {
       });
       state.saveDirectory(directory);
       rows().forEach((tr) => tr.classList.remove('is-unconfirmed'));
+      state.saveSettings({ employeeNumberPosition: pane.querySelector('#dir-number-position').value });
       dialogs.toast('Employee List saved.', 'success');
     });
   }

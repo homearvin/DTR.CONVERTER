@@ -1,21 +1,21 @@
 {
-  "latest": "1.22.0",
-  "released": "2026-11-02",
+  "latest": "1.23.0",
+  "released": "2026-11-03",
   "download_url": "https://homearvin.github.io/DTR.CONVERTER/#get",
   "changes": [
-    "Pro DTR layouts: customize school headers, logos, time headings, verification and signature wording.",
-    "Save reusable layouts for selected employees or all employees; keep past months unchanged.",
-    "Print sizes, Pictures and locked Excel downloads; Employee Attendance Record and Abnormal Report support."
+    "Employee numbers for Standard and Pro: edit them in Employee List and show beside the name or at the upper right below the logo.",
+    "Numbers retain leading zeros and appear in Print, PDF, Pictures and Excel without changing biometric attendance matching.",
+    "Now reads Card Report, Record Report and cropped day-grid Excel files. Missing month/year is selected by you; unreadable numeric clocks remain blank with warnings."
   ],
   "package": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.22.0/DTR-Converter-1.22.0-portable.zip",
-    "sha256": "84a2f677daf701f669bb28fec62033683085869b9cbb4f4084d3eefde1d3dc42",
-    "size": 13208853,
-    "signature": "++uLN69FBzPC6dwcPjtrEsNDQgRuKuvnPGWlPaURD0VNcU/XIaqKY4ArsFeC8+DIVQo4Y6oNzxU5cOEEZpvZDA=="
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.23.0/DTR-Converter-1.23.0-portable.zip",
+    "sha256": "a59c76c04eeb066bf388127b4bb7fdff495ee09958a7fe6197e10c1f7936e433",
+    "size": 13215797,
+    "signature": "NRLHhRpuZRni2pXHbfviN/eXQR/TFRdSLkfPFYMqfeTPFHL5oxw2AwjAPYZHVwOlx0Yqo76h1+Yl7FO87t9oAA=="
   },
   "installer": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.22.0/DTR-Converter-1.22.0-setup.exe",
-    "sha256": "29c69d51fee5620b3996730e4a9cce96ced1928e6c0f2caa0b7862fe2591b3fb",
-    "size": 15141646
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.23.0/DTR-Converter-1.23.0-setup.exe",
+    "sha256": "41a8426fc8a1695b1adc30cbde7c26587f440603613bef9c968b88101fc0d667",
+    "size": 15149659
   }
 }
