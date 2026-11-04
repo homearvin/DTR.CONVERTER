@@ -1,21 +1,21 @@
 {
-  "latest": "1.23.1",
+  "latest": "1.23.2",
   "released": "2026-11-04",
   "download_url": "https://homearvin.github.io/DTR.CONVERTER/#get",
   "changes": [
-    "Now accepts XLSM attendance workbooks with UID, Name, AM Time In and PM Time Out columns.",
-    "Reads both recorded times, keeps missing times blank and separates months using dates inside the workbook.",
-    "After updating, upload the original workbook again and select the month. Employee numbers, Pro layouts and all existing formats remain available."
+    "Checks for updates each time you open DTR Converter, so a cached check no longer hides a new release.",
+    "Settings > Updates now includes Check for updates, even after closing the reminder.",
+    "Retries when the internet reconnects and explains when an update check could not finish. Your saved work and activation are kept."
   ],
   "package": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.23.1/DTR-Converter-1.23.1-portable.zip",
-    "sha256": "3834cbcca1b82ba232e99a2ea7ec051ab6eb24a00c2ae7ecfd348056184c07eb",
-    "size": 13216427,
-    "signature": "IfLDEzMYT7hrZbgKg8v9aJfjsbdg2Qm1zwveTtpMmSt6uNDoVGhfdKINWAoNriGs0KOR4ZYTsExXaNK4rIRcAQ=="
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.23.2/DTR-Converter-1.23.2-portable.zip",
+    "sha256": "05e098047ce9d50906827d59e05ebcc77d236cdf267b2d1dfa4f9db70eb44907",
+    "size": 13214941,
+    "signature": "wW3tMDbDwsRL8sbChVN1bRA9FmA5DpaTrETRyGzmV9XjSYreZIAeIaRJuXFU3DtB1LzcwR/bRURVdpvX/u8qDA=="
   },
   "installer": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.23.1/DTR-Converter-1.23.1-setup.exe",
-    "sha256": "521f9eeac2b7594d9d3a72c19d3a20a336c51f9fc7bfbbf9798195640296d469",
-    "size": 15150142
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.23.2/DTR-Converter-1.23.2-setup.exe",
+    "sha256": "267e599e06ead5336237d24e3b13834600ab67dbf68da47cd86a1076c4387808",
+    "size": 15148611
   }
 }

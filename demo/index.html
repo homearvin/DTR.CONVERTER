@@ -1630,7 +1630,7 @@ window.DTR = window.DTR || {};
 DTR.config = Object.freeze({
   APP_NAME: 'DTR Converter',
   APP_SUBTITLE: 'Biometric Timecard → CSC Form No. 48',
-  APP_VERSION: '1.23.1',
+  APP_VERSION: '1.23.2',
 
   /* Where clients ask for help and keys (same as desktop/licensing.py CONTACT_*). */
   CONTACT: Object.freeze({ email: 'azmarketingservicesbicol@gmail.com', facebook: 'AZ Digital Marketing' }),
@@ -9122,7 +9122,8 @@ DTR.ui.settings = (function () {
     { id: 'official', label: 'Official time', icon: 'i-clock', pro: true, hint: 'Your office hours, used to fill in Under Time and the TOTAL.' },
     { id: 'employees', label: 'Employee List', icon: 'i-users', hint: 'Names as they print on Form 48, matched to the machine by ID number.' },
     { id: 'holidays', label: 'Holidays & suspensions', icon: 'i-calendar', hint: 'Set a holiday, class suspension or vacation once for many employees.' },
-    { id: 'data', label: 'Saved data & backup', icon: 'i-backup', hint: 'Months saved on this computer, and a backup file to keep them safe.' }
+    { id: 'data', label: 'Saved data & backup', icon: 'i-backup', hint: 'Months saved on this computer, and a backup file to keep them safe.' },
+    { id: 'updates', label: 'Updates', icon: 'i-download', hint: 'Check for a new version without changing your saved work.' }
   ]);
 
   const { field } = dialogs;
@@ -9552,6 +9553,7 @@ DTR.ui.settings = (function () {
           }
           if (id === 'holidays') { pane.innerHTML = DTR.ui.holidays.html(state.get().settings); DTR.ui.holidays.wire(pane, () => show('holidays')); }
           if (id === 'data') { pane.innerHTML = dataHtml(); wireData(pane, close, () => show('data')); }
+          if (id === 'updates') DTR.ui.update.renderSettings(pane);
           pane.scrollTop = scroll;
         }
         el.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => show(b.dataset.tab)));
@@ -10074,7 +10076,7 @@ DTR.ui.help = (function () {
  * ui/update.js — "Update available → Update now → Restart" on the Home screen.
  *
  * Talks to DTR Converter.exe (desktop/updater.py):
- *   POST /update/check     asks the website, at most once a day (the exe decides)
+ *   POST /update/check     asks the website; ?force=1 refreshes on opening or a manual check
  *   GET  /update/status    what is known now: available? downloading? ready?
  *   POST /update/download  starts the download (checked against the owner's signature)
  *   POST /update/restart   swaps the program and restarts it; this page then reloads
@@ -10093,6 +10095,8 @@ DTR.ui.update = (function () {
   let restarting = false;
   let checked = false;
   let onChange = () => {};
+  let checking = null;
+  let settingsRoot = null;
 
   const post = (url) => fetch(url, { method: 'POST', cache: 'no-store' }).then((r) => r.json());
   const get = (url) => fetch(url, { cache: 'no-store' }).then((r) => r.json());
@@ -10100,14 +10104,63 @@ DTR.ui.update = (function () {
   function set(next) {
     status = next;
     onChange();
+    refreshSettings();
   }
 
-  /** Once per opening of the app: ask the exe (which asks the website at most daily). */
+  /** A fresh check on every opening: yesterday's/day-old cache must not hide a new release. */
   function checkOnce(redraw) {
     onChange = redraw || onChange;
-    if (checked || DTR.config.DEMO_MODE) return;   // the online demo has no program to ask
+    if (checked || DTR.config.DEMO_MODE) return;
     checked = true;
-    post('/update/check').then(set).catch(() => {});
+    checkNow();
+    window.addEventListener('online', () => checkNow());
+  }
+
+  function checkNow() {
+    if (DTR.config.DEMO_MODE) return Promise.resolve(null);
+    if (checking) return checking;
+    // Keep the manifest paired with the package being downloaded or awaiting restart.
+    if (status && ['downloading', 'ready'].includes(status.step)) return Promise.resolve(status);
+    checking = post('/update/check?force=1').then(next => {
+      set(next);
+      return next;
+    }).catch(() => {
+      const next = Object.assign({}, status, {
+        check_error: 'Could not check for updates. Check your internet connection and try again.'
+      });
+      set(next);
+      return next;
+    }).finally(() => { checking = null; refreshSettings(); });
+    refreshSettings();
+    return checking;
+  }
+
+  function refreshSettings() {
+    if (settingsRoot && settingsRoot.isConnected && settingsRoot.querySelector('[data-update-settings]')) renderSettings(settingsRoot);
+  }
+
+  /** A permanent recovery route if a reminder was dismissed or the opening check was offline. */
+  function renderSettings(root) {
+    settingsRoot = root;
+    if (DTR.config.DEMO_MODE) {
+      root.innerHTML = '<section class="settings-section" data-update-settings><h3>Online demo</h3><p>The demo is updated on the website. Desktop updates are available in the installed app.</p></section>';
+      return;
+    }
+    const s = status;
+    const busy = checking || (s && ['downloading', 'ready'].includes(s.step));
+    const message = checking ? 'Checking for updates…' : s && s.check_error ? s.check_error
+      : s && s.available ? 'An update is available. Your saved work is kept.'
+      : s && s.checked_at ? 'You are using the latest version.' : 'Check online for the latest version.';
+    root.innerHTML = '<section class="settings-section" data-update-settings>'
+      + '<h3>DTR Converter ' + esc(DTR.config.APP_VERSION) + '</h3>'
+      + '<p class="settings-hint" role="status">' + esc(message) + '</p>'
+      + '<button class="btn btn-secondary" id="update-check-now"' + (busy ? ' disabled' : '') + '>Check for updates</button>'
+      + '</section>' + bannerHtml('settings-update-banner');
+    root.querySelector('#update-check-now').onclick = () => {
+      if (DTR.ui.shell.showUpdate) DTR.ui.shell.showUpdate();
+      checkNow();
+    };
+    wire(root);
   }
 
   function poll() {
@@ -10143,10 +10196,10 @@ DTR.ui.update = (function () {
   }
 
   /** The banner for the Home screen ('' when there is nothing to say). */
-  function bannerHtml() {
+  function bannerHtml(id = 'update-banner') {
     const s = status;
     if (restarting) {
-      return `<section class="card update-banner" id="update-banner"><div class="update-main"><b>Restarting DTR Converter…</b>
+      return `<section class="card update-banner" id="${esc(id)}"><div class="update-main"><b>Restarting DTR Converter…</b>
               <span class="muted">This takes a few seconds. Your work is kept.</span></div></section>`;
     }
     if (!s || !s.available) return '';
@@ -10162,7 +10215,7 @@ DTR.ui.update = (function () {
       action = s.download_url ? `<a class="btn btn-secondary" href="${esc(s.download_url)}" target="_blank" rel="noopener">Download</a>` : '';
     }
     return `
-      <section class="card update-banner" id="update-banner">
+      <section class="card update-banner" id="${esc(id)}">
         <span class="update-icon"><svg><use href="#i-download"/></svg></span>
         <div class="update-main">
           <b>Update available — version ${esc(s.latest)}</b>
@@ -10181,7 +10234,7 @@ DTR.ui.update = (function () {
     }));
   }
 
-  return { checkOnce, bannerHtml, wire };
+  return { checkOnce, checkNow, bannerHtml, wire, renderSettings };
 })();
 
 </script>
@@ -10383,7 +10436,8 @@ DTR.ui.shell = (function () {
     if (passBox) passBox.innerHTML = DTR.ui.getPro.passBanner();
   }
   function init() { render(); DTR.ui.update.checkOnce(renderUpdate); }
-  return { init, render };
+  function showUpdate() { dismissed = false; renderUpdate(); }
+  return { init, render, showUpdate };
 })();
 
 </script>
