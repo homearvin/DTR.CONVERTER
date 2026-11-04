@@ -1,21 +1,21 @@
 {
-  "latest": "1.23.0",
-  "released": "2026-11-03",
+  "latest": "1.23.1",
+  "released": "2026-11-04",
   "download_url": "https://homearvin.github.io/DTR.CONVERTER/#get",
   "changes": [
-    "Employee numbers for Standard and Pro: edit them in Employee List and show beside the name or at the upper right below the logo.",
-    "Numbers retain leading zeros and appear in Print, PDF, Pictures and Excel without changing biometric attendance matching.",
-    "Now reads Card Report, Record Report and cropped day-grid Excel files. Missing month/year is selected by you; unreadable numeric clocks remain blank with warnings."
+    "Now accepts XLSM attendance workbooks with UID, Name, AM Time In and PM Time Out columns.",
+    "Reads both recorded times, keeps missing times blank and separates months using dates inside the workbook.",
+    "After updating, upload the original workbook again and select the month. Employee numbers, Pro layouts and all existing formats remain available."
   ],
   "package": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.23.0/DTR-Converter-1.23.0-portable.zip",
-    "sha256": "a59c76c04eeb066bf388127b4bb7fdff495ee09958a7fe6197e10c1f7936e433",
-    "size": 13215797,
-    "signature": "NRLHhRpuZRni2pXHbfviN/eXQR/TFRdSLkfPFYMqfeTPFHL5oxw2AwjAPYZHVwOlx0Yqo76h1+Yl7FO87t9oAA=="
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.23.1/DTR-Converter-1.23.1-portable.zip",
+    "sha256": "3834cbcca1b82ba232e99a2ea7ec051ab6eb24a00c2ae7ecfd348056184c07eb",
+    "size": 13216427,
+    "signature": "IfLDEzMYT7hrZbgKg8v9aJfjsbdg2Qm1zwveTtpMmSt6uNDoVGhfdKINWAoNriGs0KOR4ZYTsExXaNK4rIRcAQ=="
   },
   "installer": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.23.0/DTR-Converter-1.23.0-setup.exe",
-    "sha256": "41a8426fc8a1695b1adc30cbde7c26587f440603613bef9c968b88101fc0d667",
-    "size": 15149659
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.23.1/DTR-Converter-1.23.1-setup.exe",
+    "sha256": "521f9eeac2b7594d9d3a72c19d3a20a336c51f9fc7bfbbf9798195640296d469",
+    "size": 15150142
   }
 }

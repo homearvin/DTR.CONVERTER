@@ -54,7 +54,7 @@
   .types{display:flex; flex-wrap:wrap; gap:8px; margin-top:20px}
   .type{display:inline-flex; align-items:center; gap:6px; padding:6px 11px; border-radius:10px; background:#fff; box-shadow:inset 0 0 0 1px var(--line); font-weight:750; font-size:13.5px; color:var(--navy)}
   .type i{display:grid; place-items:center; width:26px; height:18px; border-radius:4px; color:#fff; font-style:normal; font-size:9.5px; font-weight:800}
-  .t-xls i,.t-xlsx i{background:#1d7a45} .t-csv i{background:#2563eb} .t-txt i{background:#64748b} .t-dat i{background:#7c3aed}
+  .t-xls i,.t-xlsx i,.t-xlsm i{background:#1d7a45} .t-csv i{background:#2563eb} .t-txt i{background:#64748b} .t-dat i{background:#7c3aed}
   .steps{padding:22px 24px}
   .steps h3{font-size:16px}
   .steps ol{margin:12px 0 0; padding:0; list-style:none; display:grid; gap:12px}
@@ -158,6 +158,7 @@
       <div class="types" aria-label="File types it reads">
         <span class="type t-xls"><i>XLS</i>Excel 97–2003</span>
         <span class="type t-xlsx"><i>XLSX</i>Excel</span>
+        <span class="type t-xlsm"><i>XLSM</i>Excel macros</span>
         <span class="type t-csv"><i>CSV</i>Comma separated</span>
         <span class="type t-txt"><i>TXT</i>Text log</span>
         <span class="type t-dat"><i>DAT</i>Device log</span>
@@ -215,6 +216,16 @@
  *   ti (title) · hd (heading) · tm (time) · mu (faint).
  */
 const FORMATS = [
+  {
+    name: 'UID daily attendance', brand: null, types: ['xls', 'xlsx', 'xlsm'],
+    lookFor: '<code>Date</code>, <code>UID</code>, <code>Name</code>, <code>Section</code>, <code>AM Time In</code> and <code>PM Time Out</code>, often on one sheet per day.',
+    sample: [
+      [['Date', 'hd'], ['UID', 'hd'], ['Name', 'hd'], ['Section', 'hd'], ['AM Time In', 'hd'], ['PM Time Out', 'hd']],
+      ['2026-10-01', '0007', 'Juan Dela Cruz', 'Office', ['07:56:59', 'tm'], ['17:02:01', 'tm']],
+      ['2026-10-02', '0007', 'Juan Dela Cruz', 'Office', ['08:01:00', 'tm'], '']
+    ],
+    reads: ['Both recorded time columns, employee names and UID numbers', 'Separate month choices when the workbook contains more than one month; dates come from cells', 'Blank times stay blank. Roster-only people and picture paths are not attendance. Workbook macros do not run.']
+  },
   {
     name: 'Card Report', brand: null, types: ['xls', 'xlsx'],
     lookFor: '<code>Card Report</code>, <code>WeekDate</code>, an employee number/name and paired <code>On-duty / Off-duty</code> or <code>Check-in / Check-out</code> columns.',
@@ -411,7 +422,7 @@ const FORMATS = [
   }
 ];
 
-const TYPE_LABELS = { xls: 'XLS', xlsx: 'XLSX', csv: 'CSV', txt: 'TXT', dat: 'DAT' };
+const TYPE_LABELS = { xls: 'XLS', xlsx: 'XLSX', xlsm: 'XLSM', csv: 'CSV', txt: 'TXT', dat: 'DAT' };
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const typeChip = (t) => `<span class="type t-${t}"><i>${TYPE_LABELS[t]}</i></span>`;
 const letters = (n) => Array.from({ length: n }, (_, i) => String.fromCharCode(65 + i));
