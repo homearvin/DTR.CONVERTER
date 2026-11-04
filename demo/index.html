@@ -1630,7 +1630,7 @@ window.DTR = window.DTR || {};
 DTR.config = Object.freeze({
   APP_NAME: 'DTR Converter',
   APP_SUBTITLE: 'Biometric Timecard → CSC Form No. 48',
-  APP_VERSION: '1.23.2',
+  APP_VERSION: '1.23.3',
 
   /* Where clients ask for help and keys (same as desktop/licensing.py CONTACT_*). */
   CONTACT: Object.freeze({ email: 'azmarketingservicesbicol@gmail.com', facebook: 'AZ Digital Marketing' }),
@@ -4229,7 +4229,7 @@ DTR.names = (function () {
   const isParticle = (token) => SURNAME_PARTICLES.includes(token.toUpperCase());
 
   /** "Maria Santos" → { last: 'Santos', first: 'Maria', middleInitial: '', extension: '' } */
-  function guess(rawName) {
+  function legacyGuess(rawName) {
     const tokens = String(rawName).replace(/[,_]/g, ' ').split(/\s+/).filter(Boolean);
     let extension = '';
     if (tokens.length > 2 && isExtension(tokens[tokens.length - 1])) {
@@ -4250,6 +4250,36 @@ DTR.names = (function () {
     return { last: lastParts.join(' '), first: tokens.join(' '), middleInitial, extension };
   }
 
+  // Keep the old split only to recognize untouched guesses saved by earlier versions.
+  const nameFields = ['last', 'first', 'middleInitial', 'extension'];
+  const isInitial = token => /^[a-z]\.?$/i.test(token) || /^(?:[a-z]\.){2,3}$/i.test(token);
+
+  function guess(rawName, surnameFirstInitial = false) {
+    const clean = String(rawName || '').replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
+    if (clean.includes(',')) return parseFull(clean);
+    const tokens = clean.split(' ').filter(Boolean);
+    const withoutSuffix = tokens.filter(token => !isExtension(token));
+    // This UID report also writes SURNAME GIVEN NAMES M.I. without a comma.
+    // The owner confirmed this convention; other reports retain their existing order.
+    if (surnameFirstInitial && withoutSuffix.length >= 3
+        && isInitial(withoutSuffix[withoutSuffix.length - 1])) {
+      const particle = SURNAME_PARTICLES.map(p => p.split(' '))
+        .sort((a, b) => b.length - a.length)
+        .find(parts => parts.every((p, i) => (tokens[i] || '').toUpperCase() === p));
+      const surnameLength = particle ? particle.length + 1 : 1;
+      return parseFull(tokens.slice(0, surnameLength).join(' ') + ', ' + tokens.slice(surnameLength).join(' '));
+    }
+    return legacyGuess(clean);
+  }
+
+  /** Repair only an untouched automatic split of the SAME source name. */
+  function repairGuess(person, rawName, surnameFirstInitial = false) {
+    if (!person || person.confirmed || !rawName || person.rawName !== rawName) return null;
+    const old = legacyGuess(rawName), next = guess(rawName, surnameFirstInitial);
+    if (!nameFields.every(key => (person[key] || '') === old[key])) return null;
+    return nameFields.some(key => next[key] !== old[key]) ? next : null;
+  }
+
   /**
    * A full name as people type it → parts.
    *   "DELA CRUZ, JUAN P."  → last DELA CRUZ, first JUAN, M.I. P
@@ -4261,13 +4291,13 @@ DTR.names = (function () {
     const comma = clean.indexOf(',');
     if (comma === -1) return guess(clean);
     const last = clean.slice(0, comma).trim();
-    const tokens = clean.slice(comma + 1).trim().split(' ').filter(Boolean);
+    const tokens = clean.slice(comma + 1).trim().split(/[\s,]+/).filter(Boolean);
     let extension = '';
     const extAt = tokens.findIndex(isExtension);
     if (extAt !== -1 && tokens.length > 1) extension = stripDot(tokens.splice(extAt, 1)[0]);
     let middleInitial = '';
     const lastToken = tokens[tokens.length - 1] || '';
-    if (tokens.length > 1 && lastToken.replace(/\./g, '').length <= 2) {
+    if (tokens.length > 1 && isInitial(lastToken)) {
       middleInitial = tokens.pop().replace(/\./g, '');
     }
     return { last, first: tokens.join(' '), middleInitial, extension };
@@ -4297,7 +4327,7 @@ DTR.names = (function () {
     return String(value == null ? '' : value).trim().slice(0, DTR.config.EMPLOYEE_NUMBER_MAX_LENGTH);
   }
 
-  return { guess, parseFull, format, sortKey, employeeNumber };
+  return { guess, repairGuess, parseFull, format, sortKey, employeeNumber };
 })();
 
 </script>
@@ -6381,13 +6411,18 @@ DTR.state = (function () {
    * Adds unseen employees to the directory with a guessed name (unconfirmed).
    * An entry that never had a name gets one when a later file brings it.
    */
-  function registerEmployees(employees) {
+  function registerEmployees(employees, format) {
+    const surnameFirstInitial = format === DTR.config.FILE_FORMATS.UID_DAILY;
     let added = 0;
     let changed = false;
     employees.forEach((e) => {
       const known = s.directory[e.id];
-      if (known && (known.confirmed || known.last || !e.rawName)) return;
-      s.directory[e.id] = Object.assign(DTR.names.guess(e.rawName), { rawName: e.rawName, confirmed: false });
+      if (known && (known.confirmed || known.last || !e.rawName)) {
+        const repaired = DTR.names.repairGuess(known, e.rawName, surnameFirstInitial);
+        if (repaired) { s.directory[e.id] = Object.assign({}, known, repaired); changed = true; }
+        return;
+      }
+      s.directory[e.id] = Object.assign({}, known, DTR.names.guess(e.rawName, surnameFirstInitial), { rawName: e.rawName, confirmed: false });
       changed = true;
       if (!known) added++;
     });
@@ -6436,7 +6471,7 @@ DTR.state = (function () {
     s.monthKey = key;
     s.data = data;
     s.work = store.getWork(key);
-    registerEmployees(data.employees);
+    registerEmployees(data.employees, data.format);
     const first = printableEmployees()[0] || orderedEmployees()[0];
     s.selectedId = first ? first.id : null;
     s.selectedDay = null;
@@ -6496,7 +6531,7 @@ DTR.state = (function () {
     if (!store.saveWork(key, work)) throw new Error('The layout and edits could not be saved. Free browser storage and try again.');
     oldKeys.filter((k) => k !== key).forEach((k) => store.deleteMonth(k));
     if (oldKeys.includes(s.settings.recentMonthKey) && s.settings.recentMonthKey !== key) saveSettings({ recentMonthKey: key });
-    const newNames = registerEmployees(merged.employees);
+    const newNames = registerEmployees(merged.employees, merged.format);
     openMonth(key);
     return { key, newNames, addedToExisting: oldKeys.length > 0, period: merged.period };
   }

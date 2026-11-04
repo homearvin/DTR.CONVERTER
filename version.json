@@ -1,21 +1,21 @@
 {
-  "latest": "1.23.2",
+  "latest": "1.23.3",
   "released": "2026-11-04",
   "download_url": "https://homearvin.github.io/DTR.CONVERTER/#get",
   "changes": [
-    "Checks for updates each time you open DTR Converter, so a cached check no longer hides a new release.",
-    "Settings > Updates now includes Check for updates, even after closing the reminder.",
-    "Retries when the internet reconnects and explains when an update check could not finish. Your saved work and activation are kept."
+    "Fixes surname-first employee names, middle initials, extra commas and Jr./Sr. suffixes.",
+    "Corrects UID attendance names with an omitted comma and a final middle initial, while keeping recorded times unchanged.",
+    "Reopen the saved month to repair unchanged automatic name guesses. Confirmed or manually edited names stay as saved; correct those in Settings > Employee List if needed."
   ],
   "package": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.23.2/DTR-Converter-1.23.2-portable.zip",
-    "sha256": "05e098047ce9d50906827d59e05ebcc77d236cdf267b2d1dfa4f9db70eb44907",
-    "size": 13214941,
-    "signature": "wW3tMDbDwsRL8sbChVN1bRA9FmA5DpaTrETRyGzmV9XjSYreZIAeIaRJuXFU3DtB1LzcwR/bRURVdpvX/u8qDA=="
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.23.3/DTR-Converter-1.23.3-portable.zip",
+    "sha256": "46e8435806d901b35a40ce4b88a44734d0a93555780e72fe22af6778e7b48f28",
+    "size": 13218637,
+    "signature": "sbp1w02+7AjQFvBfZiciotYdAEJGKyHqn/q6kjVn9NGKYzyPE56GK2mGmNCxnFtzFnnhkDQX+FQKxjskkXJNDA=="
   },
   "installer": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.23.2/DTR-Converter-1.23.2-setup.exe",
-    "sha256": "267e599e06ead5336237d24e3b13834600ab67dbf68da47cd86a1076c4387808",
-    "size": 15148611
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.23.3/DTR-Converter-1.23.3-setup.exe",
+    "sha256": "0d70ff27d0fef0af592bd6dc7ea66e740b70376b933623b4cfe1ea715abbed52",
+    "size": 15152223
   }
 }
