@@ -1,21 +1,20 @@
 {
-  "latest": "1.23.3",
-  "released": "2026-11-04",
+  "latest": "1.24.0",
+  "released": "2026-11-05",
   "download_url": "https://homearvin.github.io/DTR.CONVERTER/#get",
   "changes": [
-    "Fixes surname-first employee names, middle initials, extra commas and Jr./Sr. suffixes.",
-    "Corrects UID attendance names with an omitted comma and a final middle initial, while keeping recorded times unchanged.",
-    "Reopen the saved month to repair unchanged automatic name guesses. Confirmed or manually edited names stay as saved; correct those in Settings > Employee List if needed."
+    "Pro: staff who tap only twice a day - turn on Settings > Official time > \"Fill from the official time\" and their empty lunch boxes get the schedule's A.M. out and P.M. in, with no Under Time added.",
+    "Filled lunch boxes are marked \"Lunch filled\" on screen (not machine taps) and can still be changed by hand."
   ],
   "package": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.23.3/DTR-Converter-1.23.3-portable.zip",
-    "sha256": "46e8435806d901b35a40ce4b88a44734d0a93555780e72fe22af6778e7b48f28",
-    "size": 13218637,
-    "signature": "sbp1w02+7AjQFvBfZiciotYdAEJGKyHqn/q6kjVn9NGKYzyPE56GK2mGmNCxnFtzFnnhkDQX+FQKxjskkXJNDA=="
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.24.0/DTR-Converter-1.24.0-portable.zip",
+    "sha256": "5bf48d521905f347137fa17a2e1bec52f12253e3a454b8dedc3970bb298d7d82",
+    "size": 12182319,
+    "signature": "4eWbp51UlzDBft7G+29ln4kBRCO1cey0qZoorTSwA+cy+KReE8kjD3/Gtze7Slz/EwytnXrJyAZeoXADYyu2Bg=="
   },
   "installer": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.23.3/DTR-Converter-1.23.3-setup.exe",
-    "sha256": "0d70ff27d0fef0af592bd6dc7ea66e740b70376b933623b4cfe1ea715abbed52",
-    "size": 15152223
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.24.0/DTR-Converter-1.24.0-setup.exe",
+    "sha256": "75f9ec2331b2d395a1ef8f17669dff934196780242d7ea06474638cdcfb776db",
+    "size": 14123966
   }
 }

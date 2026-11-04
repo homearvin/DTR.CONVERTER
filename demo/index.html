@@ -395,6 +395,7 @@ button.home-review-item:hover { box-shadow: inset 0 0 0 1px var(--line-2); }
 .lg-extra { width: 8px; height: 8px; border-radius: 50%; background: var(--orange-600); }
 .lg-computed { background: #e6efff; box-shadow: inset 0 0 0 1px #9db8f5; }
 .lg-incomplete { background: #fff4e5; box-shadow: inset 0 0 0 1px #f3c98b; }
+.lg-filled { background: #f1e8ff; box-shadow: inset 0 0 0 1px #c4a5f5; }
 
 /* Pro */
 .pro-chip { display: inline-flex; align-items: center; height: 18px; padding: 0 7px; border-radius: 999px; background: linear-gradient(135deg, #1e40af, var(--blue-500)); color: #fff; font-size: 10.5px; font-weight: 700; letter-spacing: 0.4px; vertical-align: middle; }
@@ -1279,6 +1280,8 @@ button.home-review-item:hover { box-shadow: inset 0 0 0 1px var(--line-2); }
   .sheet tr.is-selected td.is-edited { background: #ffe58a; }
   /* Pro: computed Under Time, days not computed (a time is missing), days the AO covered */
   .sheet .is-computed { background: #e6efff; color: #1d4ed8; }
+  /* Pro: lunch filled from the official time on a 2-tap day (converter.js fillLunch) */
+  .sheet .is-filled { background: #f1e8ff; color: #6d28d9; }
   .sheet tr.is-incomplete td { background-color: #fff4e5; }
   .sheet tr.is-covered td { background-color: #ecfdf3; }
   /* a remark set in Holidays & suspensions (for many employees at once) */
@@ -1630,7 +1633,7 @@ window.DTR = window.DTR || {};
 DTR.config = Object.freeze({
   APP_NAME: 'DTR Converter',
   APP_SUBTITLE: 'Biometric Timecard → CSC Form No. 48',
-  APP_VERSION: '1.23.3',
+  APP_VERSION: '1.24.0',
 
   /* Where clients ask for help and keys (same as desktop/licensing.py CONTACT_*). */
   CONTACT: Object.freeze({ email: 'azmarketingservicesbicol@gmail.com', facebook: 'AZ Digital Marketing' }),
@@ -1666,12 +1669,13 @@ DTR.config = Object.freeze({
    * printing / Download PDF asks to print without them or get Pro. The Undertaking list can be
    * viewed but only printed with Pro.
    */
-  PRO_FEATURES: Object.freeze({ UNDERTIME: 'undertime', LOGO: 'logo', LAYOUT: 'layout', UNDERTAKING: 'undertaking' }),
+  PRO_FEATURES: Object.freeze({ UNDERTIME: 'undertime', LOGO: 'logo', LAYOUT: 'layout', UNDERTAKING: 'undertaking', LUNCH: 'lunch' }),
   PRO_FEATURE_LABELS: Object.freeze({
     undertime: 'Under Time computed from your official time',
     logo: 'School logo on the form',
     layout: 'Custom DTR layout',
-    undertaking: 'Undertaking list'
+    undertaking: 'Undertaking list',
+    lunch: 'Lunch break filled from the official time on 2-tap days'
   }),
 
   /*
@@ -1953,6 +1957,10 @@ DTR.config = Object.freeze({
     schedules: [],            // [{ id, name, amIn: 'HH:MM', amOut, pmIn, pmOut }]
     defaultScheduleId: '',    // for employees without their own (Employee List → Schedule)
     graceMinutes: 0,          // DepEd has none
+    // A day with only the morning arrival and the afternoon departure gets the schedule's own
+    // A.M. out / P.M. in written in the lunch boxes (converter.js fillLunch). Off unless the office
+    // turns it on; marked on screen as filled by the office, never shown as machine taps.
+    fillLunchBreak: false,
 
     // Holidays & suspensions (both editions). Categories are the office's own; each employee
     // may have one (Employee List → Category). Marks: see js/daymarks.js.
@@ -5024,6 +5032,9 @@ DTR.signers = (function () {
  *   • Pro with official time set (`timeRules`): Under Time per day and the TOTAL start
  *     from js/timecalc.js. They are only starting values — the admin's edits still win.
  *     Days the admin marks "covered" (Locator Slip / Undertaking) are not computed.
+ *   • Pro, only if the office turns it on (settings.fillLunchBreak): a working day with just the
+ *     morning arrival and the afternoon departure gets the schedule's own lunch times (A.M. out,
+ *     P.M. in) in the two empty boxes — so they add no Under Time. Marked row.filled (screen only).
  *   • A Saturday/Sunday with no taps gets "SAT"/"SUN" written across the row.
  *   • Days the month does not have (e.g. 31 in September) are blank and not editable.
  *   • Whatever the admin types (including clearing a box) wins over the machine value.
@@ -5130,6 +5141,21 @@ DTR.converter = (function () {
     return { placed, slots, extra: taps.filter((_, i) => !slots[i]) };
   }
 
+  /**
+   * Pro: fills the lunch boxes of a 2-tap working day from the schedule ({ out, in } 'HH:MM').
+   * Only when both lunch boxes are empty, both ends are there, and the lunch fits between them
+   * (arrived before lunch, left after it). Returns the boxes it filled ([] = none).
+   */
+  function fillLunch(placed, lunch, weekday) {
+    if (!lunch || WEEKEND_LABELS[weekday]) return [];
+    const [amIn, amOut, pmIn, pmOut] = TIME_SLOTS;
+    if (!placed[amIn] || !placed[pmOut] || placed[amOut] || placed[pmIn]) return [];
+    if (!(clockMinutes(placed[amIn]) < clockMinutes(lunch.out) && clockMinutes(lunch.in) < clockMinutes(placed[pmOut]))) return [];
+    placed[amOut] = lunch.out;
+    placed[pmIn] = lunch.in;
+    return [amOut, pmIn];
+  }
+
   /** The value shown in one box: the admin's edit if any, else the machine's (or the computed) value. */
   function applyEdit(row, slot, edit) {
     const key = cellKey(row.day, slot);
@@ -5194,7 +5220,7 @@ DTR.converter = (function () {
     const inMonth = day <= monthLength;
     const row = {
       day, inMonth, weekday: null, iso: null, taps: [], tapKinds: [], tapSlots: [], notes: [], extraTaps: [],
-      machine: {}, values: {}, edited: {}, label: '', labelEdited: false, time: null,
+      machine: {}, values: {}, edited: {}, filled: {}, label: '', labelEdited: false, time: null,
       // Holidays & suspensions: half-day remarks, the remark's text, and "tapped on a marked day"
       amLabel: '', pmLabel: '', markText: '', marked: false, markTapped: false, markExcluded: false
     };
@@ -5210,6 +5236,7 @@ DTR.converter = (function () {
     const { placed, slots, extra } = placeTaps(row.taps, row.tapKinds, placement);
     row.tapSlots = slots;
     row.extraTaps = extra;
+    fillLunch(placed, timeRules && timeRules.lunch, row.weekday).forEach((slot) => { row.filled[slot] = true; });
     TIME_SLOTS.forEach((slot) => { row.machine[slot] = formatTime(placed[slot], timeFormat); });
     TIME_SLOTS.forEach((slot) => applyEdit(row, slot, edit));
 
@@ -5260,7 +5287,8 @@ DTR.converter = (function () {
    * @param person    directory entry (name parts)
    * @param settings  app settings
    * @param edit      the admin's edits for this employee (may be undefined)
-   * @param timeRules Pro only, else null: { official: {amIn…} in minutes, graceMinutes, mode, scheduleName }
+   * @param timeRules Pro only, else null: { official: {amIn…} in minutes, graceMinutes, mode, scheduleName,
+   *                  lunch: { out, in } 'HH:MM' to fill 2-tap days, or null }
    * @param logo      Pro only, else '': the school logo (data: URL) for the top-right corner
    */
   function build({ employee, period, person, settings, edit, timeRules, logo }) {
@@ -5315,6 +5343,7 @@ DTR.converter = (function () {
         daysWithExtraTaps: rows.filter((r) => r.extraTaps.length).length,
         incompleteDays: time ? time.incompleteDays.length : 0,
         markedDays: rows.filter((r) => r.marked).length,
+        lunchFilledDays: rows.filter((r) => r.filled.amOut).length,   // Pro: 2-tap days given the official lunch
         markTappedDays: rows.filter((r) => r.markTapped).map((r) => r.day),   // tapped on a holiday / suspension
         signsOwn,
         editedCells: rows.reduce((n, r) => n + Object.values(r.edited).filter(Boolean).length + (r.labelEdited ? 1 : 0) + (r.covered ? 1 : 0), 0)
@@ -5322,7 +5351,7 @@ DTR.converter = (function () {
     };
   }
 
-  return { build, cellKey, emptyEdit, formatTime, placeTaps, slotsFor, ALL_SLOTS, HEADER_FIELDS };
+  return { build, cellKey, emptyEdit, formatTime, placeTaps, slotsFor, fillLunch, ALL_SLOTS, HEADER_FIELDS };
 })();
 
 </script>
@@ -5549,8 +5578,10 @@ DTR.form48 = (function () {
     const editable = opts.editable && row.inMonth;
     // Pro, screen only: an Under Time box filled by the computation (not typed).
     const computed = opts.marks && row.time && UNDERTIME_SLOTS.includes(slot) && row.values[slot] && !row.edited[slot];
+    // Pro, screen only: a lunch box filled from the official time on a 2-tap day (not a machine tap).
+    const filled = opts.marks && row.filled && row.filled[slot] && !row.edited[slot];
     const classes = cls('f48-cell', groupStart && 'f48-g-start', editable && 'is-editable',
-      opts.marks && row.edited[slot] && 'is-edited', computed && 'is-computed');
+      opts.marks && row.edited[slot] && 'is-edited', computed && 'is-computed', filled && 'is-filled');
     return `<td class="${classes}"${attr(editable, 'data-day', row.day)}${attr(editable, 'data-slot', slot)}>${esc(row.values[slot])}</td>`;
   }
 
@@ -6583,7 +6614,9 @@ DTR.state = (function () {
     const schedule = scheduleFor(id);
     const official = DTR.timecalc.scheduleMinutes(schedule);
     if (!official) return null;
-    return { official, graceMinutes: s.settings.graceMinutes, mode: s.settings.underTimeMode, scheduleName: schedule.name };
+    // 2-tap days: the lunch of the employee's OWN schedule, so it never adds Under Time.
+    const lunch = s.settings.fillLunchBreak ? { out: schedule.amOut, in: schedule.pmIn } : null;
+    return { official, graceMinutes: s.settings.graceMinutes, mode: s.settings.underTimeMode, scheduleName: schedule.name, lunch };
   }
 
   /** The Form 48 model. `{ plain: true }` (Standard only) leaves out the Pro features, for printing. */
@@ -6638,7 +6671,10 @@ DTR.state = (function () {
   function proFeaturesInUse() {
     const { PRO_FEATURES: F } = DTR.config;
     const used = [];
-    if ((s.settings.schedules || []).some((x) => DTR.timecalc.scheduleMinutes(x))) used.push(F.UNDERTIME);
+    if ((s.settings.schedules || []).some((x) => DTR.timecalc.scheduleMinutes(x))) {
+      used.push(F.UNDERTIME);
+      if (s.settings.fillLunchBreak) used.push(F.LUNCH);
+    }
     if (s.settings.schoolLogo || (s.data && s.data.employees.some(e => layoutFor(e.id)?.logoData && layoutFor(e.id).showLogo))) used.push(F.LOGO);
     if (s.data && s.data.employees.some(e => DTR.layouts.isCustom(layoutFor(e.id)))) used.push(F.LAYOUT);
     return used;
@@ -7627,7 +7663,8 @@ DTR.ui.workspace = (function () {
         <span><i class="lg lg-extra"></i>Taps not printed</span>
         ${state.timeRulesFor(state.get().selectedId) ? `
           <span><i class="lg lg-computed"></i>Computed</span>
-          <span><i class="lg lg-incomplete"></i>Incomplete</span>` : ''}
+          <span><i class="lg lg-incomplete"></i>Incomplete</span>
+          ${state.get().settings.fillLunchBreak ? '<span title="Lunch boxes of 2-tap days, from the official time — not machine taps"><i class="lg lg-filled"></i>Lunch filled</span>' : ''}` : ''}
         <span class="tb-hint">Click any box to edit · click a day number for details</span>
       </div>
       <div class="tb-group">
@@ -7862,8 +7899,8 @@ DTR.ui.workspace = (function () {
       </section>`;
   }
 
-  /** Pro: one day's result and the Covered switch (inside Day details). */
-  function dayTimeHtml(row) {
+  /** Pro: one day's result and the Covered switch (inside Day details); a lunch filled from `scheduleName`. */
+  function dayTimeHtml(row, scheduleName) {
     if (!row.time) return '';
     const { DAY_STATUS: S, describeMinutes } = DTR.timecalc;
     const status = row.time.status;
@@ -7875,7 +7912,11 @@ DTR.ui.workspace = (function () {
     else if (!row.time.underMinutes && !row.time.lateMinutes) text = 'On time — nothing to add.';
     else text = `Late <strong>${describeMinutes(row.time.lateMinutes)}</strong> · left early <strong>${describeMinutes(row.time.earlyMinutes)}</strong>`;
     const covered = status === S.COVERED;
-    return `
+    const lunch = row.filled.amOut && !row.edited.amOut && !row.edited.pmIn
+      ? `<div class="sub-label">Lunch break</div>
+         <p class="panel-note day-lunch">Only two taps this day. The lunch boxes were <b>filled from the official time</b> of <b>${esc(scheduleName || 'the schedule')}</b> (${esc(row.values.amOut)} – ${esc(row.values.pmIn)}) — they are not machine taps. Click a box to change it.</p>`
+      : '';
+    return `${lunch}
       <div class="sub-label">Under Time</div>
       <p class="panel-note time-day">${text}</p>
       <button class="btn ${covered ? 'btn-ghost' : 'btn-secondary'} btn-sm btn-block" id="day-covered" data-covered="${covered ? 0 : 1}">
@@ -7930,7 +7971,7 @@ DTR.ui.workspace = (function () {
         ${row.extraTaps.length ? `<p class="panel-note panel-note--extra">Taps marked "Not printed" have no box under the tap rule (${esc(TAP_PLACEMENT_LABELS[s.settings.tapPlacement])}). Edit the boxes if a different tap should appear.</p>` : ''}
         ${notes}
         ${dayMarkHtml(row)}
-        ${dayTimeHtml(row)}
+        ${dayTimeHtml(row, m.time && m.time.scheduleName)}
         <div class="sub-label">Remark across the row</div>
         <div class="remark">
           <input id="remark-input" placeholder="e.g. HOLIDAY" value="${esc(row.label)}" maxlength="${DTR.config.REMARK_MAX_LENGTH}">
@@ -9337,6 +9378,15 @@ DTR.ui.settings = (function () {
         </div>
       </section>
       <section class="settings-section">
+        <h3>Days with only two taps</h3>
+        <p class="settings-hint">Some staff tap only when they arrive in the morning and leave in the afternoon.</p>
+        <div class="choices choices--row">
+          ${optionCard('set-lunch', 'blank', !settings.fillLunchBreak, 'Leave the lunch boxes blank', 'As the machine recorded — the admin types them if needed')}
+          ${optionCard('set-lunch', 'fill', Boolean(settings.fillLunchBreak), 'Fill from the official time', 'A.M. out and P.M. in of the employee\'s schedule — no Under Time is added')}
+        </div>
+        <p class="field-hint">Filled boxes are marked on screen as <b>Lunch filled</b>, never as machine taps, and can be changed by hand. A teacher with a different lunch (e.g. lunch duty 11:30–12:30) gets their own schedule in <b>Employee List → Schedule</b>.</p>
+      </section>
+      <section class="settings-section">
         <h3>Grace period</h3>
         <div class="form-grid">
           ${field('Minutes late that are not counted', `<input id="set-grace" type="number" min="0" max="60" step="1" value="${esc(settings.graceMinutes || 0)}">`, 'Leave at 0 if your office has none (DepEd has none).')}
@@ -9397,7 +9447,8 @@ DTR.ui.settings = (function () {
         schedules,
         defaultScheduleId: checkedDefault ? checkedDefault.value : schedules[0].id,
         graceMinutes: grace,
-        underTimeMode: pane.querySelector('input[name="set-ut-mode"]:checked').value
+        underTimeMode: pane.querySelector('input[name="set-ut-mode"]:checked').value,
+        fillLunchBreak: pane.querySelector('input[name="set-lunch"]:checked').value === 'fill'
       });
       dialogs.toast('Official time saved. Under Time is computed on every DTR.', 'success');
       refresh();
@@ -10019,6 +10070,7 @@ DTR.ui.help = (function () {
           '<b>Every month:</b> late arrivals and early departures fill Under Time. Lunch is never counted.',
           '<b>A day with a missing time</b> is shaded and listed as incomplete — it is not guessed. Type the missing time, or mark the day Covered.',
           '<b>Locator Slip / Undertaking:</b> click the day number and choose <b>Covered</b>. That day is not counted.',
+          '<b>Staff who tap only twice</b> (arrival and departure): Settings → Official time → <b>Days with only two taps</b> → <b>Fill from the official time</b>. Their empty lunch boxes get the schedule\'s A.M. out and P.M. in, so no Under Time is added. These boxes are marked <b>Lunch filled</b> on screen, and you can still change them.',
           '<b>Print → Undertaking list</b> prints the days each employee left before the official end, to collect Undertakings.',
           '<b>School logo:</b> Settings → Form &amp; taps → <b>Upload logo</b>. Drag and zoom to frame it in the circle; it prints small in the top-right corner of every DTR. <b>Adjust framing</b> changes it later.'
         ])}
