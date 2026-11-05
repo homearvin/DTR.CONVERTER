@@ -1633,7 +1633,7 @@ window.DTR = window.DTR || {};
 DTR.config = Object.freeze({
   APP_NAME: 'DTR Converter',
   APP_SUBTITLE: 'Biometric Timecard → CSC Form No. 48',
-  APP_VERSION: '1.24.0',
+  APP_VERSION: '1.24.1',
 
   /* Where clients ask for help and keys (same as desktop/licensing.py CONTACT_*). */
   CONTACT: Object.freeze({ email: 'azmarketingservicesbicol@gmail.com', facebook: 'AZ Digital Marketing' }),
@@ -5147,7 +5147,7 @@ DTR.converter = (function () {
    * (arrived before lunch, left after it). Returns the boxes it filled ([] = none).
    */
   function fillLunch(placed, lunch, weekday) {
-    if (!lunch || WEEKEND_LABELS[weekday]) return [];
+    if (!lunch || WEEKEND_LABELS[weekday] || !(clockMinutes(lunch.out) < clockMinutes(lunch.in))) return [];
     const [amIn, amOut, pmIn, pmOut] = TIME_SLOTS;
     if (!placed[amIn] || !placed[pmOut] || placed[amOut] || placed[pmIn]) return [];
     if (!(clockMinutes(placed[amIn]) < clockMinutes(lunch.out) && clockMinutes(lunch.in) < clockMinutes(placed[pmOut]))) return [];
@@ -5236,7 +5236,8 @@ DTR.converter = (function () {
     const { placed, slots, extra } = placeTaps(row.taps, row.tapKinds, placement);
     row.tapSlots = slots;
     row.extraTaps = extra;
-    fillLunch(placed, timeRules && timeRules.lunch, row.weekday).forEach((slot) => { row.filled[slot] = true; });
+    // A hidden/extra third tap must never be mistaken for a two-tap day.
+    if (row.taps.length === 2) fillLunch(placed, timeRules && timeRules.lunch, row.weekday).forEach((slot) => { row.filled[slot] = true; });
     TIME_SLOTS.forEach((slot) => { row.machine[slot] = formatTime(placed[slot], timeFormat); });
     TIME_SLOTS.forEach((slot) => applyEdit(row, slot, edit));
 

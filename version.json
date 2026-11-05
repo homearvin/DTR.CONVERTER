@@ -1,20 +1,21 @@
 {
-  "latest": "1.24.0",
+  "latest": "1.24.1",
   "released": "2026-11-05",
   "download_url": "https://homearvin.github.io/DTR.CONVERTER/#get",
   "changes": [
-    "Pro: staff who tap only twice a day - turn on Settings > Official time > \"Fill from the official time\" and their empty lunch boxes get the schedule's A.M. out and P.M. in, with no Under Time added.",
-    "Filled lunch boxes are marked \"Lunch filled\" on screen (not machine taps) and can still be changed by hand."
+    "Corrects optional Pro lunch filling: days with extra or repeated taps are not treated as two-tap days.",
+    "Uses the employee schedule only when its lunch fits between the recorded arrival and departure; invalid lunch intervals stay blank.",
+    "Keeps manual edits, employee names and original machine taps. Standard plain printing continues to exclude schedule-filled lunch times."
   ],
   "package": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.24.0/DTR-Converter-1.24.0-portable.zip",
-    "sha256": "5bf48d521905f347137fa17a2e1bec52f12253e3a454b8dedc3970bb298d7d82",
-    "size": 12182319,
-    "signature": "4eWbp51UlzDBft7G+29ln4kBRCO1cey0qZoorTSwA+cy+KReE8kjD3/Gtze7Slz/EwytnXrJyAZeoXADYyu2Bg=="
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.24.1/DTR-Converter-1.24.1-portable.zip",
+    "sha256": "11edaa2dcfe54e54f4ad753e8f7e230bccfbc9579ef0b1e9a7bbf48beb55797c",
+    "size": 13219027,
+    "signature": "y7NWxboLGabpYpjxwaz8MeYDyc4I8VgoAybcTbg6mAT3dFeoPRmpDNdwZY1UOSdzYlCP/lIY/SjqYOiZAtCuBg=="
   },
   "installer": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.24.0/DTR-Converter-1.24.0-setup.exe",
-    "sha256": "75f9ec2331b2d395a1ef8f17669dff934196780242d7ea06474638cdcfb776db",
-    "size": 14123966
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.24.1/DTR-Converter-1.24.1-setup.exe",
+    "sha256": "7cb9507400a4359cedfb1790084071726d5b86899d3631ca27d7ff471fefe029",
+    "size": 15153198
   }
 }
