@@ -310,7 +310,7 @@ const FORMATS = [
   },
   {
     name: 'Attendance Record Report', brand: null, types: ['xls', 'xlsx'],
-    lookFor: 'Title <code>Attendance Record Report</code> (often a file called <code>StandardReport</code>), an <code>Att. Time</code> date range, and <code>ID: · Name: · Dept.:</code> above day columns.',
+    lookFor: 'Title <code>Attendance Record Report</code> with an <code>Att. Time</code> range and <code>ID: · Name: · Dept.:</code>, or <code>List of Logs</code> with a <code>Period</code> range and <code>No: · Name: · Dept:</code> above day columns.',
     sample: [
       [['Attendance Record Report', 'ti'], '', '', '', '', ''],
       ['Att. Time:', '2026-09-01 ~ 2026-09-30', '', '', '', ''],

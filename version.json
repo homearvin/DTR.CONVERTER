@@ -1,21 +1,21 @@
 {
-  "latest": "1.24.1",
-  "released": "2026-11-05",
+  "latest": "1.24.2",
+  "released": "2026-11-06",
   "download_url": "https://homearvin.github.io/DTR.CONVERTER/#get",
   "changes": [
-    "Corrects optional Pro lunch filling: days with extra or repeated taps are not treated as two-tap days.",
-    "Uses the employee schedule only when its lunch fits between the recorded arrival and departure; invalid lunch intervals stay blank.",
-    "Keeps manual edits, employee names and original machine taps. Standard plain printing continues to exclude schedule-filled lunch times."
+    "Reads monthly List of Logs Excel reports with employee names, biometric IDs and all recorded clocks.",
+    "Preserves repeated taps, extra taps, blank days and employees with no attendance; ignores calculated summaries.",
+    "Uses dates inside the workbook even if renamed. Your saved names, edits and activation are kept."
   ],
   "package": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.24.1/DTR-Converter-1.24.1-portable.zip",
-    "sha256": "11edaa2dcfe54e54f4ad753e8f7e230bccfbc9579ef0b1e9a7bbf48beb55797c",
-    "size": 13219027,
-    "signature": "y7NWxboLGabpYpjxwaz8MeYDyc4I8VgoAybcTbg6mAT3dFeoPRmpDNdwZY1UOSdzYlCP/lIY/SjqYOiZAtCuBg=="
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.24.2/DTR-Converter-1.24.2-portable.zip",
+    "sha256": "a37a3bd15b3e87c5c1066257e367fc5076ccb9bb014c1bdc7d06d8287e628b4b",
+    "size": 13250663,
+    "signature": "r5j75LQIqNABC7/GNgyq63qmC0+yaPiztnHuDPsZViMgHJFF1PrI9uwv2f9A9FdZN+6v9XCFwbdDXY5ecxF+CA=="
   },
   "installer": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.24.1/DTR-Converter-1.24.1-setup.exe",
-    "sha256": "7cb9507400a4359cedfb1790084071726d5b86899d3631ca27d7ff471fefe029",
-    "size": 15153198
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.24.2/DTR-Converter-1.24.2-setup.exe",
+    "sha256": "275420b8b79e1999d8ce1b38377c5db94e680de1d724b3411cfadff76e2548de",
+    "size": 15184683
   }
 }
