@@ -1,21 +1,20 @@
 {
-  "latest": "1.24.2",
+  "latest": "1.25.0",
   "released": "2026-11-06",
   "download_url": "https://homearvin.github.io/DTR.CONVERTER/#get",
   "changes": [
-    "Reads monthly List of Logs Excel reports with employee names, biometric IDs and all recorded clocks.",
-    "Preserves repeated taps, extra taps, blank days and employees with no attendance; ignores calculated summaries.",
-    "Uses dates inside the workbook even if renamed. Your saved names, edits and activation are kept."
+    "New free trial for new computers: DTR Converter opens without a key and gives 5 uploads within 30 days (Standard features, once per computer). Copies with a key are not affected.",
+    "When the trial is over, \"Choose your version\" shows the 30-day Pro pass, Standard and Pro side by side, with what each one includes."
   ],
   "package": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.24.2/DTR-Converter-1.24.2-portable.zip",
-    "sha256": "a37a3bd15b3e87c5c1066257e367fc5076ccb9bb014c1bdc7d06d8287e628b4b",
-    "size": 13250663,
-    "signature": "r5j75LQIqNABC7/GNgyq63qmC0+yaPiztnHuDPsZViMgHJFF1PrI9uwv2f9A9FdZN+6v9XCFwbdDXY5ecxF+CA=="
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.25.0/DTR-Converter-1.25.0-portable.zip",
+    "sha256": "946b15abd045fdd2c1376fd07f17b5267fadd11836313cc6a6ca00606dd7c49a",
+    "size": 12198473,
+    "signature": "e+kLEsMTR02/VguwysbZLPqUpiYYHHqRi3O36PwZqND7vuCkU2PVsBaJSIfF23gDoLlWx3QYIMcFLfPhTUuJBQ=="
   },
   "installer": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.24.2/DTR-Converter-1.24.2-setup.exe",
-    "sha256": "275420b8b79e1999d8ce1b38377c5db94e680de1d724b3411cfadff76e2548de",
-    "size": 15184683
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.25.0/DTR-Converter-1.25.0-setup.exe",
+    "sha256": "868d24adb4d5d11888d302c1cdb3ae84ed86c0bdc2c46073006ec1c5139f2d49",
+    "size": 14140870
   }
 }
