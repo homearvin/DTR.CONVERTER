@@ -82,8 +82,14 @@
   .step i{display:grid; place-items:center; width:34px; height:34px; border-radius:10px; background:var(--navy); color:#fff; font-style:normal; font-weight:800; margin-bottom:12px}
   .step p{margin-top:6px; color:var(--muted); font-size:14.5px}
 
-  .plans{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; margin-top:34px; max-width:1180px; margin-left:auto; margin-right:auto}
+  .plans{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; margin-top:34px; max-width:1280px; margin-left:auto; margin-right:auto}
   .plan .tag.tag--pass{background:#0f9d6b}
+  .plan.plan--free{box-shadow:var(--shadow), inset 0 0 0 2px #0f9d6b; background:#f4fdf8}
+  .plan .tag.tag--free{background:#0b7a53}
+  .plan .who.who--free{color:#0b7a53}
+  .plan .no svg{color:#c2c9d6}
+  .plan li.no{color:var(--faint)}
+  @media (max-width:1180px){ .plans{grid-template-columns:repeat(2,minmax(0,1fr))} }
   /* Introductory offer: the 30-day Pro Pass (P299) — promo bar, hero box, first price card */
   .promo-bar{display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:6px 12px; padding:9px 16px; background:linear-gradient(90deg,#0b7a53,#0f9d6b); color:#fff; font-size:14px; text-decoration:none; text-align:center}
   .promo-bar b{font-weight:800}
@@ -106,7 +112,7 @@
   .price{margin-top:10px}
   .price b{font-size:30px; font-weight:850; color:var(--navy); letter-spacing:-.02em}
   .price span{display:block; color:var(--muted); font-size:14px}
-  .plan ul{list-style:none; padding:0; margin:20px 0 24px; display:grid; gap:10px; font-size:14.5px; color:var(--ink-2); flex:1}
+  .plan ul{list-style:none; padding:0; margin:20px 0 24px; display:grid; align-content:start; gap:10px; font-size:14.5px; color:var(--ink-2); flex:1}
   .plan li{display:flex; gap:9px} .plan li svg{flex:none; width:18px; height:18px; margin-top:3px; color:var(--blue)}
   .plan .note{margin-top:12px; font-size:12.5px; color:var(--faint); text-align:center}
 
@@ -170,8 +176,8 @@
   <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3.5" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M3 20c.6-3.4 3-5.5 6-5.5s5.4 2.1 6 5.5M15.5 5.2a3.5 3.5 0 0 1 0 6.6M17.5 14.8c1.8.7 3 2.6 3.5 5.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
 </defs></svg>
 
-<a class="promo-bar" href="#editions"><span class="promo-badge">Introductory offer</span>
-  <span>Start with the <b>30-day Pro Pass — only ₱299</b>. Full Pro, no automatic renewal.</span><span class="promo-go">See prices →</span></a>
+<a class="promo-bar js-setup" href="https://github.com/homearvin/DTR.CONVERTER/releases/latest"><span class="promo-badge">Free</span>
+  <span><b>DTR Converter is free to download and use</b> — no key, no time limit.</span><span class="promo-go">Download free →</span></a>
 <header class="top">
   <div class="wrap">
     <a class="brand" href="#top"><span class="mark"><svg width="22" height="22"><use href="#i-doc"/></svg></span>
@@ -184,7 +190,7 @@
       <a href="demo/">Try the demo</a>
       <a href="#faq">Questions</a>
     </nav>
-    <a class="btn primary sm" href="#get">Get DTR Converter</a>
+    <a class="btn primary sm js-setup" href="https://github.com/homearvin/DTR.CONVERTER/releases/latest">Download free</a>
   </div>
 </header>
 
@@ -196,20 +202,16 @@
       <h1>The whole month's DTRs, ready before lunch.</h1>
       <p class="lead">Upload the file from the biometric machine. DTR Converter puts every employee on a CSC Form No. 48 Daily Time Record — checked, named and ready to print, two copies per sheet.</p>
       <div class="hero-cta">
-        <a class="btn primary" href="#get"><svg><use href="#i-dl"/></svg>Get DTR Converter</a>
+        <a class="btn primary js-setup" href="https://github.com/homearvin/DTR.CONVERTER/releases/latest"><svg><use href="#i-dl"/></svg>Download free</a>
         <a class="btn ghost" href="demo/"><svg><use href="#i-check"/></svg>Try the demo online</a>
       </div>
       <p class="dl-facts">No installing for the demo — it opens in your browser. Try the sample office or your own biometric file (read in your browser only, never uploaded). <a href="compatible.html">See which biometric files it reads →</a></p>
-      <a class="promo-box" href="#editions">
-        <span class="promo-badge">Introductory package</span>
-        <span class="promo-box-main"><b>₱299</b><span>Full Pro for 30 days — try it on this month's DTRs before buying for life.</span></span>
-      </a>
       <p class="dl-facts"><b>Free to use:</b> download it and use it without a key — every employee, fixing the times and printing Form 48, with no time limit.</p>
       <p class="dl-facts">Windows 10 or 11 · <span class="js-version">latest version</span> · about 12 MB · works offline</p>
       <div class="hero-trust">
         <span><svg><use href="#i-check"/></svg>Times copied exactly as recorded</span>
         <span><svg><use href="#i-check"/></svg>Your staff data stays on your PC</span>
-        <span><svg><use href="#i-check"/></svg>One-time payment, or ₱299 for 30 days</span>
+        <span><svg><use href="#i-check"/></svg>Free forever · upgrade only when you need more</span>
       </div>
     </div>
     <img class="shot" src="images/check.png" width="1366" height="768" alt="DTR Converter checking screen: the employee list in groups, the CSC Form 48 preview, and the Under Time summary">
@@ -218,7 +220,7 @@
   <div class="strip">
     <div class="card"><b>30–200</b><span>employees a month, in one upload</span></div>
     <div class="card"><b>Form 48</b><span>CSC Daily Time Record, A4 or long bond</span></div>
-    <div class="card"><b>Offline</b><span>internet only once, to activate</span></div>
+    <div class="card"><b>Free</b><span>no key, no time limit, works offline</span></div>
     <div class="card"><b>Saved</b><span>every change, automatically</span></div>
   </div>
 
@@ -274,14 +276,29 @@
 
   <section id="editions">
     <div class="center">
-      <span class="eyebrow">30-day Pass · Standard · Pro</span>
-      <h2 style="margin-top:8px">The converter, or the converter plus Under Time.</h2>
+      <span class="eyebrow">Free · 30-day Pass · Standard · Pro</span>
+      <h2 style="margin-top:8px">Start free. Upgrade when you need more.</h2>
       <p class="lead" style="margin:12px auto 0; max-width:640px">One app, free to start — no key needed. A license key unlocks the paid edition — upgrade any time without reinstalling.</p>
     </div>
     <div class="plans">
+      <div class="card plan plan--free">
+        <span class="tag tag--free">Start here</span>
+        <span class="who who--free">Free</span>
+        <h3>DTR Converter Free</h3>
+        <div class="price"><b>₱0</b><span>free forever · no key</span></div>
+        <ul>
+          <li><svg><use href="#i-check"/></svg>Every employee, from the biometric file to CSC Form 48</li>
+          <li><svg><use href="#i-check"/></svg>Fix the times: missing taps, double taps, remarks</li>
+          <li><svg><use href="#i-check"/></svg>Set the In-Charge who signs</li>
+          <li><svg><use href="#i-check"/></svg>Print Form 48, one employee at a time</li>
+          <li><svg><use href="#i-check"/></svg>No time limit, works offline</li>
+          <li class="no"><svg><use href="#i-check"/></svg>Not in Free: Print all, PDF/Excel, holidays, saved months, Employee List</li>
+        </ul>
+        <a class="btn primary js-setup" href="https://github.com/homearvin/DTR.CONVERTER/releases/latest"><svg><use href="#i-dl"/></svg>Download free</a>
+      </div>
       <div class="card plan featured featured--pass">
-        <span class="tag tag--pass">Introductory offer</span>
-        <span class="who who--pass">Start here · 30-day Pass</span>
+        <span class="tag tag--pass">Try everything</span>
+        <span class="who who--pass">30-day Pass</span>
         <h3>Pro Pass</h3>
         <div class="price"><b>₱299</b><span>30 days · one computer</span></div>
         <ul>
@@ -298,10 +315,12 @@
         <h3>DTR Converter</h3>
         <div class="price"><b>₱999</b><span>one-time · one computer</span></div>
         <ul>
-          <li><svg><use href="#i-check"/></svg>Biometric file → CSC Form 48, exactly as recorded</li>
-          <li><svg><use href="#i-check"/></svg>Checking list, names remembered, inactive staff set aside</li>
+          <li><svg><use href="#i-check"/></svg>Everything in Free, plus:</li>
+          <li><svg><use href="#i-check"/></svg>Print all employees in one go; save as PDF, Excel or pictures</li>
+          <li><svg><use href="#i-check"/></svg>Holidays &amp; suspensions for everyone at once; earlier months kept</li>
+          <li><svg><use href="#i-check"/></svg>Employee List: names remembered, imported from Excel; more signers</li>
           <li><svg><use href="#i-check"/></svg>Editable employee numbers beside the name or at the upper right</li>
-          <li><svg><use href="#i-check"/></svg>Print A4 cut cards or long bond, or save as PDF</li>
+          <li><svg><use href="#i-check"/></svg>Choose A4 cut cards or long bond, sizes and 12-hour time</li>
           <li><svg><use href="#i-check"/></svg>Backup, Help guide, one-click updates</li>
           <li><svg><use href="#i-check"/></svg>Try every Pro feature on screen — upgrade any time for ₱1,001</li>
         </ul>
@@ -330,7 +349,7 @@
   <section id="get">
     <div class="center">
       <span class="eyebrow">How to get it</span>
-      <h2 style="margin-top:8px">Download, send your name, receive your key.</h2>
+      <h2 style="margin-top:8px">Download free. Buy a key only when you want more.</h2>
     </div>
     <div class="buy">
       <div class="card">
@@ -338,11 +357,11 @@
         <ol>
           <li><a class="js-setup" href="https://github.com/homearvin/DTR.CONVERTER/releases/latest">Download the DTR Converter installer</a> (about 12 MB) and open it: it adds DTR Converter to the Start menu and desktop, and you can uninstall it from Windows Settings. Prefer no installing? Get the <a class="js-download" href="https://github.com/homearvin/DTR.CONVERTER/releases/latest">portable zip</a> instead.</li>
           <li>It opens as the <b>Free version</b> — no key needed, no time limit: upload, fix the times and print every employee's Form 48, one employee at a time. Items marked <b>STANDARD</b> (Print all, PDF/Excel, holidays, saved months and more) come with a paid version.</li>
-          <li>Send the payment below with your <b>name and school/office</b> and whether you want <b>Standard</b>, <b>Pro</b> or the <b>30-day Pass</b>.</li>
+          <li>Want more? Send the payment below with your <b>name and school/office</b> and whether you want <b>Standard</b>, <b>Pro</b> or the <b>30-day Pass</b>.</li>
           <li>You receive a small <b>.dtrkey</b> file. With internet on, open DTR Converter, click <b>Have a key?</b> and choose it. That's it — it works offline from then on, and the DTRs you made in Free stay.</li>
         </ol>
         <div class="hero-cta" style="margin-top:22px">
-          <a class="btn primary js-setup" href="https://github.com/homearvin/DTR.CONVERTER/releases/latest"><svg><use href="#i-dl"/></svg>Download DTR Converter</a>
+          <a class="btn primary js-setup" href="https://github.com/homearvin/DTR.CONVERTER/releases/latest"><svg><use href="#i-dl"/></svg>Download free</a>
         </div>
         <p class="dl-facts">Installer for Windows · or the <a class="js-download" href="https://github.com/homearvin/DTR.CONVERTER/releases/latest">portable zip</a> (no installing: Right-click → Extract All, then open DTR Converter.exe). Your saved work stays when you switch between them.</p>
         <p class="dl-facts">Windows 10 or 11 (64-bit) with Microsoft Edge or Google Chrome. If Windows says "Windows protected your PC", click More info → Run anyway (first time only).</p>
@@ -354,7 +373,8 @@
         <div class="pay"><span class="pm bank">Bank</span><span class="info"><b>Bank transfer</b><small>BPI · AZ Digital Marketing</small></span><span class="num">2469270049</span></div>
         <p style="margin-top:14px; font-size:14px; color:var(--muted)">Then send your name, school/office, the edition and a screenshot of the payment to
           <a href="mailto:azmarketingservicesbicol@gmail.com">azmarketingservicesbicol@gmail.com</a> or
-          <a href="https://www.facebook.com/AZDigitalMarketingOfficial" target="_blank" rel="noopener">AZ Digital Marketing on Facebook</a>.</p>
+          <a href="https://www.facebook.com/AZDigitalMarketingOfficial" target="_blank" rel="noopener">AZ Digital Marketing on Facebook</a>,
+          or call / text <b>0912 068 8399</b>.</p>
       </div>
     </div>
   </section>
