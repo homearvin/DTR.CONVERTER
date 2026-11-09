@@ -1,23 +1,20 @@
 {
-  "latest": "1.26.0",
-  "released": "2026-11-08",
+  "latest": "1.27.0",
+  "released": "2026-11-09",
   "download_url": "https://homearvin.github.io/DTR.CONVERTER/#get",
   "changes": [
-    "DTR Converter is now FREE without a key: upload your file, fix the times, set the In-Charge and print every employee's Form 48, one employee at a time. No time limit, and it works offline.",
-    "Items marked STANDARD (Print all, PDF/Excel/pictures, holidays, saved months, backup, Employee List, more signers, paper and time style) come with Standard or Pro. Copies with a key are not affected.",
-    "Better reading of clock-table files with an original and an edited sheet, and of repeated taps in four-tap mode.",
-    "A \"Contact us\" box in the price cards and Help: message us on Facebook, call/text, email or open our website in one click.",
-    "Simpler Upload screen: one box to drop or browse your file."
+    "Free version: times now print the way your biometric file writes them. Files with AM/PM times stay 12-hour (1:05, 5:12); 24-hour files stay 24-hour.",
+    "Free version: 30 fixes of times or remarks each month (changing the same box again is free). The count starts again on the 1st. Standard and Pro have no limit."
   ],
   "package": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.26.0/DTR-Converter-1.26.0-portable.zip",
-    "sha256": "e87629c54861f93a459d2a6ed12a67546c1762fcc50f4d7b5fa3216abbb4c324",
-    "size": 12196654,
-    "signature": "zDK+zMLQNWfyh20Lx9z8I04V2tPrb4Gpql+Zj1t1ONSRGdgHcbFmvkApQJGXCFvIKJ6gkDPZqPvkgBM+NEWrDQ=="
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.27.0/DTR-Converter-1.27.0-portable.zip",
+    "sha256": "5a994205f5a6563249532e70bc90f10a14e16cbe7dec9b0d352ac7c5d5360b7e",
+    "size": 12197677,
+    "signature": "2iQz7vOjRv0DGV8vb1cjWny1uVXzb5vFPWWu/4Fhj0Mnm8Zxbx5+OinBHK3Lcsbd9f80U5Ux1MdAQfuEbtw+Cw=="
   },
   "installer": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.26.0/DTR-Converter-1.26.0-setup.exe",
-    "sha256": "980f2ee5349a5a2398b18720f57da6925b1a388c55ffd3cb61bce2b96a28ec06",
-    "size": 14140423
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.27.0/DTR-Converter-1.27.0-setup.exe",
+    "sha256": "3d7059901dbff41d0b5a31fb2d30fbce81c2a9247318ca7cb8e270b1cab1c38a",
+    "size": 14140837
   }
 }

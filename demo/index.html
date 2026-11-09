@@ -897,6 +897,8 @@ button.home-review-item:hover { box-shadow: inset 0 0 0 1px var(--line-2); }
 /* Free version (1.26.0): the quiet strip, STANDARD chips and read-only previews of locked items */
 .free-banner { background: #ecfdf3; color: #14532d; }
 .free-banner .icon-btn { flex: none; }
+.free-fixes { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 8px; background: #ecfdf3; color: #14532d; }
+.free-fixes.is-used-up { background: #fff4e5; color: #8a4b00; }
 .pro-chip--standard { background: linear-gradient(135deg, #0f766e, #14b8b0); }
 .try-pro--standard { background: linear-gradient(90deg, #ecfdf5, #eef8ff); box-shadow: inset 0 0 0 1px #c7eadf; }
 .locked-preview, .is-locked { opacity: 0.6; filter: grayscale(0.35); pointer-events: none; user-select: none; }
@@ -1680,7 +1682,7 @@ window.DTR = window.DTR || {};
 DTR.config = Object.freeze({
   APP_NAME: 'DTR Converter',
   APP_SUBTITLE: 'Biometric Timecard → CSC Form No. 48',
-  APP_VERSION: '1.26.0',
+  APP_VERSION: '1.27.0',
 
   /* Where clients ask for help and keys (same as desktop/licensing.py CONTACT_*). */
   // The "Contact us to buy" box (ui/getpro.js contactHtml): Facebook page, call/text, email.
@@ -1704,13 +1706,14 @@ DTR.config = Object.freeze({
 
   /*
    * FREE VERSION (1.26.0, owner Nov-8; replaces the 1.25.0 trial): free forever, no key, no
-   * internet. Every employee, the owner's Form 48 layout, fixing times, one In-Charge signer,
+   * internet. Every employee, the owner's Form 48 layout, fixing times (FREE_FIXES_PER_MONTH), one In-Charge signer,
    * printing one employee at a time. Everything below needs Standard (or Pro / a Pro pass);
    * js/plan.js is the only place that decides. Locked items stay visible with a STANDARD chip.
    */
   STANDARD_FEATURES: Object.freeze({
     SAVE_FILES: 'save-files', PRINT_MANY: 'print-many', HOLIDAYS: 'holidays', PAST_MONTHS: 'past-months',
-    BACKUP: 'backup', EMPLOYEE_LIST: 'employee-list', SIGNERS: 'signers', APPLY_ALL: 'apply-all', PAPER_TIME: 'paper-time'
+    BACKUP: 'backup', EMPLOYEE_LIST: 'employee-list', SIGNERS: 'signers', APPLY_ALL: 'apply-all', PAPER_TIME: 'paper-time',
+    UNLIMITED_FIXES: 'unlimited-fixes'
   }),
   STANDARD_FEATURE_LABELS: Object.freeze({
     'save-files': 'Saving DTRs as PDF, Excel or pictures',
@@ -1721,8 +1724,15 @@ DTR.config = Object.freeze({
     'employee-list': 'The Employee List (saved names, import names)',
     'signers': 'More than one signer',
     'apply-all': '"Use for all employees"',
-    'paper-time': 'Choosing the paper, size and time style'
+    'paper-time': 'Choosing the paper, size and time style',
+    'unlimited-fixes': 'Unlimited fixes of times and remarks'
   }),
+  /*
+   * Free fixes (owner Nov-9: "limit it to edits"): one fix = one time box or remark changed, on any
+   * employee. Changing the same box again in the same calendar month is free; undoing a fix does not
+   * give it back. The count starts again on the 1st (plan.takeFix).
+   */
+  FREE_FIXES_PER_MONTH: 30,
   /* Settings Free cannot change: Free always prints with these defaults (plan.limitSettings). */
   FREE_FIXED_SETTINGS: Object.freeze(['timeFormat', 'paperSize', 'printSize', 'printScale']),
 
@@ -4201,7 +4211,7 @@ DTR.readers.uidDaily = (function () {
 window.DTR = window.DTR || {};
 
 DTR.parser = (function () {
-  const { FILE_FORMATS, MONTH_NAMES } = DTR.config;
+  const { FILE_FORMATS, MONTH_NAMES, TIME_FORMATS } = DTR.config;
   const { parseIsoDate, toIsoDate, daysInMonth, pad2 } = DTR.util;
   const R = DTR.readers;
 
@@ -4272,6 +4282,29 @@ DTR.parser = (function () {
     }));
   }
 
+  /* ---------- the file's own clock style (1.27.0, owner Nov-9) ---------- */
+
+  // A clock written with AM/PM ("4:26 PM", "04:26:10 a.m.") vs one past 12:59 ("16:26").
+  const MERIDIEM_CLOCK = /\b(?:0?[1-9]|1[0-2]):[0-5]\d(?::[0-5]\d)?\s*[ap]\.?\s?m\b/i;
+  const AFTERNOON_24H_CLOCK = /\b(?:1[3-9]|2[0-3]):[0-5]\d\b/;
+
+  /**
+   * How the machine's file writes its times: TIME_FORMATS.TWELVE_HOUR when its clocks carry
+   * AM/PM, else TIME_FORMATS.AS_RECORDED (24-hour). Every time is still stored as "HH:MM";
+   * this only lets the Free version print in the file's own style (js/plan.js). Reads what
+   * the cells show (Excel's displayed text when there is one), never the file name.
+   */
+  function clockStyle(sheets) {
+    let meridiem = 0;
+    let afternoon = 0;
+    sheets.forEach((sheet) => (sheet.displayRows || sheet.rows).forEach((row) => row.forEach((cell) => {
+      if (typeof cell !== 'string' || cell.indexOf(':') < 0) return;
+      if (MERIDIEM_CLOCK.test(cell)) meridiem++;
+      else if (AFTERNOON_24H_CLOCK.test(cell)) afternoon++;
+    })));
+    return meridiem > afternoon ? TIME_FORMATS.TWELVE_HOUR : TIME_FORMATS.AS_RECORDED;
+  }
+
   /* ---------- months ---------- */
 
   const monthKeyOf = (iso) => iso.slice(0, 7); // "2026-07"
@@ -4316,7 +4349,7 @@ DTR.parser = (function () {
     if (!months.length) {
       throw new SourceFormatError('The file has no dates. Please check that it is the attendance file from the biometric machine.');
     }
-    return Object.assign(result, { months });
+    return Object.assign(result, { months, sourceTimeFormat: clockStyle(sheets) });
   }
 
   function filterDays(map, key) {
@@ -4365,6 +4398,7 @@ DTR.parser = (function () {
       source: parsed.source || '',
       mergeable: !isReport,
       period,
+      sourceTimeFormat: parsed.sourceTimeFormat || TIME_FORMATS.AS_RECORDED,   // the file's clock style
       employees,
       warnings: parsed.warnings.slice()
     };
@@ -4377,7 +4411,7 @@ DTR.parser = (function () {
     return forMonth(parsed, biggest.key);
   }
 
-  return { read, forMonth, parse, textToRows, normalizeTime: R.cells.time, normalizeDate: R.cells.date, SourceFormatError };
+  return { read, forMonth, parse, textToRows, clockStyle, normalizeTime: R.cells.time, normalizeDate: R.cells.date, SourceFormatError };
 })();
 
 </script>
@@ -4769,6 +4803,7 @@ DTR.monthmerge = (function () {
  *   months              list of imported months (for "Recent months")
  *   month.<key>         the parsed machine data for one month
  *   work.<key>          the admin's edits and "checked" marks for that month
+ *   freeFixes           Free version: the boxes fixed this calendar month (plan.js)
  *
  * Browser storage can be cleared, so backup()/restore() move all of it to/from one file.
  */
@@ -4781,6 +4816,7 @@ DTR.store = (function () {
     SETTINGS: 'settings',
     DIRECTORY: 'directory',
     MONTHS: 'months',
+    FREE_FIXES: 'freeFixes',
     monthData: (key) => `month.${key}`,
     monthWork: (key) => `work.${key}`
   });
@@ -4853,6 +4889,12 @@ DTR.store = (function () {
   }
   const saveWork = (key, work) => write(KEYS.monthWork(key), work);
 
+  /* ---------- Free fixes this calendar month (js/plan.js) ---------- */
+
+  /** { month: 'YYYY-MM', used: ['<monthKey>|<employeeId>|<day>.<slot or remark>'] }. Not in backups; deleting a month keeps it. */
+  const getFreeFixes = () => read(KEYS.FREE_FIXES, null);
+  const saveFreeFixes = (record) => write(KEYS.FREE_FIXES, record);
+
   /* ---------- backup / restore ---------- */
 
   function backup() {
@@ -4889,7 +4931,7 @@ DTR.store = (function () {
   return {
     getSettings, saveSettings, getDirectory, saveDirectory,
     monthKey, listMonths, saveMonth, getMonth, deleteMonth, getWork, saveWork,
-    backup, restore, lastError: () => lastError
+    getFreeFixes, saveFreeFixes, backup, restore, lastError: () => lastError
   };
 })();
 
@@ -5190,11 +5232,14 @@ DTR.signers = (function () {
  *   item of config STANDARD_FEATURES; the Pro features stay as before (ui/getpro.js).
  *
  *   allows(feature)     false only in Free, for a STANDARD_FEATURES item
- *   limitSettings(s)    the settings a Free printout uses: what Free cannot change goes back to its
- *                       default, other signers and holidays are left out. The SAVED settings are
+ *   limitSettings(s, f) the settings a Free printout uses: what Free cannot change goes back to its
+ *                       default (the time style follows the file, `f`), other signers and holidays
+ *                       are left out. The SAVED settings are
  *                       never touched, so buying Standard brings back what was set before.
  *   canOpenMonth(key)   Free opens only the month uploaded last; earlier months stay saved (and
  *                       come back with Standard)
+ *   fixesLeft/takeFix   Free changes FREE_FIXES_PER_MONTH time boxes / remarks a calendar month
+ *                       (state.setCell / setLabel ask before saving)
  *
  * Screens ask DTR.ui.getPro.needStandard(feature) for a click on a locked item: it answers
  * allows() and otherwise shows the versions.
@@ -5202,7 +5247,7 @@ DTR.signers = (function () {
 window.DTR = window.DTR || {};
 
 DTR.plan = (function () {
-  const { STANDARD_FEATURES, FREE_FIXED_SETTINGS, DEFAULT_SETTINGS } = DTR.config;
+  const { STANDARD_FEATURES, FREE_FIXED_SETTINGS, DEFAULT_SETTINGS, TIME_FORMATS, FREE_FIXES_PER_MONTH } = DTR.config;
   const LOCKED = new Set(Object.values(STANDARD_FEATURES));
 
   /* licenseGate loads last (and the tests stub it), so ask it each time. */
@@ -5210,10 +5255,16 @@ DTR.plan = (function () {
 
   const allows = (feature) => !(isFree() && LOCKED.has(feature));
 
-  function limitSettings(settings) {
+  /**
+   * `sourceTimeFormat` = how the open month's file writes its times (parser.clockStyle). Free
+   * prints in the file's own style (owner Nov-9: "they only get what their file has"): AM/PM
+   * files as 12-hour, others as recorded. Standard and Pro choose it in Settings.
+   */
+  function limitSettings(settings, sourceTimeFormat) {
     if (!isFree()) return settings;
     const out = Object.assign({}, settings, { otherSigners: [], dayMarks: [] });
     FREE_FIXED_SETTINGS.forEach((name) => { out[name] = DEFAULT_SETTINGS[name]; });
+    if (Object.values(TIME_FORMATS).includes(sourceTimeFormat)) out.timeFormat = sourceTimeFormat;
     return out;
   }
 
@@ -5226,7 +5277,39 @@ DTR.plan = (function () {
 
   const canOpenMonth = (key) => allows(STANDARD_FEATURES.PAST_MONTHS) || key === latestMonthKey();
 
-  return { isFree, allows, limitSettings, latestMonthKey, canOpenMonth };
+  /* ---------- Free fixes: FREE_FIXES_PER_MONTH boxes a calendar month (owner Nov-9) ---------- */
+
+  const calendarMonth = (now) => `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+  /** The boxes fixed this calendar month (an older month's record counts as empty). */
+  function usedFixes(now) {
+    const record = DTR.store.getFreeFixes();
+    return record && record.month === calendarMonth(now) && Array.isArray(record.used) ? record.used : [];
+  }
+
+  /** Fixes left this month; Infinity when this copy has no limit. */
+  function fixesLeft(now = new Date()) {
+    if (allows(STANDARD_FEATURES.UNLIMITED_FIXES)) return Infinity;
+    return Math.max(0, FREE_FIXES_PER_MONTH - usedFixes(now).length);
+  }
+
+  /**
+   * Asks to change one box (`box` = '<monthKey>|<employeeId>|<day>.<slot or remark>'). True = go
+   * ahead (and it is counted); false = no fixes left. A box already fixed this month is free again.
+   */
+  function takeFix(box, now = new Date()) {
+    if (allows(STANDARD_FEATURES.UNLIMITED_FIXES)) return true;
+    const used = usedFixes(now);
+    if (used.includes(box)) return true;
+    if (used.length >= FREE_FIXES_PER_MONTH) return false;
+    DTR.store.saveFreeFixes({ month: calendarMonth(now), used: used.concat(box) });
+    return true;
+  }
+
+  /** The 1st of next month — when the free fixes start again. */
+  const fixesReset = (now = new Date()) => new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+  return { isFree, allows, limitSettings, latestMonthKey, canOpenMonth, fixesLeft, takeFix, fixesReset };
 })();
 
 </script>
@@ -6895,7 +6978,7 @@ DTR.state = (function () {
   }
 
   /** The settings every DTR is built and printed with: the saved ones, limited in Free (js/plan.js). */
-  const settings = () => DTR.plan.limitSettings(s.settings);
+  const settings = () => DTR.plan.limitSettings(s.settings, s.data && s.data.sourceTimeFormat);
 
   /** The Form 48 model. `{ plain: true }` (Standard only) leaves out the Pro features, for printing. */
   function model(id, opts) {
@@ -6982,22 +7065,30 @@ DTR.state = (function () {
     emit(reason || 'work');
   }
 
-  /** Stores the admin's value; storing the machine's own value again removes the edit. */
+  /** Free counts each changed box (plan.takeFix). False = no free fixes left, nothing saved. */
+  const mayFix = (id, day, what) => DTR.plan.takeFix(`${s.monthKey}|${id}|${day}.${what}`);
+
+  /** Stores the admin's value; storing the machine's own value again removes the edit. False = not saved. */
   function setCell(id, day, slot, value) {
+    const row = model(id).rows[day - 1];
+    if (value !== row.values[slot] && !mayFix(id, day, slot)) return false;
     const edit = editableFor(id);
     const key = cellKey(day, slot);
-    const machineValue = model(id).rows[day - 1].machine[slot];
-    if (value === machineValue) delete edit.cells[key];
+    if (value === row.machine[slot]) delete edit.cells[key];
     else edit.cells[key] = value;
     saveWork();
+    return true;
   }
 
+  /** False = not saved (no free fixes left). */
   function setLabel(id, day, value) {
+    if (value !== model(id).rows[day - 1].label && !mayFix(id, day, 'remark')) return false;
     const edit = editableFor(id);
     edit.labels[day] = value;
     const row = model(id).rows[day - 1];
     if (!row.labelEdited) delete edit.labels[day];
     saveWork();
+    return true;
   }
 
   /**
@@ -7244,7 +7335,7 @@ DTR.ui = DTR.ui || {};
 
 DTR.ui.getPro = (function () {
   const { escapeHtml: esc, readFileAsText } = DTR.util;
-  const { PRICES, PAYMENT_METHODS, CONTACT, PRO_FEATURE_LABELS, STANDARD_FEATURE_LABELS, EDITIONS, PASS_DAYS, PASS_REMIND_DAYS, MONTH_NAMES } = DTR.config;
+  const { PRICES, PAYMENT_METHODS, CONTACT, PRO_FEATURE_LABELS, STANDARD_FEATURE_LABELS, EDITIONS, PASS_DAYS, PASS_REMIND_DAYS, MONTH_NAMES, FREE_FIXES_PER_MONTH } = DTR.config;
   const dialogs = DTR.ui.dialogs;
 
   const isPro = () => DTR.licenseGate.isPro();
@@ -7359,6 +7450,7 @@ DTR.ui.getPro = (function () {
      The first row is what Free has too; the rest is what Free locks (config STANDARD_FEATURES). */
   const PLAN_FEATURES = Object.freeze([
     ['Every employee, fix times, print Form 48', [true, true, true]],
+    [`Unlimited fixes (Free: ${FREE_FIXES_PER_MONTH} a month)`, [true, true, true]],
     ['Print all employees in one go', [true, true, true]],
     ['Save as PDF, Excel or pictures', [true, true, true]],
     ['Holidays & suspensions, Employee List', [true, true, true]],
@@ -7485,8 +7577,23 @@ DTR.ui.getPro = (function () {
   /** A click on a locked item: true if this copy has it; otherwise the versions open and false. */
   function needStandard(feature) {
     if (DTR.plan.allows(feature)) return true;
-    plans(`<b>${esc(STANDARD_FEATURE_LABELS[feature])}</b> comes with Standard and Pro. The Free version keeps what you need: every employee, fixing the times, and printing Form 48 one employee at a time.`);
+    plans(`<b>${esc(STANDARD_FEATURE_LABELS[feature])}</b> comes with Standard and Pro. The Free version keeps what you need: every employee, ${FREE_FIXES_PER_MONTH} fixes a month, and printing Form 48 one employee at a time.`);
     return false;
+  }
+
+  const resetText = () => { const d = DTR.plan.fixesReset(); return `${MONTH_NAMES[d.getMonth()]} ${d.getDate()}`; };
+
+  /** Shown when a Free fix is refused: everything still opens and prints, only changing stops. */
+  function fixesUsedUp() {
+    plans(`<b>You have used your ${FREE_FIXES_PER_MONTH} free fixes for this month.</b> Your DTRs still open and print as they are. Standard and Pro have no limit on fixes. Free fixes start again on <b>${esc(resetText())}</b>.`);
+  }
+
+  /** "18 of 30 free fixes left this month" ('' when this copy has no limit). */
+  function fixesNote() {
+    const left = DTR.plan.fixesLeft();
+    if (left === Infinity) return '';
+    return `<p class="panel-note free-fixes${left ? '' : ' is-used-up'}"><span class="pro-chip">FREE</span>
+      <b>${left} of ${FREE_FIXES_PER_MONTH}</b> free fixes left this month. <button class="link" data-get-pro>Unlimited with Standard</button></p>`;
   }
 
   /** The STANDARD chip beside a locked item ('' when this copy has it). */
@@ -7500,7 +7607,7 @@ DTR.ui.getPro = (function () {
     const ended = gate().endedPass();
     const text = ended
       ? `<b>Your Pro pass ended on ${esc(dateText(ended.expires))}.</b> You are on the Free version now: every DTR still opens, fixes and prints one employee at a time.`
-      : '<b>DTR Converter Free.</b> Every employee, fixing the times and printing Form 48 are free. Standard adds Print all, PDF and Excel, holidays, saved months and more.';
+      : `<b>DTR Converter Free.</b> Every employee, ${FREE_FIXES_PER_MONTH} fixes a month and printing Form 48 are free. Standard adds unlimited fixes, Print all, PDF and Excel, holidays, saved months and more.`;
     return `<div class="pass-banner free-banner"><span class="pro-chip">FREE</span><span>${text}</span>
       <button class="btn btn-secondary btn-sm" data-get-pro>See versions</button>
       <button class="icon-btn icon-btn--sm" data-free-banner-close title="Hide for now"><svg><use href="#i-x"/></svg></button></div>`;
@@ -7528,7 +7635,7 @@ DTR.ui.getPro = (function () {
     }
   });
 
-  return { open, plans, contactHtml, choosePrint, tryBanner, chooseKeyFile, canPrint, passChip, passBanner, needStandard, lockChip, freeBanner };
+  return { open, plans, contactHtml, choosePrint, tryBanner, chooseKeyFile, canPrint, passChip, passBanner, needStandard, lockChip, freeBanner, fixesUsedUp, fixesNote };
 })();
 
 </script>
@@ -8182,12 +8289,13 @@ DTR.ui.workspace = (function () {
       done = true;
       view.editing = null;
       const value = input.value.trim();
-      if (commit && value !== original.trim()) {
-        commitBox(el, value); // redraws everything
-      } else {
+      const changed = commit && value !== original.trim();
+      const saved = changed && commitBox(el, value); // saving redraws everything
+      if (!saved) {
         el.classList.remove('is-editing');
         el.textContent = original;
       }
+      if (changed && !saved) return;                 // refused: no free fixes left
       if (nextSelector) beginEdit(findBox(nextSelector));
     }
 
@@ -8210,11 +8318,15 @@ DTR.ui.workspace = (function () {
     return `[data-day="${Number(el.dataset.day) + 1}"][data-slot="${el.dataset.slot}"]`;
   }
 
+  /** True when saved; false when Free has no fixes left (the versions are shown). */
   function commitBox(el, value) {
     const id = state.get().selectedId;
-    if (el.dataset.slot) state.setCell(id, Number(el.dataset.day), el.dataset.slot, value);
+    let saved = true;
+    if (el.dataset.slot) saved = state.setCell(id, Number(el.dataset.day), el.dataset.slot, value);
     else if (el.dataset.field) state.setHeader(id, el.dataset.field, value);
-    else if (el.dataset.labelDay) state.setLabel(id, Number(el.dataset.labelDay), value);
+    else if (el.dataset.labelDay) saved = state.setLabel(id, Number(el.dataset.labelDay), value);
+    if (!saved) DTR.ui.getPro.fixesUsedUp();
+    return saved;
   }
 
   /** Clicking another box while one is open: save the open one, then open the clicked one. */
@@ -8433,6 +8545,7 @@ DTR.ui.workspace = (function () {
         </div>
         <div class="chips">${ROW_LABEL_CHOICES.map((c) => `<button class="chip" data-chip="${esc(c)}">${esc(c)}</button>`).join('')}</div>
         ${hasTimes && row.label ? '<p class="panel-note">The remark shows only when the four time boxes are empty.</p>' : ''}
+        ${DTR.ui.getPro.fixesNote()}
         <div class="day-actions">
           <button class="btn btn-ghost btn-sm" id="day-clear" ${hasTimes ? '' : 'disabled'}>Clear the 4 times</button>
           <button class="btn btn-ghost btn-sm" id="day-restore" ${dayEdited ? '' : 'disabled'}>Restore machine record</button>
@@ -8451,6 +8564,7 @@ DTR.ui.workspace = (function () {
           <div><dt>Days with taps not printed</dt><dd>${extraDays.length ? extraDays.map((r) => `<button class="link" data-goto-day="${r.day}">${r.day}</button>`).join(', ') : '0'}</dd></div>
           <div><dt>Boxes changed by you</dt><dd>${m.stats.editedCells}</dd></div>
         </dl>
+        ${DTR.ui.getPro.fixesNote()}
         <div class="sub-label">Official hours (top of form)</div>
         <div class="hours-grid">
           <label>Regular Days<input id="hdr-regular" value="${esc(m.header.regularDays)}" placeholder="e.g. 8:00–5:00"></label>
@@ -8555,11 +8669,13 @@ DTR.ui.workspace = (function () {
       if (covered) covered.addEventListener('click', () => state.setCovered(e.id, day, covered.dataset.covered === '1'));
       const skipMark = $('#day-skip-mark');
       if (skipMark) skipMark.addEventListener('click', () => state.skipDayMark(e.id, day));
-      const saveRemark = (value) => state.setLabel(e.id, day, value.trim().toUpperCase());
+      const saveRemark = (value) => { if (!state.setLabel(e.id, day, value.trim().toUpperCase())) DTR.ui.getPro.fixesUsedUp(); };
       $('#remark-save').addEventListener('click', () => saveRemark($('#remark-input').value));
       $('#remark-input').addEventListener('keydown', (ev) => { if (ev.key === 'Enter') saveRemark(ev.target.value); });
       els.inspector.querySelectorAll('[data-chip]').forEach((c) => c.addEventListener('click', () => saveRemark(c.dataset.chip)));
-      $('#day-clear').addEventListener('click', () => TIME_SLOTS.forEach((slot) => state.setCell(e.id, day, slot, '')));
+      $('#day-clear').addEventListener('click', () => {
+        if (!TIME_SLOTS.every((slot) => state.setCell(e.id, day, slot, ''))) DTR.ui.getPro.fixesUsedUp();
+      });
       $('#day-restore').addEventListener('click', () => state.restoreDay(e.id, day));
     }
 
@@ -9764,7 +9880,7 @@ DTR.ui.settings = (function () {
     const tapTitle = (v) => TAP_PLACEMENT_LABELS[v].replace(/\s*\(.*\)$/, '');
     // Free: paper and time style show what Free prints with (the defaults), read-only.
     const paperLocked = !DTR.plan.allows(STANDARD_FEATURES.PAPER_TIME);
-    const settings = DTR.plan.limitSettings(saved);
+    const settings = paperLocked ? state.settings() : saved;      // Free: what it prints with (time style = the file's)
     return `
       ${signersHtml(settings)}
 
@@ -9790,7 +9906,7 @@ DTR.ui.settings = (function () {
         </div>
       </section>
 
-      ${paperLocked ? `<p class="settings-hint settings-lock-note">${lockChip(STANDARD_FEATURES.PAPER_TIME)} Free prints on ${esc(PAPER_SIZES[settings.paperSize].label)}, times exactly as recorded. <button class="link" data-get-pro>Choose them with Standard</button></p>` : ''}
+      ${paperLocked ? `<p class="settings-hint settings-lock-note">${lockChip(STANDARD_FEATURES.PAPER_TIME)} Free prints on ${esc(PAPER_SIZES[settings.paperSize].label)}, with the times written the way your machine's file writes them (12-hour or 24-hour). <button class="link" data-get-pro>Choose them with Standard</button></p>` : ''}
       <section class="settings-section settings-columns${paperLocked ? ' is-locked' : ''}" ${paperLocked ? 'inert' : ''}>
         <div>
           <h3>Paper</h3>
@@ -10487,7 +10603,7 @@ DTR.ui.help = (function () {
       body: () => `
         ${steps([
           'Open <b>DTR Converter</b> from the desktop shortcut.',
-          'No key yet? DTR Converter is <b>free</b>: upload your files, fix the times, set the In-Charge and print every employee\'s Form 48, one employee at a time. No time limit, no internet needed. Items marked <b>STANDARD</b> (Print all, PDF/Excel, holidays, saved months, Employee List and more) come with Standard or Pro.',
+          `No key yet? DTR Converter is <b>free</b>: upload your files, fix up to ${DTR.config.FREE_FIXES_PER_MONTH} times or remarks a month, set the In-Charge and print every employee's Form 48, one employee at a time. No time limit, no internet needed. Items marked <b>STANDARD</b> (unlimited fixes, Print all, PDF/Excel, holidays, saved months, Employee List and more) come with Standard or Pro.`,
           'Have a key? Connect to the internet once, click <b>Have a key?</b> under the upload box (or <b>I have a key</b> in the versions window) and pick your <b>.dtrkey</b> file. After this it works offline.',
           'Go to <b>Settings → Form &amp; taps</b> and type the <b>In-Charge</b> name (School Head / office head). It prints on every DTR. Add their <b>title</b> (e.g. Principal I) to print it under the name instead of the word "In-Charge".',
           'Someone else signs some DTRs (e.g. the Principal\'s own DTR is signed by the District Supervisor)? In the same place click <b>Add another signer</b>, then in <b>Employee List → Signed by</b> choose them for those employees. Choose the In-Charge under <b>Their own DTR</b> and the app warns if anyone would sign their own DTR.',
