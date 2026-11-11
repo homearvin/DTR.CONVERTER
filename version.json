@@ -1,20 +1,19 @@
 {
-  "latest": "1.27.0",
-  "released": "2026-11-09",
+  "latest": "1.28.0",
+  "released": "2026-11-12",
   "download_url": "https://homearvin.github.io/DTR.CONVERTER/#get",
   "changes": [
-    "Free version: times now print the way your biometric file writes them. Files with AM/PM times stay 12-hour (1:05, 5:12); 24-hour files stay 24-hour.",
-    "Free version: 30 fixes of times or remarks each month (changing the same box again is free). The count starts again on the 1st. Standard and Pro have no limit."
+    "Bigger, easier-to-read times on the printed DTR (arrival, departure and Under Time). The form still fits one page."
   ],
   "package": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.27.0/DTR-Converter-1.27.0-portable.zip",
-    "sha256": "5a994205f5a6563249532e70bc90f10a14e16cbe7dec9b0d352ac7c5d5360b7e",
-    "size": 12197677,
-    "signature": "2iQz7vOjRv0DGV8vb1cjWny1uVXzb5vFPWWu/4Fhj0Mnm8Zxbx5+OinBHK3Lcsbd9f80U5Ux1MdAQfuEbtw+Cw=="
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.28.0/DTR-Converter-1.28.0-portable.zip",
+    "sha256": "e65e9ac21118e8d28a1f73c5842ac6d1a8c4c5446000416abf7db7fcec2223b4",
+    "size": 12199948,
+    "signature": "SdJBpuHlpzG7JBGXVZ8CzidKuCco3S49ft+rybo5KLUSZOLwFaX0Ig+1OZxWBdVNIpVVfxsc1qtAuKPzj3xoBQ=="
   },
   "installer": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.27.0/DTR-Converter-1.27.0-setup.exe",
-    "sha256": "3d7059901dbff41d0b5a31fb2d30fbce81c2a9247318ca7cb8e270b1cab1c38a",
-    "size": 14140837
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.28.0/DTR-Converter-1.28.0-setup.exe",
+    "sha256": "cdd2d424af076b02a2955d89f3908a3dfeb1f8adf093c7c3c362dc4d378590bd",
+    "size": 14142570
   }
 }

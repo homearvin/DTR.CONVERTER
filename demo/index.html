@@ -1282,6 +1282,17 @@ button.home-review-item:hover { box-shadow: inset 0 0 0 1px var(--line-2); }
 .f48-table td.f48-col-day { text-align: right; padding-right: 3pt; font-size: 9.5pt; }
 .f48-cell { border-left: 1px solid var(--f48-ink); border-bottom: 1px dashed var(--f48-ink); font-weight: 600; }
 .f48-table .f48-g-start { border-left: var(--f48-double); }
+/*
+ * The times (and Under Time / TOTAL) print bigger: --f48-time-size, set by form48.js from
+ * config.FORM48_TIME_PT. They never make a row taller: the size is capped at the row's own height
+ * (less 1pt for its dashed line) — the same height the custom-layout and employee-number rules give
+ * the row — and never smaller than the table's normal 9pt.
+ */
+.f48-table td.f48-time {
+  line-height: 1;
+  font-size: max(9pt, min(var(--f48-time-size),
+    calc(var(--f48-row-h) - var(--layout-row-reduction, 0pt) - var(--number-row-reduction, 0pt) - 1pt)));
+}
 .f48-label { font-weight: 700; font-size: 8pt; letter-spacing: 3pt; }
 /* longer remarks step down so they stay on one row (form48.js REMARK_STEPS, up to REMARK_MAX_LENGTH) */
 .f48-label.is-l { letter-spacing: 1pt; }
@@ -1682,7 +1693,7 @@ window.DTR = window.DTR || {};
 DTR.config = Object.freeze({
   APP_NAME: 'DTR Converter',
   APP_SUBTITLE: 'Biometric Timecard → CSC Form No. 48',
-  APP_VERSION: '1.27.0',
+  APP_VERSION: '1.28.0',
 
   /* Where clients ask for help and keys (same as desktop/licensing.py CONTACT_*). */
   // The "Contact us to buy" box (ui/getpro.js contactHtml): Facebook page, call/text, email.
@@ -2005,6 +2016,14 @@ DTR.config = Object.freeze({
 
   /* Download pictures: one PNG per employee, the whole sheet at this sharpness (dots per inch). */
   IMAGE_DPI: 200,
+
+  /*
+   * Size of the times on the form, in points: A.M./P.M. arrival and departure, Under Time and TOTAL
+   * (1.28.0, client request: bigger, easier-to-read times; it was 9 pt like the rest of the table).
+   * form48.js hands it to css/form48.css, which keeps it inside its row so the form never gets
+   * taller; export/excel.js uses the same number.
+   */
+  FORM48_TIME_PT: 11,
 
   TIME_FORMATS: Object.freeze({
     AS_RECORDED: 'as-recorded', // 16:26 stays 16:26
@@ -5938,7 +5957,7 @@ DTR.form48 = (function () {
     const computed = opts.marks && row.time && UNDERTIME_SLOTS.includes(slot) && row.values[slot] && !row.edited[slot];
     // Pro, screen only: a lunch box filled from the official time on a 2-tap day (not a machine tap).
     const filled = opts.marks && row.filled && row.filled[slot] && !row.edited[slot];
-    const classes = cls('f48-cell', groupStart && 'f48-g-start', editable && 'is-editable',
+    const classes = cls('f48-cell', 'f48-time', groupStart && 'f48-g-start', editable && 'is-editable',
       opts.marks && row.edited[slot] && 'is-edited', computed && 'is-computed', filled && 'is-filled');
     return `<td class="${classes}"${attr(editable, 'data-day', row.day)}${attr(editable, 'data-slot', slot)}>${esc(row.values[slot])}</td>`;
   }
@@ -5976,7 +5995,7 @@ DTR.form48 = (function () {
 
   function totalRow(model, opts) {
     const editCell = (field, groupStart) => {
-      const classes = cls('f48-cell', 'f48-total-cell', groupStart && 'f48-g-start', opts.editable && 'is-editable');
+      const classes = cls('f48-cell', 'f48-time', 'f48-total-cell', groupStart && 'f48-g-start', opts.editable && 'is-editable');
       return `<td class="${classes}"${attr(opts.editable, 'data-field', field)}>${esc(model.header[field])}</td>`;
     };
     return `
@@ -6050,8 +6069,9 @@ DTR.form48 = (function () {
     const { size, scale } = sizeOf({ printSize: o.size, printScale: o.scale });
     const left = Object.assign({}, o, { marks: o.editable });
     const right = { editable: false, marks: false, selectedDay: null };
-    const style = size === 'custom' ? ` style="--f48-scale:${scale / 100}"` : '';
-    const open = `<div class="sheet sheet--${esc(o.paper)} size-${size}"${style}>`;
+    // The time size lives in config (Excel uses it too); the stylesheet reads it from this variable.
+    const vars = [`--f48-time-size:${DTR.config.FORM48_TIME_PT}pt`].concat(size === 'custom' ? [`--f48-scale:${scale / 100}`] : []);
+    const open = `<div class="sheet sheet--${esc(o.paper)} size-${size}" style="${vars.join(';')}">`;
     const copy = (copyOpts) => `<div class="copy">${copyHtml(model, copyOpts)}</div>`;
     return DTR.config.PRINT_SIZES[size].perSheet === 1
       ? `${open}${copy(left)}</div>${open}${copy(right)}</div>`
@@ -6524,11 +6544,11 @@ DTR.xlsx = (function () {
 window.DTR = window.DTR || {};
 
 DTR.excel = (function () {
-  const { FORM_TEXT: T, TIME_SLOTS, UNDERTIME_SLOTS } = DTR.config;
+  const { FORM_TEXT: T, TIME_SLOTS, UNDERTIME_SLOTS, FORM48_TIME_PT } = DTR.config;
 
   /*
    * The form is as wide on paper as the app's printout (css/form48.css), so Excel never has to
-   * shrink it and every font prints at the same size as in the app (times 9 pt on Full page).
+   * shrink it and every font prints at the same size as in the app (times config.FORM48_TIME_PT on Full page).
    * One copy is 7 columns: Days · A.M. arrival, departure · P.M. arrival, departure · Under time
    * hours, minutes; the Days column is 0.42 in of the 3.62 in copy, the other six share the rest.
    *   copyIn  width of one copy on paper · gapIn  space between the two copies
@@ -6549,6 +6569,7 @@ DTR.excel = (function () {
   const PX_PER_CHAR = 7.55;
   const FILL = 0.97;                       // a little room so rounding never spills onto a 2nd page
   const DAY_ROW_PT = Object.freeze({ MIN: 13, MAX: 30 });
+  const TIME_ROW_ROOM_PT = 2.5;            // a day row keeps this much above its time (checked in Excel 365)
   const LOGO_IN = 0.5;
   // Long names print smaller, as on the form (form48.js LONG_NAME_STEPS and css .f48-name sizes).
   const NAME_SIZES = Object.freeze([{ over: 38, pt: 7.5 }, { over: 30, pt: 9 }]);
@@ -6664,6 +6685,13 @@ DTR.excel = (function () {
 
     // --- one row per day ---
     const cell = (c, extra) => Object.assign({ sz: sz(9), b: true, h: 'center', border: { l: leftLine(c), b: 'dashed' } }, extra);
+    // Times, Under Time and TOTAL print bigger than the remarks, as on the printout (config.FORM48_TIME_PT).
+    // fillPage() later caps them to the day rows' height; never below the table's normal size.
+    const timeCell = (c, extra) => {
+      const style = cell(c, Object.assign({ sz: sz(FORM48_TIME_PT) }, extra));
+      out.timeStyles.push({ style, min: sz(9) });
+      return style;
+    };
     model.rows.forEach((row) => {
       put(r, 0, row.inMonth ? row.day : '', { sz: sz(9.5), b: true, h: 'right' });
       const value = (slot) => (row.inMonth ? row.values[slot] || '' : '');
@@ -6672,11 +6700,11 @@ DTR.excel = (function () {
       } else {
         const [amIn, amOut, pmIn, pmOut] = TIME_SLOTS;
         if (row.amLabel) block(r, 1, r, 2, row.amLabel, cell(1, { sz: sz(7) }));
-        else { put(r, 1, value(amIn), cell(1)); put(r, 2, value(amOut), cell(2)); }
+        else { put(r, 1, value(amIn), timeCell(1)); put(r, 2, value(amOut), timeCell(2)); }
         if (row.pmLabel) block(r, 3, r, 4, row.pmLabel, cell(3, { sz: sz(7) }));
-        else { put(r, 3, value(pmIn), cell(3)); put(r, 4, value(pmOut), cell(4)); }
+        else { put(r, 3, value(pmIn), timeCell(3)); put(r, 4, value(pmOut), timeCell(4)); }
       }
-      UNDERTIME_SLOTS.forEach((slot, i) => put(r, 5 + i, value(slot), cell(5 + i)));
+      UNDERTIME_SLOTS.forEach((slot, i) => put(r, 5 + i, value(slot), timeCell(5 + i)));
       out.dayRows.add(r);                 // its height is set by fillPage()
       r += 1;
     });
@@ -6684,8 +6712,8 @@ DTR.excel = (function () {
     // --- total, certification, signatures ---
     put(r, 0, T.TOTAL, { sz: sz(8), b: true, h: 'center', border: { t: 'medium' } });
     block(r, 1, r, 4, '', { border: { t: 'medium', b: 'thin' } });
-    put(r, 5, model.header.totalHours, cell(5, { border: { t: 'medium', b: 'thin', l: 'double' } }));
-    put(r, 6, model.header.totalMinutes, cell(6, { border: { t: 'medium', b: 'thin', l: 'thin' } }));
+    put(r, 5, model.header.totalHours, timeCell(5, { border: { t: 'medium', b: 'thin', l: 'double' } }));
+    put(r, 6, model.header.totalMinutes, timeCell(6, { border: { t: 'medium', b: 'thin', l: 'thin' } }));
     height(r++, 17);
     if (l) styledText(l.certification, l.footerStyle);
     else { block(r, 0, r, LAST, `      ${T.CERTIFY}`, { sz: sz(8.5), i: true, wrap: true, v: 'top' }); height(r++, 38); }
@@ -6713,6 +6741,9 @@ DTR.excel = (function () {
     const otherPt = Object.keys(out.rowHeights).reduce((n, r) => n + (out.dayRows.has(Number(r)) ? 0 : out.rowHeights[r]), 0);
     const dayPt = Math.min(DAY_ROW_PT.MAX, Math.max(DAY_ROW_PT.MIN, (pagePt - otherPt) / out.dayRows.size));
     out.dayRows.forEach((r) => { out.rowHeights[r] = Math.floor(dayPt * 10) / 10; });
+    // Like css/form48.css: a time never fills its row so far that it touches the dashed line.
+    const cap = Math.floor((dayPt - TIME_ROW_ROOM_PT) * 2) / 2;
+    out.timeStyles.forEach(({ style, min }) => { style.sz = Math.max(min, Math.min(style.sz, cap)); });
   }
 
   /** One worksheet for one employee. */
@@ -6723,7 +6754,7 @@ DTR.excel = (function () {
     const paperSize = DTR.config.PAPER_SIZES[paper] || DTR.config.PAPER_SIZES.a4;
     const gap = Math.round(((shape.gapIn * 96) / PX_PER_CHAR) * 100) / 100;
     const colWidths = layout.copies === 2 ? layout.cols.concat([gap], layout.cols) : layout.cols;
-    const out = { cells: [], merges: [], rowHeights: {}, dayRows: new Set(), images: [], logo: model.logo ? logoCache(model.logo) : null };
+    const out = { cells: [], merges: [], rowHeights: {}, dayRows: new Set(), timeStyles: [], images: [], logo: model.logo ? logoCache(model.logo) : null };
     for (let i = 0; i < layout.copies; i++) addCopy(out, model, i * (COPY_COLS + 1), layout);
     fillPage(out, colWidths, paperSize);
     return {
