@@ -1755,7 +1755,7 @@ DTR.config = Object.freeze({
   DEMO_MODE: true,
   DEMO_EMPLOYEE_LIMIT: 5,
   DEMO_SAMPLE_FILE: 'sample.csv',
-  DEMO_BUY_URL: '../#editions',
+  DEMO_DOWNLOAD_URL: '../#get',
   DEMO_WATERMARK: 'DEMO — NOT FOR SUBMISSION',
   PASS_DAYS: 30,
   PASS_REMIND_DAYS: 7,
@@ -7688,7 +7688,7 @@ DTR.ui.getPro = (function () {
 window.DTR = window.DTR || {};
 
 DTR.demo = (function () {
-  const { DEMO_MODE, DEMO_EMPLOYEE_LIMIT, DEMO_SAMPLE_FILE, DEMO_BUY_URL } = DTR.config;
+  const { DEMO_MODE, DEMO_EMPLOYEE_LIMIT, DEMO_SAMPLE_FILE, DEMO_DOWNLOAD_URL } = DTR.config;
   const active = Boolean(DEMO_MODE);
 
   /** A file's month → at most DEMO_EMPLOYEE_LIMIT employees (those with taps first). Unchanged outside the demo. */
@@ -7705,7 +7705,7 @@ DTR.demo = (function () {
     if (!active) return '';
     return `<div class="demo-banner"><span class="demo-badge">Demo</span>
       <span>Try DTR Converter here. Your file is read <b>in this browser only</b> — never uploaded. The demo shows ${DEMO_EMPLOYEE_LIMIT} employees and marks every DTR "DEMO".</span>
-      <a class="btn btn-primary btn-sm" href="${DEMO_BUY_URL}" target="_top">Get the full app — from ₱299</a></div>`;
+      <a class="btn btn-primary btn-sm" href="${DEMO_DOWNLOAD_URL}" target="_top">Download the app — Free</a></div>`;
   }
 
   /** The "Try with a sample file" button under the upload box. */
