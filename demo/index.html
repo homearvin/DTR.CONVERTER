@@ -1693,7 +1693,7 @@ window.DTR = window.DTR || {};
 DTR.config = Object.freeze({
   APP_NAME: 'DTR Converter',
   APP_SUBTITLE: 'Biometric Timecard → CSC Form No. 48',
-  APP_VERSION: '1.28.0',
+  APP_VERSION: '1.30.0',
 
   /* Where clients ask for help and keys (same as desktop/licensing.py CONTACT_*). */
   // The "Contact us to buy" box (ui/getpro.js contactHtml): Facebook page, call/text, email.
@@ -6321,6 +6321,9 @@ DTR.xlsx = (function () {
   const xml = (text) => String(text)
     .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '')
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  // Excel treats literal text shaped like _x0041_ as an encoded character unless
+  // its leading underscore is escaped. Preserve exactly what the user entered.
+  const excelText = (text) => xml(String(text).replace(/_(?=x[0-9a-f]{4}_)/gi, '_x005F_'));
 
   /** 0 → A, 25 → Z, 26 → AA */
   function colName(c) {
@@ -6411,7 +6414,7 @@ DTR.xlsx = (function () {
       const sAttr = s ? ` s="${s}"` : '';
       if (cell.v === undefined || cell.v === null || cell.v === '') return `<c r="${ref(cell.r, cell.c)}"${sAttr}/>`;
       if (typeof cell.v === 'number') return `<c r="${ref(cell.r, cell.c)}"${sAttr}><v>${cell.v}</v></c>`;
-      return `<c r="${ref(cell.r, cell.c)}"${sAttr} t="inlineStr"><is><t xml:space="preserve">${xml(cell.v)}</t></is></c>`;
+      return `<c r="${ref(cell.r, cell.c)}"${sAttr} t="inlineStr"><is><t xml:space="preserve">${excelText(cell.v)}</t></is></c>`;
     };
     const rowXml = Array.from(rows.keys()).sort((a, b) => a - b).map((r) => {
       const height = (sheet.rowHeights || {})[r];
@@ -6507,7 +6510,8 @@ DTR.xlsx = (function () {
     const printAreas = sheets.map((sheet, i) => {
       const lastRow = Math.max(...sheet.cells.map((cell) => cell.r));
       const lastCol = sheet.colWidths.length - 1;
-      return `<definedName name="_xlnm.Print_Area" localSheetId="${i}">'${names[i].replace(/'/g, "''")}'!$A$1:$${colName(lastCol)}$${lastRow + 1}</definedName>`;
+      const area = `'${names[i].replace(/'/g, "''")}'!$A$1:$${colName(lastCol)}$${lastRow + 1}`;
+      return `<definedName name="_xlnm.Print_Area" localSheetId="${i}">${xml(area)}</definedName>`;
     }).join('');
     files.unshift(
       { name: '[Content_Types].xml', data: `${XML_HEAD}<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">`
@@ -6519,7 +6523,7 @@ DTR.xlsx = (function () {
         + overrides.join('') + '</Types>' },
       { name: '_rels/.rels', data: rels([{ type: 'officeDocument', target: 'xl/workbook.xml' }]) },
       { name: 'xl/workbook.xml', data: `${XML_HEAD}<workbook xmlns="${NS}" xmlns:r="${NS_R}"><sheets>`
-        + names.map((name, i) => `<sheet name="${xml(name)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('')
+        + names.map((name, i) => `<sheet name="${excelText(name)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('')
         + `</sheets><definedNames>${printAreas}</definedNames></workbook>` },
       { name: 'xl/_rels/workbook.xml.rels', data: rels(sheets.map((_, i) => ({ type: 'worksheet', target: `worksheets/sheet${i + 1}.xml` }))
         .concat([{ type: 'styles', target: 'styles.xml' }])) }
@@ -7394,6 +7398,44 @@ DTR.ui.getPro = (function () {
   /* ---------- the Pro key (moved here from Settings so every "Get Pro" can use it) ---------- */
 
   function chooseKeyFile() {
+    if (DTR.demo && DTR.demo.active) {
+      dialogs.toast('Download DTR Converter to activate a license on your Windows computer.', 'info');
+      return;
+    }
+    dialogs.open({
+      title: 'Activate your license',
+      body: `<p class="modal-text">Paste the license code you received. It unlocks the edition issued to your buyer name on one computer.</p>
+        <form id="license-code-form">
+          ${dialogs.field('License code', '<input id="license-code" type="text" autocomplete="off" spellcheck="false" maxlength="80" placeholder="DTR-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX" required>', 'Connect to the internet for activation.')}
+          <p id="license-code-message" class="field-hint" role="status" aria-live="polite"></p>
+          <button type="submit" class="btn btn-primary" id="license-code-submit">Activate license</button>
+        </form>`,
+      footer: '<button class="btn btn-ghost" data-close>Cancel</button><button class="btn btn-secondary" id="legacy-key-file">Use a key file instead…</button>',
+      onMount: (el) => {
+        let busy = false;
+        const message = el.querySelector('#license-code-message');
+        const submit = el.querySelector('#license-code-submit');
+        const file = el.querySelector('#legacy-key-file');
+        el.querySelector('#license-code-form').addEventListener('submit', async (event) => {
+          event.preventDefault();
+          if (busy) return;
+          busy = true; submit.disabled = true; file.disabled = true;
+          message.textContent = 'Checking your license online… this may take up to a minute.';
+          const answer = await gate().activateCode(el.querySelector('#license-code').value);
+          if (!answer.ok) {
+            message.textContent = answer.message || 'The license could not be activated. Please try again.';
+            busy = false; submit.disabled = false; file.disabled = false;
+            return;
+          }
+          message.textContent = `Activated for ${answer.name}. Reopening DTR Converter…`;
+          setTimeout(() => location.reload(), 1200);
+        });
+        file.addEventListener('click', chooseLegacyKeyFile);
+      }
+    });
+  }
+
+  function chooseLegacyKeyFile() {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.dtrkey';
@@ -7470,7 +7512,7 @@ DTR.ui.getPro = (function () {
       <div class="getpro-pay">${PAYMENT_METHODS.map((m) => `<div class="getpro-pay-row"><span class="pm pm--${esc(m.id)}" title="${esc(m.name)}">${esc(m.short)}</span><small>${esc(m.detail)}</small><b>${esc(m.number)}</b></div>`).join('')}</div>
       <ol class="getpro-steps" start="2">
         <li>Send your name, school/office and a screenshot of the payment to us (below). Say ${say}.</li>
-        <li>You receive a key file. Connect to the internet once and choose it with <b>I have a key</b>. Your saved work stays.</li>
+        <li>You receive a license code. Connect to the internet, click <b>I have a key</b> and paste it. Existing .dtrkey files still work. Paid access is checked occasionally; your saved work stays on this computer.</li>
       </ol>
       ${contactHtml('Send it here')}`;
   }
@@ -7598,6 +7640,18 @@ DTR.ui.getPro = (function () {
       <button class="btn btn-primary btn-sm" data-get-pro>${pass.expired ? 'Renew or get Pro for life' : 'Renew'}</button></div>`;
   }
 
+  /** Paid access was paused by the owner's key list or needs an online check. */
+  function accessBanner() {
+    const status = gate().access();
+    if (!status || !['revoked', 'needs_internet'].includes(status.state)) return '';
+    const revoked = status.state === 'revoked';
+    const text = revoked
+      ? '<b>This paid license is no longer active.</b> Your employees and DTRs are safe. DTR Converter is running the Free version.'
+      : '<b>Connect to the internet to check this paid license.</b> Your employees and DTRs are safe and remain available in the Free version.';
+    return `<div class="pass-banner is-ended"><span class="pro-chip">${revoked ? 'ACCESS' : 'OFFLINE'}</span><span>${text}</span>
+      <button class="btn btn-secondary btn-sm" onclick="location.reload()">Check again</button></div>`;
+  }
+
   /* ---------- the Free version (1.26.0) ---------- */
 
   /*
@@ -7666,7 +7720,7 @@ DTR.ui.getPro = (function () {
     }
   });
 
-  return { open, plans, contactHtml, choosePrint, tryBanner, chooseKeyFile, canPrint, passChip, passBanner, needStandard, lockChip, freeBanner, fixesUsedUp, fixesNote };
+  return { open, plans, contactHtml, choosePrint, tryBanner, chooseKeyFile, canPrint, passChip, passBanner, accessBanner, needStandard, lockChip, freeBanner, fixesUsedUp, fixesNote };
 })();
 
 </script>
@@ -10635,7 +10689,7 @@ DTR.ui.help = (function () {
         ${steps([
           'Open <b>DTR Converter</b> from the desktop shortcut.',
           `No key yet? DTR Converter is <b>free</b>: upload your files, fix up to ${DTR.config.FREE_FIXES_PER_MONTH} times or remarks a month, set the In-Charge and print every employee's Form 48, one employee at a time. No time limit, no internet needed. Items marked <b>STANDARD</b> (unlimited fixes, Print all, PDF/Excel, holidays, saved months, Employee List and more) come with Standard or Pro.`,
-          'Have a key? Connect to the internet once, click <b>Have a key?</b> under the upload box (or <b>I have a key</b> in the versions window) and pick your <b>.dtrkey</b> file. After this it works offline.',
+          'Have a key? Connect to the internet, click <b>Have a key?</b> under the upload box (or <b>I have a key</b> in the versions window) and paste your license code. Received a <b>.dtrkey</b> file? Click <b>Use a key file instead</b>. Paid access is checked occasionally and has a seven-day offline allowance.',
           'Go to <b>Settings → Form &amp; taps</b> and type the <b>In-Charge</b> name (School Head / office head). It prints on every DTR. Add their <b>title</b> (e.g. Principal I) to print it under the name instead of the word "In-Charge".',
           'Someone else signs some DTRs (e.g. the Principal\'s own DTR is signed by the District Supervisor)? In the same place click <b>Add another signer</b>, then in <b>Employee List → Signed by</b> choose them for those employees. Choose the In-Charge under <b>Their own DTR</b> and the app warns if anyone would sign their own DTR.',
           'Taps fill the boxes <b>by time of day</b>: morning taps (before 12:00 NN) in the A.M. boxes, afternoon taps in the P.M. boxes. You can change this in Settings → Form &amp; taps → <b>How taps fill the time boxes</b>.',
@@ -11172,7 +11226,7 @@ DTR.ui.shell = (function () {
     document.querySelectorAll('#blue-header [data-page]').forEach(b => b.onclick = () => { if (b.dataset.page !== 'review') DTR.ui.home.show(b.dataset.page); });
     DTR.ui.nav.bind(document.getElementById('blue-header')); renderUpdate();
     const passBox = document.getElementById('blue-pass');   // the Free strip / 30-day Pro pass: last days
-    if (passBox) passBox.innerHTML = DTR.ui.getPro.freeBanner() || DTR.ui.getPro.passBanner();
+    if (passBox) passBox.innerHTML = DTR.ui.getPro.accessBanner() || DTR.ui.getPro.freeBanner() || DTR.ui.getPro.passBanner();
   }
   function init() { render(); DTR.ui.update.checkOnce(renderUpdate); }
   function showUpdate() { dismissed = false; renderUpdate(); }
@@ -11194,6 +11248,7 @@ window.DTR = window.DTR || {};
 DTR.licenseGate = (function () {
   const LICENSE_URL = '/license';
   let info = null;
+  let monitor = null;
 
   function block(message) {
     document.title = 'DTR Converter';
@@ -11220,6 +11275,7 @@ DTR.licenseGate = (function () {
       .then((data) => {
         if (!data || data.licensed !== true) { location.replace('/'); return new Promise(() => {}); }
         info = data;
+        startMonitor();
         return data;
       })
       .catch(() => { block(notice); return new Promise(() => {}); });
@@ -11245,16 +11301,32 @@ DTR.licenseGate = (function () {
     return info.pass_in_use || !info.print_ok ? info.pass : null;
   }
 
+  /** Cached online-access result: active, grace, needs_internet or revoked. */
+  const access = () => (info && info.access) || null;
+
   /** False only when a Pro pass has ended and there is no lifetime key: view, but no printing/PDF. */
   const printOk = () => !DTR.config.LICENSE_REQUIRED || !info || info.print_ok !== false;
 
   /** Asks DTR Converter.exe again (a pass can end while the app is open). Resolves printOk(). */
   function recheck() {
     if (!DTR.config.LICENSE_REQUIRED) return Promise.resolve(true);
+    const before = edition();
     return fetch(LICENSE_URL, { cache: 'no-store' })
       .then((r) => r.json())
-      .then((data) => { if (data && data.licensed) info = data; return printOk(); })
+      .then((data) => {
+        if (data && data.licensed) info = data;
+        if (edition() !== before) { location.reload(); return false; }
+        return printOk();
+      })
       .catch(() => printOk());
+  }
+
+  /** The desktop checks in the background; notice a downgrade without making users reopen. */
+  function startMonitor() {
+    if (monitor || !DTR.config.LICENSE_REQUIRED) return;
+    const poll = () => recheck();
+    setTimeout(poll, 2000);
+    monitor = setInterval(poll, 60000);
   }
 
   /** Free because a Pro pass ended (desktop/free.py): its {expires, ...}; null otherwise. */
@@ -11270,7 +11342,11 @@ DTR.licenseGate = (function () {
       .catch(() => ({ ok: false, message: 'Keys can be added only in DTR Converter.exe.' }));
   }
 
-  return { check, info: () => info, edition, isPro, isFree, pass, endedPass, printOk, recheck, activateKey };
+  function activateCode(code) {
+    return activateKey(JSON.stringify({ code }));
+  }
+
+  return { check, info: () => info, edition, isPro, isFree, pass, access, endedPass, printOk, recheck, activateKey, activateCode };
 })();
 
 </script>

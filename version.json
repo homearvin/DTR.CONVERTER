@@ -1,21 +1,20 @@
 {
-  "latest": "1.29.0",
+  "latest": "1.30.0",
   "released": "2026-11-12",
   "download_url": "https://homearvin.github.io/DTR.CONVERTER/#get",
   "changes": [
-    "Paid licenses can now be managed securely; removing paid access changes the app to Free without deleting employees or saved DTRs.",
-    "Paid copies keep a seven-day offline allowance between access checks.",
-    "Excel downloads now preserve names with special symbols and literal text such as _x0041_."
+    "Activate Standard, Pro or a Pro Pass by pasting a license code; buyer names remain attached to the signed license.",
+    "Existing key files, one-computer activation and remote access controls continue working."
   ],
   "package": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.29.0/DTR-Converter-1.29.0-portable.zip",
-    "sha256": "789015da3464ad5128fe982c25efaff8eb4971e2cb6608b47398a2d8399d7217",
-    "size": 13245276,
-    "signature": "Gqh4P5YrFitHUom1Nl+Dc3/BBkclN9JZvzf7iSK0SqxonwqFDDh6sKwtgFD2p7fiWOorsLlFKMwozEsh0i03Ag=="
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.30.0/DTR-Converter-1.30.0-portable.zip",
+    "sha256": "778a0e7a5445b4bf84f9b8ef0a1093498c226ca964d48a90a571fe5580a7ec71",
+    "size": 13250014,
+    "signature": "HKI+G2NS32xlfz+wOnLyomo9IbuDJx1swglr2bTXUZ7unL7zby5pxse5xInLdcuq+Z6Q7ZOHYfjAwY4Nj1IlDQ=="
   },
   "installer": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.29.0/DTR-Converter-1.29.0-setup.exe",
-    "sha256": "a58e021f01074db3cb5f4688912948df771c2954f290933763416195a2ad4e6e",
-    "size": 15178683
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.30.0/DTR-Converter-1.30.0-setup.exe",
+    "sha256": "e817d2dab6b6efbba939c76b606fbcbbb10b5f9c9f064888514b367c0a86c097",
+    "size": 15182963
   }
 }
