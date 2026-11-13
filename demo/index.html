@@ -1406,6 +1406,15 @@ button.home-review-item:hover { box-shadow: inset 0 0 0 1px var(--line-2); }
 .layout-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .layout-type,.layout-logo { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; border: 1px solid #d2dfef; padding: 12px; border-radius: 8px; }
 .layout-logo { grid-template-columns: 1fr; }
+.layout-logo-upload { display: grid; grid-template-columns: 56px minmax(0,1fr); gap: 12px; align-items: center; }
+.layout-logo-thumb { width: 56px; height: 56px; display: grid; place-items: center; border: 1px solid #d2dfef; border-radius: 6px; background: white; }
+.layout-logo-thumb img { width: 48px; height: 48px; object-fit: contain; }
+.layout-logo-thumb span { font-size: 11px; color: #647891; }
+.layout-logo-options { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.layout-controls .layout-logo-size { flex-direction: row; align-items: center; gap: 6px; font-weight: 400; }
+.layout-controls .layout-logo-size select { width: auto; padding: 5px; font-size: 13px; }
+.layout-fixed-label { padding: 10px 12px; border-left: 3px solid #1767ca; background: #edf4ff; font-size: 13px; color: #173e70; }
+.layout-fixed-label span { display: block; margin-top: 4px; color: #526a86; font-size: 12px; }
 .layout-type legend,.layout-logo legend { padding: 0 5px; color: #345c8c; font-size: 12px; }
 .layout-controls .layout-check { flex-direction: row; align-items: center; gap: 8px; font-weight: 400; }
 .layout-check input { accent-color: #1767ca; }
@@ -1427,6 +1436,10 @@ button.home-review-item:hover { box-shadow: inset 0 0 0 1px var(--line-2); }
 /* Export styles are shared by print, PDF and Pictures. The attendance grid stays intact. */
 .f48-custom-layout .f48-table tbody td { line-height: 1; height: max(9pt, calc(var(--f48-row-h) - var(--layout-row-reduction, 0pt))); }
 .f48-school-header { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.3; margin-bottom: 5pt; }
+.f48-branding { position: relative; box-sizing: border-box; margin: 3pt 0 5pt; }
+.f48-branding .f48-school-header { margin-bottom: 0; }
+.sheet .f48-has-branding .f48-table tbody td { line-height: 1; height: max(9pt, calc(var(--f48-row-h) - var(--layout-row-reduction, 0pt) - var(--number-row-reduction, 0pt))); }
+.f48-branding .f48-logo { top: 0; object-fit: contain; }
 .f48-custom-layout .f48-cert { white-space: pre-wrap; overflow-wrap: anywhere; }
 .f48-verification,.f48-footer-note { white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 5pt; line-height: 1.3; }
 .f48-employee-caption,.f48-signer-caption { width: 2.45in; margin-left: auto; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.3; }
@@ -1693,7 +1706,7 @@ window.DTR = window.DTR || {};
 DTR.config = Object.freeze({
   APP_NAME: 'DTR Converter',
   APP_SUBTITLE: 'Biometric Timecard → CSC Form No. 48',
-  APP_VERSION: '1.30.0',
+    APP_VERSION: '1.31.0',
 
   /* Where clients ask for help and keys (same as desktop/licensing.py CONTACT_*). */
   // The "Contact us to buy" box (ui/getpro.js contactHtml): Facebook page, call/text, email.
@@ -5807,6 +5820,7 @@ DTR.layouts = (function () {
     pmIn: T.ARRIVAL, pmOut: T.DEPARTURE.join('\n'), certification: T.CERTIFY,
     employeeCaption: '', verification: '', signerCaption: '', footer: '',
     showLogo: true, logoPosition: 'right', logoSize: 0.56, logoData: '',
+    showGovernmentLogo: true, governmentLogoSize: 0.56, governmentLogoData: '',
     headerStyle: { align: 'center', size: 9, bold: true, italic: false },
     footerStyle: { align: 'left', size: 8.5, bold: false, italic: true } });
   const imageOK = value => /^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(String(value || ''));
@@ -5821,6 +5835,11 @@ DTR.layouts = (function () {
     base.logoPosition = v.logoPosition === 'left' ? 'left' : 'right';
     base.logoSize = [0.4, 0.56, 0.7].includes(Number(v.logoSize)) ? Number(v.logoSize) : 0.56;
     base.logoData = imageOK(v.logoData) ? v.logoData : '';
+    base.showGovernmentLogo = v.showGovernmentLogo !== false;
+    base.governmentLogoSize = [0.4, 0.56, 0.7].includes(Number(v.governmentLogoSize)) ? Number(v.governmentLogoSize) : 0.56;
+    base.governmentLogoData = imageOK(v.governmentLogoData) ? v.governmentLogoData : '';
+    // Two logos have dedicated sides. Older single-logo layouts keep their chosen side.
+    if (base.showGovernmentLogo && base.governmentLogoData) base.logoPosition = 'right';
     base.headerStyle = style(v.headerStyle, base.headerStyle);
     base.footerStyle = style(v.footerStyle, base.footerStyle);
     return base;
@@ -5831,14 +5850,16 @@ DTR.layouts = (function () {
       if (v[k].length > max) return `${k.replace(/([A-Z])/g, ' $1')}: use ${max} characters or fewer.`;
     }
     if (!v.name.trim()) return 'Give this layout a name.';
-    if (v.header.split('\n').length > 3) return 'Use at most three header lines.';
+    if (v.header.split('\n').length > 4) return 'Use at most four header lines.';
     for (const k of ['am', 'pm', 'amIn', 'amOut', 'pmIn', 'pmOut']) if (!v[k].trim()) return 'Keep a label in every time heading.';
     return '';
   }
   function isCustom(value) {
     if (!value) return false;
     const a = normalize(value), b = original();
+    if (a.showGovernmentLogo && a.governmentLogoData) return true;
     delete a.name; delete b.name; delete a.logoData; delete b.logoData;
+    delete a.governmentLogoData; delete b.governmentLogoData;
     return JSON.stringify(a) !== JSON.stringify(b);
   }
   function preset(key) {
@@ -5850,16 +5871,31 @@ DTR.layouts = (function () {
   const css = s => `text-align:${s.align};font-size:${s.size}pt;font-weight:${s.bold ? 700 : 400};font-style:${s.italic ? 'italic' : 'normal'}`;
   // Reserve space for additions by shortening the day rows, never changing their values.
   const lines = (text, width = 48) => String(text).split('\n').reduce((n, x) => n + Math.max(1, Math.ceil(x.length / width)), 0);
+  /** One position rule for HTML, print and Excel; no remotely loaded pictures. */
+  function logos(model) {
+    const l = normalize(model.layout);
+    const school = imageOK(model.logo) ? { data: model.logo, size: l.logoSize, kind: 'school' } : null;
+    const government = imageOK(model.governmentLogo) ? { data: model.governmentLogo, size: l.governmentLogoSize, kind: 'government' } : null;
+    return { left: government || (school && l.logoPosition === 'left' ? school : null),
+      right: school && (government || l.logoPosition === 'right') ? school : null };
+  }
+  function headerHeight(model) {
+    const l = normalize(model.layout), images = logos(model);
+    const count = Number(!!images.left) + Number(!!images.right);
+    const text = l.header ? lines(l.header, count === 2 ? 22 : count ? 32 : 48) * l.headerStyle.size * 1.3 : 0;
+    const picture = Math.max(images.left?.size || 0, images.right?.size || 0) * 72;
+    return text || picture ? Math.max(text, picture) + 8 : 0;
+  }
   function extraHeight(value) {
     const v = normalize(value), f = v.footerStyle.size * 1.3;
-    return (v.header ? lines(v.header, v.showLogo && v.logoData ? 32 : 48) * v.headerStyle.size * 1.3 + 5 : 0)
+    return headerHeight({ layout: v, logo: v.showLogo ? v.logoData : '', governmentLogo: v.showGovernmentLogo ? v.governmentLogoData : '' })
       + (v.verification ? lines(v.verification) * f + 5 : 0)
       + (v.employeeCaption ? lines(v.employeeCaption, 34) * f : 0)
       + (v.signerCaption ? lines(v.signerCaption, 34) * f : 0)
       + (v.footer ? lines(v.footer) * f + 5 : 0)
       + Math.max(0, lines(v.certification) * f - 42);
   }
-  return { original, normalize, validate, isCustom, preset, css, lines, extraHeight, LIMITS, imageOK };
+  return { original, normalize, validate, isCustom, preset, css, lines, logos, headerHeight, extraHeight, LIMITS, imageOK };
 })();
 
 </script>
@@ -5896,23 +5932,22 @@ DTR.form48 = (function () {
     return `<span class="${cls('f48-fill', extraClass, opts.editable && 'is-editable')}"${attr(opts.editable, 'data-field', field)}>${esc(value)}</span>`;
   }
 
-  /** Only pictures the app made itself (ui/logo.js) — never an outside address. */
-  const isLogo = (src) => /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(String(src || ''));
-
   function headerHtml(model, opts) {
     const l = model.layout && DTR.layouts.normalize(model.layout);
-    const logoStyle = l ? ` style="width:${l.logoSize}in;height:${l.logoSize}in;${l.logoPosition === 'left' ? 'left:0;right:auto' : ''}"` : '';
+    const images = DTR.layouts.logos(model), hasBranding = !!(images.left || images.right || l?.header);
+    const image = (side) => {
+      const logo = images[side];
+      return logo ? `<img class="f48-logo${logo.kind === 'government' ? ' f48-government-logo' : ''}" data-logo-side="${side}" style="width:${logo.size}in;height:${logo.size}in;${side}:0;${side === 'left' ? 'right' : 'left'}:auto" src="${logo.data}" alt="${logo.kind === 'government' ? 'DepEd / government logo' : 'School / office logo'}">` : '';
+    };
+    const brandStyle = `min-height:${Math.max(images.left?.size || 0, images.right?.size || 0)}in;padding-left:${images.left ? images.left.size + 0.06 : 0}in;padding-right:${images.right ? images.right.size + 0.06 : 0}in`;
     const number = model.employeeNumber && model.employeeNumberPosition !== 'hidden' ? model.employeeNumber : '';
     const besideName = number && model.employeeNumberPosition === 'name';
     const aboveTitle = number && model.employeeNumberPosition === 'top-right';
-    const topStyle = !aboveTitle && l && model.logo && !l.header ? ` style="padding-${l.logoPosition}:${l.logoSize + 0.06}in;min-height:${l.logoSize}in"` : '';
     return `
-      <div class="f48-layout-top"${topStyle}>
-      ${aboveTitle ? `<div class="f48-number-brand" style="min-height:${isLogo(model.logo) ? (l ? l.logoSize : 0.56) : 0}in">` : ''}
-      ${isLogo(model.logo) ? `<img class="f48-logo"${logoStyle} src="${model.logo}" alt="">` : ''}
-      ${l && l.header ? `<div class="f48-school-header" style="${DTR.layouts.css(l.headerStyle)};${model.logo ? `padding-${l.logoPosition}:${l.logoSize + 0.06}in;min-height:${l.logoSize}in` : ''}">${esc(l.header)}</div>` : ''}
       <div class="f48-formno">${esc(T.FORM_NO)}</div>
-      ${aboveTitle ? `</div><div class="f48-employee-number f48-number-top">Employee No. ${esc(number)}</div>` : ''}
+      <div class="f48-layout-top">
+      ${hasBranding ? `<div class="f48-branding" style="${brandStyle}">${image('left')}${image('right')}${l?.header ? `<div class="f48-school-header" style="${DTR.layouts.css(l.headerStyle)}">${esc(l.header)}</div>` : ''}</div>` : ''}
+      ${aboveTitle ? `<div class="f48-employee-number f48-number-top">Employee No. ${esc(number)}</div>` : ''}
       <div class="f48-title">${esc(T.TITLE)}</div>
       <div class="f48-title-rule"></div>
       </div>
@@ -6031,11 +6066,12 @@ DTR.form48 = (function () {
   function copyHtml(model, opts) {
     // Online demo only (js/demo.js): every copy, on screen and on paper, says it is not for submission.
     const hasNumber = !!model.employeeNumber && ['name', 'top-right'].includes(model.employeeNumberPosition);
-    const numberSpace = !hasNumber ? 0 : model.employeeNumberPosition === 'name' ? 16
-      : 16 + (model.logo && !(model.layout && model.layout.header) ? 34 : 0);
+    const images = DTR.layouts.logos(model), hasLogos = !!(images.left || images.right);
+    const numberSpace = hasNumber ? 16 : 0;
+    const extra = model.layout ? DTR.layouts.extraHeight(model.layout) : DTR.layouts.headerHeight(model);
     const watermark = DTR.config.DEMO_MODE ? `<div class="f48-demo-mark" aria-hidden="true">${esc(DTR.config.DEMO_WATERMARK)}</div>` : '';
     return `
-      <div class="f48${model.layout ? ' f48-custom-layout' : ''}${hasNumber ? ' f48-with-number' : ''}"${model.layout || hasNumber ? ` style="--layout-row-reduction:${model.layout ? DTR.layouts.extraHeight(model.layout) / 31 : 0}pt;--number-row-reduction:${numberSpace / 31}pt"` : ''}>
+      <div class="f48${model.layout ? ' f48-custom-layout' : ''}${hasLogos ? ' f48-has-branding' : ''}${hasNumber ? ' f48-with-number' : ''}"${model.layout || hasNumber || hasLogos ? ` style="--layout-row-reduction:${extra / 31}pt;--number-row-reduction:${numberSpace / 31}pt"` : ''}>
         ${watermark}
         ${headerHtml(model, opts)}
         <table class="f48-table">
@@ -6091,7 +6127,8 @@ DTR.form48 = (function () {
   }
 
   function checkFit(model, opts) {
-    if (!model.layout && !(model.employeeNumber && model.employeeNumberPosition !== 'hidden')) return '';
+    const logos = DTR.layouts.logos(model);
+    if (!model.layout && !logos.left && !logos.right && !(model.employeeNumber && model.employeeNumberPosition !== 'hidden')) return '';
     const box = document.createElement('div');
     box.style.cssText = 'position:fixed;left:-20000px;top:0;visibility:hidden;pointer-events:none';
     box.innerHTML = sheet(model, opts); document.body.appendChild(box);
@@ -6574,7 +6611,6 @@ DTR.excel = (function () {
   const FILL = 0.97;                       // a little room so rounding never spills onto a 2nd page
   const DAY_ROW_PT = Object.freeze({ MIN: 13, MAX: 30 });
   const TIME_ROW_ROOM_PT = 2.5;            // a day row keeps this much above its time (checked in Excel 365)
-  const LOGO_IN = 0.5;
   // Long names print smaller, as on the form (form48.js LONG_NAME_STEPS and css .f48-name sizes).
   const NAME_SIZES = Object.freeze([{ over: 38, pt: 7.5 }, { over: 30, pt: 9 }]);
   const nameSize = (name) => (NAME_SIZES.find((s) => String(name).length > s.over) || { pt: 10.5 }).pt;
@@ -6645,15 +6681,25 @@ DTR.excel = (function () {
     };
     const number = model.employeeNumber && model.employeeNumberPosition !== 'hidden' ? model.employeeNumber : '';
     const aboveTitle = number && model.employeeNumberPosition === 'top-right';
+    const logos = DTR.layouts.logos(model);
+    const logoHeight = Math.max(logos.left?.size || 0, logos.right?.size || 0) * 72;
     // --- top of the form ---
-    if (aboveTitle && model.logo && !l) { height(r++, LOGO_IN * 72 + 4); }
-    if (l && model.logo && !l.header) { height(r++, l.logoSize * 72 + 4); }
-    if (l && l.header) {
-      const left = model.logo && l.logoPosition === 'left' ? 1 : 0;
-      const right = model.logo && l.logoPosition === 'right' ? LAST - 1 : LAST;
-      styledText(l.header, l.headerStyle, left, right, model.logo ? l.logoSize * 72 : 0);
-    }
+    // Fixed identity is always the very first row, outside editable branding.
     block(r, 0, r, LAST, T.FORM_NO, { sz: sz(8), i: true }); height(r++, 13);
+    const brandingRow = r;
+    if (l && l.header) {
+      // A merged header cannot have left/right padding. Reserve whole columns
+      // wide enough for each image, and measure only the remaining text width.
+      const reserve = (logo, reverse) => {
+        if (!logo) return 0;
+        const widths = reverse ? layout.cols.slice().reverse() : layout.cols;
+        let inches = 0, columns = 0;
+        while (columns < widths.length && inches < (logo.size + 0.06) * k) inches += widths[columns++] * PX_PER_CHAR / 96;
+        return columns;
+      };
+      const left = reserve(logos.left, false), right = LAST - reserve(logos.right, true);
+      styledText(l.header, l.headerStyle, left, right, logoHeight + 8);
+    } else if (logoHeight) height(r++, logoHeight + 8);
     if (aboveTitle) styledText(`Employee No. ${number}`, { size: 8, align: 'right' });
     block(r, 0, r, LAST, T.TITLE, { sz: sz(13.5), b: true, h: 'center' }); height(r++, 22);
     height(r++, 6);
@@ -6733,8 +6779,14 @@ DTR.excel = (function () {
 
     if (l && l.signerCaption) styledText(l.signerCaption, l.footerStyle, 3);
     if (l && l.footer) styledText(l.footer, l.footerStyle);
-    const logo = out.logo;
-    if (logo) out.images.push({ bytes: logo.bytes, ext: logo.ext, r: 0, c: c0 + (l && l.logoPosition === 'left' ? 0 : LAST - 1), sizeIn: (l ? l.logoSize : LOGO_IN) * k, offsetIn: [0.12 * (layout.copyIn / GEOMETRY.a4.two.copyIn), 0.02] });
+    for (const side of ['left','right']) {
+      const image = logos[side], logo = out.logos[side];
+      if (!image || !logo) continue;
+      const sizeIn = image.size * k;
+      let x = side === 'left' ? 0.02 : layout.copyIn - sizeIn - 0.02, column = 0;
+      while (column < LAST && x >= layout.cols[column] * PX_PER_CHAR / 96) x -= layout.cols[column++] * PX_PER_CHAR / 96;
+      out.images.push({ bytes: logo.bytes, ext: logo.ext, r: brandingRow, c: c0 + column, sizeIn, offsetIn: [x, 0.02] });
+    }
   }
 
   /** Day-row height that makes the form fill the page once Excel fits its width to the paper. */
@@ -6758,7 +6810,9 @@ DTR.excel = (function () {
     const paperSize = DTR.config.PAPER_SIZES[paper] || DTR.config.PAPER_SIZES.a4;
     const gap = Math.round(((shape.gapIn * 96) / PX_PER_CHAR) * 100) / 100;
     const colWidths = layout.copies === 2 ? layout.cols.concat([gap], layout.cols) : layout.cols;
-    const out = { cells: [], merges: [], rowHeights: {}, dayRows: new Set(), timeStyles: [], images: [], logo: model.logo ? logoCache(model.logo) : null };
+    const logos = DTR.layouts.logos(model);
+    const out = { cells: [], merges: [], rowHeights: {}, dayRows: new Set(), timeStyles: [], images: [],
+      logos: { left: logos.left ? logoCache(logos.left.data) : null, right: logos.right ? logoCache(logos.right.data) : null } };
     for (let i = 0; i < layout.copies; i++) addCopy(out, model, i * (COPY_COLS + 1), layout);
     fillPage(out, colWidths, paperSize);
     return {
@@ -7022,7 +7076,11 @@ DTR.state = (function () {
     const plain = Boolean(opts && opts.plain);
     const result = build({ employee: e, period: s.data.period, person: person(id), settings: settings(), edit: s.work.edits[id], timeRules: timeRulesFor(id, plain), logo: logoFor(plain) });
     const layout = !withoutPro(plain) && layoutFor(id);
-    if (layout) { if (DTR.layouts.isCustom(layout)) result.layout = layout; result.logo = layout.showLogo ? layout.logoData : ''; }
+    if (layout) {
+      if (DTR.layouts.isCustom(layout)) result.layout = layout;
+      result.logo = layout.showLogo ? layout.logoData : '';
+      result.governmentLogo = layout.showGovernmentLogo ? layout.governmentLogoData : '';
+    }
     return result;
   }
 
@@ -7071,7 +7129,10 @@ DTR.state = (function () {
       used.push(F.UNDERTIME);
       if (s.settings.fillLunchBreak) used.push(F.LUNCH);
     }
-    if (s.settings.schoolLogo || (s.data && s.data.employees.some(e => layoutFor(e.id)?.logoData && layoutFor(e.id).showLogo))) used.push(F.LOGO);
+    if (s.settings.schoolLogo || (s.data && s.data.employees.some(e => {
+      const l = layoutFor(e.id);
+      return l && ((l.logoData && l.showLogo) || (l.governmentLogoData && l.showGovernmentLogo));
+    }))) used.push(F.LOGO);
     if (s.data && s.data.employees.some(e => DTR.layouts.isCustom(layoutFor(e.id)))) used.push(F.LAYOUT);
     return used;
   }
@@ -9711,7 +9772,7 @@ window.DTR = window.DTR || {}; DTR.ui = DTR.ui || {};
 DTR.ui.layouts = (function () {
   const L = DTR.layouts, state = DTR.state, dialogs = DTR.ui.dialogs;
   const esc = DTR.util.escapeHtml;
-  const SECTIONS = [['header', 'Header & logo'], ['headings', 'Time headings'], ['footer', 'Footer & signatures']];
+  const SECTIONS = [['header', 'Header & logos'], ['headings', 'Time headings'], ['footer', 'Footer & signatures']];
   function example() {
     return DTR.converter.build({ employee: { id: 'sample', rawName: 'Juan Dela Cruz', days: {} },
       period: { year: 2026, month: 9, start: '2026-09-01', end: '2026-09-30' },
@@ -9730,6 +9791,21 @@ DTR.ui.layouts = (function () {
       ? `<textarea data-layout-key="${key}" rows="${rows}" maxlength="${L.LIMITS[key]}">${esc(draft[key])}</textarea>`
       : `<input data-layout-key="${key}" maxlength="${L.LIMITS[key]}" value="${esc(draft[key])}">`}</label>`;
     const choice = (key, values, current) => `<select data-layout-key="${key}">${values.map(([v,t]) => `<option value="${v}" ${String(v) === String(current) ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
+    function logoFields(government) {
+      const data = government ? 'governmentLogoData' : 'logoData';
+      const show = government ? 'showGovernmentLogo' : 'showLogo';
+      const size = government ? 'governmentLogoSize' : 'logoSize';
+      const prefix = government ? 'layout-government-logo' : 'layout-logo';
+      const twoLogos = draft.showGovernmentLogo && draft.governmentLogoData;
+      const label = government ? 'Left · DepEd / government logo' : `${twoLogos ? 'Right · ' : ''}School / office logo`;
+      return `<fieldset class="layout-logo"><legend>${label}</legend>
+        <div class="layout-logo-upload"><div class="layout-logo-thumb">${draft[data] ? `<img src="${draft[data]}" alt="${label}">` : '<span>No logo</span>'}</div>
+        <label class="layout-field"><span>${draft[data] ? 'Replace picture' : 'Upload picture'}</span><input type="file" id="${prefix}-file" accept="image/png,image/jpeg"></label></div>
+        <div class="layout-logo-options"><label class="layout-check"><input type="checkbox" data-layout-key="${show}" ${draft[show] ? 'checked' : ''}>Show</label>
+        <label class="layout-logo-size">Size${choice(size,[[0.4,'Small'],[0.56,'Medium'],[0.7,'Large']],draft[size])}</label>
+        ${draft[data] ? `<button class="btn btn-ghost btn-sm" id="${prefix}-remove">Remove</button>` : ''}</div>
+        ${government || twoLogos ? '' : `<label>Position${choice('logoPosition',[['left','Left'],['right','Right']],draft.logoPosition)}</label>`}</fieldset>`;
+    }
     function typography(key) {
       const st = draft[key];
       return `<fieldset class="layout-type"><legend>Text style</legend><label>Align${choice(key + '.align', [['left','Left'],['center','Center'],['right','Right']], st.align)}</label><label>Size${choice(key + '.size', [8,8.5,9,10,11].map(n => [n,`${n} pt`]),st.size)}</label>
@@ -9752,7 +9828,7 @@ DTR.ui.layouts = (function () {
       onClose: () => { if (returnFocus?.isConnected) returnFocus.focus(); },
       onMount: (el, close) => {
         const error = text => { el.querySelector('#layout-error').textContent = text; };
-        const withDraft = model => Object.assign({}, model, { layout: L.normalize(draft), logo: draft.showLogo ? draft.logoData : '' });
+        const withDraft = model => Object.assign({}, model, { layout: L.normalize(draft), logo: draft.showLogo ? draft.logoData : '', governmentLogo: draft.showGovernmentLogo ? draft.governmentLogoData : '' });
         const options = () => Object.assign({ paper: state.get().settings.paperSize }, DTR.form48.sizeOf(state.get().settings));
         function preview() {
           const box = el.querySelector('#layout-preview');
@@ -9762,18 +9838,16 @@ DTR.ui.layouts = (function () {
           const table = form.querySelector('.f48-table');
           table.querySelector('thead').dataset.layoutRegion = 'headings';
           let after = false;
-          Array.from(form.children).forEach(x => { if (x === table) after = true; else if (!x.classList.contains('f48-demo-mark')) x.dataset.layoutRegion = after ? 'footer' : 'header'; });
+          Array.from(form.children).forEach(x => { if (x === table) after = true; else if (!x.classList.contains('f48-demo-mark') && !x.classList.contains('f48-formno')) x.dataset.layoutRegion = after ? 'footer' : 'header'; });
           box.querySelectorAll('[data-layout-region]').forEach(x => x.classList.toggle('layout-active-region', x.dataset.layoutRegion === section));
           error(L.validate(draft) || DTR.form48.checkFit(withDraft(source), options()));
         }
         function fields() {
           const pane = el.querySelector('#layout-fields');
           pane.setAttribute('aria-labelledby', `layout-tab-${section}`);
-          if (section === 'header') pane.innerHTML = `${field('header','School header (up to three lines)',3)}${typography('headerStyle')}
-            <fieldset class="layout-logo"><legend>School logo</legend><label class="layout-check"><input type="checkbox" data-layout-key="showLogo" ${draft.showLogo ? 'checked' : ''}>Show logo</label>
-            <div class="layout-two"><label>Position${choice('logoPosition',[['left','Left'],['right','Right']],draft.logoPosition)}</label><label>Size${choice('logoSize',[[0.4,'Small'],[0.56,'Medium'],[0.7,'Large']],draft.logoSize)}</label></div>
-            <label class="layout-field"><span>${draft.logoData ? 'Replace logo' : 'Add logo'}</span><input type="file" id="layout-logo-file" accept="image/png,image/jpeg"></label>
-            ${draft.logoData ? '<button class="btn btn-ghost btn-sm" id="layout-remove-logo">Remove logo</button>' : ''}</fieldset>`;
+          if (section === 'header') pane.innerHTML = `<div class="layout-fixed-label">${esc(DTR.config.FORM_TEXT.FORM_NO)} <span>Fixed at the top</span></div>
+            ${logoFields(true)}${logoFields(false)}
+            ${field('header','School / office header (up to four lines)',4)}${typography('headerStyle')}`;
           if (section === 'headings') pane.innerHTML = `<div class="layout-two">${field('am','Morning heading')}${field('pm','Afternoon heading')}${field('amIn','Morning arrival')}${field('amOut','Morning departure')}${field('pmIn','Afternoon arrival')}${field('pmOut','Afternoon departure')}</div><p class="field-hint">Labels change here. Tap placement and calculations stay the same.</p>`;
           if (section === 'footer') pane.innerHTML = `${field('certification','Employee certification',4)}${field('employeeCaption','Employee signature caption')}${field('verification','Verification statement',2)}${field('signerCaption','Approving officer caption')}${field('footer','Footer note',2)}${typography('footerStyle')}<p class="field-hint">Signer names and titles come from each employee’s “Signed by” choice.</p>`;
           el.querySelectorAll('[data-layout-tab]').forEach(x => x.setAttribute('aria-selected', String(x.dataset.layoutTab === section)));
@@ -9791,12 +9865,18 @@ DTR.ui.layouts = (function () {
           const [a,b] = key.split('.');
           const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
           if (b) draft[a][b] = b === 'size' ? Number(value) : value;
-          else draft[a] = a === 'logoSize' ? Number(value) : value;
+          else draft[a] = ['logoSize','governmentLogoSize'].includes(a) ? Number(value) : value;
+          if (a === 'showGovernmentLogo') { if (value && draft.governmentLogoData) draft.logoPosition = 'right'; fields(); el.querySelector('[data-layout-key="showGovernmentLogo"]').focus({preventScroll:true}); return; }
           preview();
         });
-        el.querySelector('#layout-fields').addEventListener('click', e => { if (e.target.id === 'layout-remove-logo') { draft.logoData = ''; fields(); } });
+        el.querySelector('#layout-fields').addEventListener('click', e => {
+          if (e.target.id === 'layout-logo-remove') { draft.logoData = ''; fields(); }
+          if (e.target.id === 'layout-government-logo-remove') { draft.governmentLogoData = ''; fields(); }
+        });
         el.querySelector('#layout-fields').addEventListener('change', async e => {
-          if (e.target.id !== 'layout-logo-file' || !e.target.files[0]) return;
+          const government = e.target.id === 'layout-government-logo-file';
+          if ((!government && e.target.id !== 'layout-logo-file') || !e.target.files[0]) return;
+          const save = el.querySelector('#layout-save'); save.disabled = true;
           try {
             const file = e.target.files[0];
             if (!['image/png','image/jpeg'].includes(file.type) || file.size > 10 * 1024 * 1024) throw new Error('Choose a PNG or JPG up to 10 MB.');
@@ -9806,16 +9886,18 @@ DTR.ui.layouts = (function () {
               const canvas = document.createElement('canvas'); canvas.width = canvas.height = 240;
               const ctx = canvas.getContext('2d'), scale = 240 / Math.max(img.width,img.height);
               ctx.drawImage(img,(240-img.width*scale)/2,(240-img.height*scale)/2,img.width*scale,img.height*scale);
-              draft.logoData = canvas.toDataURL('image/png'); draft.showLogo = true;
+              if (government) { draft.governmentLogoData = canvas.toDataURL('image/png'); draft.showGovernmentLogo = true; draft.logoPosition = 'right'; }
+              else { draft.logoData = canvas.toDataURL('image/png'); draft.showLogo = true; }
             } finally { URL.revokeObjectURL(url); }
             fields();
           } catch (err) { error(err.message); }
+          finally { save.disabled = false; }
         });
         el.querySelector('#layout-name').oninput = e => { draft.name = e.target.value; preview(); };
         function replace(value) { draft = L.normalize(value); el.querySelector('#layout-name').value = draft.name; fields(); }
         el.querySelector('#layout-preset').onchange = e => {
           if (e.target.value === 'draft') return;
-          const data = e.target.value.startsWith('saved-') ? saved[Number(e.target.value.slice(6))] : Object.assign(L.preset(e.target.value), { logoData: draft.logoData });
+          const data = e.target.value.startsWith('saved-') ? saved[Number(e.target.value.slice(6))] : Object.assign(L.preset(e.target.value), { logoData: draft.logoData, governmentLogoData: draft.governmentLogoData });
           replace(data);
         };
         el.querySelector('#layout-reset').onclick = () => { replace(Object.assign(L.original(), { logoData: draft.logoData })); el.querySelector('#layout-preset').value = 'original'; };
@@ -9978,7 +10060,7 @@ DTR.ui.settings = (function () {
       </section>
 
       <section class="settings-section"><h3>DTR layouts <span class="pro-chip">PRO</span></h3>
-        <p class="settings-hint">Your school header, time headings and signature wording.</p>
+        <p class="settings-hint">Your school header, left DepEd / government logo, right school logo, time headings and signature wording.</p>
         <button class="btn btn-secondary" id="settings-layout">Customize DTR layout</button>
       </section>
       ${DTR.ui.logo.sectionHtml(settings)}
@@ -10675,10 +10757,11 @@ DTR.ui.help = (function () {
 
   /* id: used by open(id) from other screens. pro: shown with a PRO mark. */
   const TOPICS = Object.freeze([
-    { id: 'layouts', title: 'Customize your DTR layout', sub: 'School header, logo and signature wording', pro: true,
+    { id: 'layouts', title: 'Customize your DTR layout', sub: 'School header, two logos and signature wording', pro: true,
       body: () => `${steps([
         'On a DTR, click <b>DTR layout</b>, or go to <b>Settings → Form &amp; taps → Customize DTR layout</b>.',
         'Start from <b>Original Form 48</b>, <b>Form 48 with verification</b> or <b>Custom school layout</b>. Click Header, Time headings or Footer to change the wording and see it on the form.',
+        'Under <b>Header &amp; logos</b>, upload your own <b>DepEd / government logo on the left</b> and <b>school / office logo on the right</b> (PNG or JPG). Either picture is optional. The <b>Civil Service Form No. 48</b> label stays fixed above the header and both pictures.',
         'Choose this employee, selected employees or everyone in this month. Tick <b>Use as default for new months</b> if you want to reuse it. Other saved months keep their own layout.',
         'Give it a name and click <b>Save layout</b>. Saved names appear under Start from. Saving with the same name replaces that template, without changing past months.',
         'Use <b>Restore original</b> to return to the usual form, then Save. If added text will not fit the chosen print size, shorten it or use Full page.'

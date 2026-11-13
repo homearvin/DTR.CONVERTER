@@ -1,20 +1,21 @@
 {
-  "latest": "1.30.0",
-  "released": "2026-11-12",
+  "latest": "1.31.0",
+  "released": "2026-11-13",
   "download_url": "https://homearvin.github.io/DTR.CONVERTER/#get",
   "changes": [
-    "Activate Standard, Pro or a Pro Pass by pasting a license code; buyer names remain attached to the signed license.",
-    "Existing key files, one-computer activation and remote access controls continue working."
+    "Pro: upload your own DepEd/government logo on the left and school logo on the right; each is optional.",
+    "Civil Service Form No. 48 stays fixed above all logos and customized headers in preview, print, PDF, pictures and Excel.",
+    "School headers support four lines, with saved layouts and defaults for future new months. Existing attendance and licenses are kept."
   ],
   "package": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.30.0/DTR-Converter-1.30.0-portable.zip",
-    "sha256": "778a0e7a5445b4bf84f9b8ef0a1093498c226ca964d48a90a571fe5580a7ec71",
-    "size": 13250014,
-    "signature": "HKI+G2NS32xlfz+wOnLyomo9IbuDJx1swglr2bTXUZ7unL7zby5pxse5xInLdcuq+Z6Q7ZOHYfjAwY4Nj1IlDQ=="
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.31.0/DTR-Converter-1.31.0-portable.zip",
+    "sha256": "38429a873b82e09d571fedac5151187019fdc93f9ab3350a94150302830498b9",
+    "size": 13253245,
+    "signature": "3iqMBWiRWLCxdZX+bY56ljY1/lCyocG5Q1/TnrJ82qDmTFbr9DKRR0yk/awOawYbQgibxAMi2Eq0KVGy8UjqBQ=="
   },
   "installer": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.30.0/DTR-Converter-1.30.0-setup.exe",
-    "sha256": "e817d2dab6b6efbba939c76b606fbcbbb10b5f9c9f064888514b367c0a86c097",
-    "size": 15182963
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.31.0/DTR-Converter-1.31.0-setup.exe",
+    "sha256": "9553f6c5a86181b5dd2e4cfe32f454ccced25c65ebf0e4a38884529a86782bb7",
+    "size": 15186564
   }
 }
