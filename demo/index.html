@@ -1398,11 +1398,11 @@ button.home-review-item:hover { box-shadow: inset 0 0 0 1px var(--line-2); }
 #layout-preview .copy { width: 100%; }
 #layout-preview [data-layout-region] { cursor: pointer; }
 #layout-preview .layout-active-region { background: #edf5ff; outline: 1px solid #b7d6ff; outline-offset: 2px; }
-.layout-controls { border-left: 1px solid #dbe7f6; overflow: auto; background: #f8faff; }
-.layout-tabs { display: flex; padding: 8px; gap: 4px; position: sticky; top: 0; background: #edf4ff; z-index: 1; }
+.layout-controls { border-left: 1px solid #dbe7f6; overflow: hidden; background: #f8faff; display: flex; flex-direction: column; min-height: 0; }
+.layout-tabs { display: flex; padding: 8px; gap: 4px; flex-shrink: 0; background: #edf4ff; z-index: 1; }
 .layout-tabs button { flex: 1; padding: 10px 5px; font: 600 12px "Segoe UI",sans-serif; border: 0; border-radius: 6px; background: transparent; color: #345c8c; cursor: pointer; }
 .layout-tabs button[aria-selected=true] { color: white; background: #1767ca; }
-#layout-fields { padding: 18px; display: grid; gap: 14px; }
+#layout-fields { padding: 18px; display: grid; gap: 14px; overflow: auto; min-height: 0; }
 .layout-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .layout-type,.layout-logo { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; border: 1px solid #d2dfef; padding: 12px; border-radius: 8px; }
 .layout-logo { grid-template-columns: 1fr; }
@@ -1418,7 +1418,7 @@ button.home-review-item:hover { box-shadow: inset 0 0 0 1px var(--line-2); }
 .layout-type legend,.layout-logo legend { padding: 0 5px; color: #345c8c; font-size: 12px; }
 .layout-controls .layout-check { flex-direction: row; align-items: center; gap: 8px; font-weight: 400; }
 .layout-check input { accent-color: #1767ca; }
-.layout-apply { padding: 18px; border-top: 1px solid #d2dfef; display: grid; gap: 14px; }
+.layout-apply { padding: 12px 18px; border-bottom: 1px solid #d2dfef; display: grid; gap: 8px; flex-shrink: 0; max-height: 210px; overflow: auto; background: #edf4ff; }
 #layout-employees { max-height: 130px; overflow: auto; display: grid; gap: 8px; }
 #layout-employees[hidden] { display: none; }
 #layout-error { color: #a32916; font-size: 13px; margin-right: auto; max-width: 440px; }
@@ -1428,6 +1428,7 @@ button.home-review-item:hover { box-shadow: inset 0 0 0 1px var(--line-2); }
   .layout-editor { grid-template-columns: 1fr; overflow: auto; }
   .layout-preview-pane { max-height: 300px; flex-shrink: 0; }
   .layout-controls { overflow: visible; }
+  #layout-fields { overflow: visible; }
   .layout-top { gap: 10px; padding: 12px; }
   .modal--layouts .modal-foot { flex-wrap: wrap; }
   #layout-error { order: -1; width: 100%; max-width: none; }
@@ -1706,7 +1707,7 @@ window.DTR = window.DTR || {};
 DTR.config = Object.freeze({
   APP_NAME: 'DTR Converter',
   APP_SUBTITLE: 'Biometric Timecard → CSC Form No. 48',
-    APP_VERSION: '1.31.0',
+    APP_VERSION: '1.31.2',
 
   /* Where clients ask for help and keys (same as desktop/licensing.py CONTACT_*). */
   // The "Contact us to buy" box (ui/getpro.js contactHtml): Facebook page, call/text, email.
@@ -2664,7 +2665,9 @@ DTR.readers.standardReport = (function () {
   const LOG_TITLE = /^list\s+of\s+logs$/i;
   const LOG_PERIOD_LABEL = /^Period\s*:$/i;
   const LOG_ID_LABEL = /^No\s*:$/i;
-  const LOG_PERIOD = /^(\d{4})\/(\d{1,2})\/(\d{1,2})\s*~\s*(?:(\d{4})\/)?(\d{1,2})\/(\d{1,2})$/;
+  // Some devices append one parenthesized office caption to the actual date range.
+  // Keep the range anchored: free text, extra ranges and broken captions still fail.
+  const LOG_PERIOD = /^(\d{4})\/(\d{1,2})\/(\d{1,2})\s*~\s*(?:(\d{4})\/)?(\d{1,2})\/(\d{1,2})(?:\s+\([^()\r\n]{1,80}\))?$/;
   const PERIOD_LABEL = /^(?:att\.?\s*time:?$|attendance\s+date\s*:)/i;
   const PERIOD = /^(\d{4}-\d{1,2}-\d{1,2})\s*~\s*(\d{4}-\d{1,2}-\d{1,2})$/;
   const ID_LABEL = /^(?:User\s+)?ID\s*:$/i;
@@ -2821,8 +2824,14 @@ DTR.readers.standardReport = (function () {
           if (!employee) {
             const rawName = text(valueAfter(row, nameCol, deptCol)).replace(/\s+/g, ' ');
             employee = { id, rawName, days: {} };
+            // Owner confirmed these raw-log names should print exactly as written.
+            if (logList) employee.nameAsWritten = true;
             // Empty tap rows are removed by SheetJS; keep the listed employee anyway.
-            for (let day = 1; day <= lastDay; day++) employee.days[isoFor(day)] = [];
+            for (let day = 1; day <= lastDay; day++) {
+              const iso = isoFor(day);
+              // Partial raw-log exports must not replace saved days outside their period.
+              if (!logList || iso >= period.start && iso <= period.end) employee.days[iso] = [];
+            }
             byId.set(id, employee);
             result.employees.push(employee);
           }
@@ -4418,6 +4427,7 @@ DTR.parser = (function () {
     const employees = parsed.employees
       .map((e) => {
         const copy = { id: e.id, rawName: e.rawName, days: filterDays(e.days, month.key) };
+        if (e.nameAsWritten === true) copy.nameAsWritten = true;
         if (e.kinds) copy.kinds = filterDays(e.kinds, month.key);
         if (e.notes) copy.notes = filterDays(e.notes, month.key);
         return copy;
@@ -4490,7 +4500,8 @@ DTR.names = (function () {
   const nameFields = ['last', 'first', 'middleInitial', 'extension'];
   const isInitial = token => /^[a-z]\.?$/i.test(token) || /^(?:[a-z]\.){2,3}$/i.test(token);
 
-  function guess(rawName, surnameFirstInitial = false) {
+  function guess(rawName, surnameFirstInitial = false, asWritten = false) {
+    if (asWritten) return { last: String(rawName || '').replace(/\s+/g, ' ').trim(), first: '', middleInitial: '', extension: '' };
     const clean = String(rawName || '').replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
     if (clean.includes(',')) return parseFull(clean);
     const tokens = clean.split(' ').filter(Boolean);
@@ -4509,11 +4520,13 @@ DTR.names = (function () {
   }
 
   /** Repair only an untouched automatic split of the SAME source name. */
-  function repairGuess(person, rawName, surnameFirstInitial = false) {
+  function repairGuess(person, rawName, surnameFirstInitial = false, asWritten = false) {
     if (!person || person.confirmed || !rawName || person.rawName !== rawName) return null;
-    const old = legacyGuess(rawName), next = guess(rawName, surnameFirstInitial);
-    if (!nameFields.every(key => (person[key] || '') === old[key])) return null;
-    return nameFields.some(key => next[key] !== old[key]) ? next : null;
+    const old = legacyGuess(rawName), next = guess(rawName, surnameFirstInitial, asWritten);
+    const previous = asWritten ? guess(rawName, surnameFirstInitial) : old;
+    const matches = parts => nameFields.every(key => (person[key] || '') === parts[key]);
+    if (!matches(old) && !matches(previous)) return null;
+    return nameFields.some(key => next[key] !== (person[key] || '')) ? next : null;
   }
 
   /**
@@ -4745,10 +4758,16 @@ DTR.monthmerge = (function () {
     return { times, kinds: times.map((t) => kindOf.get(t) || null) };
   }
 
+  // Carry the name convention of whichever source supplies the raw name.
+  function nameFlags(oldE, newE) {
+    return (newE.rawName ? newE : oldE).nameAsWritten === true ? { nameAsWritten: true } : {};
+  }
+
   function mergeEmployee(oldE, newE) {
     const out = {
       id: oldE.id,
       rawName: newE.rawName || oldE.rawName || '',
+      ...nameFlags(oldE, newE),
       days: Object.assign({}, oldE.days),
       kinds: Object.assign({}, oldE.kinds || {}),
       notes: Object.assign({}, oldE.notes || {})
@@ -4787,6 +4806,7 @@ DTR.monthmerge = (function () {
     return {
       id: oldE.id,
       rawName: newE.rawName || oldE.rawName || '',
+      ...nameFlags(oldE, newE),
       days: replaceDays(oldE.days, newE.days, period),
       kinds: replaceDays(oldE.kinds, newE.kinds, period),
       notes: replaceDays(oldE.notes, newE.notes, period)
@@ -6895,12 +6915,13 @@ DTR.state = (function () {
     let changed = false;
     employees.forEach((e) => {
       const known = s.directory[e.id];
+      const asWritten = e.nameAsWritten === true;
       if (known && (known.confirmed || known.last || !e.rawName)) {
-        const repaired = DTR.names.repairGuess(known, e.rawName, surnameFirstInitial);
+        const repaired = DTR.names.repairGuess(known, e.rawName, surnameFirstInitial, asWritten);
         if (repaired) { s.directory[e.id] = Object.assign({}, known, repaired); changed = true; }
         return;
       }
-      s.directory[e.id] = Object.assign({}, known, DTR.names.guess(e.rawName, surnameFirstInitial), { rawName: e.rawName, confirmed: false });
+      s.directory[e.id] = Object.assign({}, known, DTR.names.guess(e.rawName, surnameFirstInitial, asWritten), { rawName: e.rawName, confirmed: false });
       changed = true;
       if (!known) added++;
     });
@@ -7121,6 +7142,38 @@ DTR.state = (function () {
   /** The school logo for the form ('' when none, or a plain Standard printout). */
   const logoFor = (plain) => (withoutPro(plain) ? '' : s.settings.schoolLogo || '');
 
+  /** Settings removal includes this month's frozen copies and the new-month default.
+   * Older months, named reusable templates and government logos keep their own values. */
+  function removeSchoolLogo() {
+    const clear = value => Object.assign({}, DTR.layouts.normalize(value), { logoData: '', showLogo: false });
+    const settings = Object.assign({}, s.settings, { schoolLogo: '', schoolLogoSource: null });
+    if (settings.defaultLayout) settings.defaultLayout = clear(settings.defaultLayout);
+    const oldWork = s.work, work = oldWork && JSON.parse(JSON.stringify(oldWork));
+    if (work && s.data) {
+      const replaced = new Map();
+      s.data.employees.forEach(e => {
+        const previous = work.layouts && work.layouts[e.id];
+        const layout = previous && work.layoutTemplates[previous];
+        if (model(e.id).logo) delete work.checked[e.id];
+        if (!layout || !layout.logoData) return;
+        if (!replaced.has(previous)) {
+          const key = `layout-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+          work.layoutTemplates[key] = clear(layout); replaced.set(previous, key);
+        }
+        work.layouts[e.id] = replaced.get(previous);
+      });
+      const used = new Set(Object.values(work.layouts || {}));
+      Object.keys(work.layoutTemplates || {}).forEach(key => { if (!used.has(key)) delete work.layoutTemplates[key]; });
+      if (!store.saveWork(s.monthKey, work)) { noteSave(false); throw new Error('Could not remove the logo. Free browser storage and try again.'); }
+    }
+    if (!store.saveSettings(settings)) {
+      if (work) store.saveWork(s.monthKey, oldWork);
+      noteSave(false); throw new Error('Could not remove the logo. Free browser storage and try again.');
+    }
+    s.settings = settings; if (work) s.work = work;
+    noteSave(true); emit('layout');
+  }
+
   /** Pro features this office has switched on (config.PRO_FEATURES), e.g. ['undertime', 'logo']. */
   function proFeaturesInUse() {
     const { PRO_FEATURES: F } = DTR.config;
@@ -7308,7 +7361,7 @@ DTR.state = (function () {
     openMonth, importMonth, closeMonth, reloadFromStore, importNames, unnamedCount, shortDayShare,
     person, orderedEmployees, employee, editFor, model, layoutFor, saveLayout, proFeaturesInUse, reviewOf, printableEmployees, scheduleFor, timeRulesFor,
     setCell, setLabel, skipDayMark, setHeader, setHeaderForAll, restoreDay, resetEmployee, setChecked, setCheckedMany,
-    setInactive, setCovered, setSchedule, setSigner, savePerson, saveDirectory, saveSettings, select
+    setInactive, setCovered, setSchedule, setSigner, savePerson, saveDirectory, saveSettings, removeSchoolLogo, select
   };
 })();
 
@@ -9754,11 +9807,15 @@ DTR.ui.logo = (function () {
     if (adjustBtn) adjustBtn.addEventListener('click', async () => { if (await adjust()) refresh(); });
     const remove = pane.querySelector('#logo-remove');
     if (remove) remove.addEventListener('click', async () => {
-      const ok = await dialogs.confirm({ title: 'Remove the logo?', message: 'The DTRs will print without a logo. You can upload one again any time.', confirmText: 'Remove logo', danger: true });
+      const ok = await dialogs.confirm({ title: 'Remove the school logo?', message: state.get().data
+        ? 'Remove the school logo from all employees in this month and from the default for new months? Other saved months, saved templates and the government logo stay unchanged.'
+        : 'Remove the school logo from the default for new months? Saved months, saved templates and the government logo stay unchanged.', confirmText: 'Remove logo', danger: true });
       if (!ok) return;
-      state.saveSettings({ schoolLogo: '', schoolLogoSource: null });
-      dialogs.toast('Logo removed.', 'success');
-      refresh();
+      try {
+        state.removeSchoolLogo();
+        dialogs.toast('School logo removed.', 'success');
+        refresh();
+      } catch (err) { dialogs.toast(err.message, 'error'); }
     });
   }
 
@@ -9819,15 +9876,24 @@ DTR.ui.layouts = (function () {
         <div class="layout-editor"><section class="layout-preview-pane" aria-label="Layout preview">
           <div class="layout-preview-heading"><strong>Live DTR preview</strong><span>Click a section to edit</span></div><div id="layout-preview"></div></section>
           <section class="layout-controls"><div class="layout-tabs" role="tablist" aria-label="Layout section">${SECTIONS.map(([key,label],i) => `<button role="tab" id="layout-tab-${key}" aria-controls="layout-fields" aria-selected="${i === 0}" data-layout-tab="${key}">${label}</button>`).join('')}</div>
-          <div id="layout-fields" role="tabpanel" aria-labelledby="layout-tab-header"></div>
-          <div class="layout-apply"><label>Apply to<select id="layout-scope">${s.data ? '<option value="current">This employee, this month</option><option value="all">All employees, this month</option><option value="selected">Selected employees, this month</option>' : ''}<option value="template">Save template only</option></select></label>
+          <div class="layout-apply"><label>Save changes for<select id="layout-scope">${s.data ? '<option value="current">This employee, this month</option><option value="all">All employees, this month</option><option value="selected">Selected employees, this month</option>' : ''}<option value="template">Save template only</option></select></label>
           <div id="layout-employees" hidden>${s.data ? state.orderedEmployees().map(e => `<label class="layout-check"><input type="checkbox" data-layout-employee="${esc(e.id)}" ${selected.has(e.id) ? 'checked' : ''}>${esc(DTR.names.format(state.person(e.id)) || e.rawName || e.id)}</label>`).join('') : ''}</div>
           <label class="layout-check"><input type="checkbox" id="layout-default" ${!s.data ? 'checked' : ''}>Use as default for new months</label>
-          <p class="field-hint">Other saved months keep their own layout.</p></div></section></div>`,
+          <p class="field-hint" id="layout-save-scope" role="status"></p></div>
+          <div id="layout-fields" role="tabpanel" aria-labelledby="layout-tab-header"></div></section></div>`,
       footer: '<button class="btn btn-ghost" id="layout-reset">Restore original</button><span id="layout-error" role="status"></span><button class="btn btn-ghost" data-close>Cancel</button><button class="btn btn-primary" id="layout-save">Save layout</button>',
       onClose: () => { if (returnFocus?.isConnected) returnFocus.focus(); },
       onMount: (el, close) => {
         const error = text => { el.querySelector('#layout-error').textContent = text; };
+        function scopeLabel() {
+          const count = scope === 'all' ? s.data.employees.length : selected.size;
+          const target = scope === 'current' ? 'this employee' : scope === 'all' || scope === 'selected' ? `${count} employees` : 'template only';
+          const future = el.querySelector('#layout-default').checked;
+          el.querySelector('#layout-save').textContent = scope === 'template' ? 'Save template' : `Save for ${target}`;
+          el.querySelector('#layout-save-scope').textContent = future
+            ? `Saves for ${target} and uses this layout for new months. Older months keep their layouts.`
+            : `Saves for ${target}. The default for new months stays unchanged.`;
+        }
         const withDraft = model => Object.assign({}, model, { layout: L.normalize(draft), logo: draft.showLogo ? draft.logoData : '', governmentLogo: draft.showGovernmentLogo ? draft.governmentLogoData : '' });
         const options = () => Object.assign({ paper: state.get().settings.paperSize }, DTR.form48.sizeOf(state.get().settings));
         function preview() {
@@ -9870,8 +9936,8 @@ DTR.ui.layouts = (function () {
           preview();
         });
         el.querySelector('#layout-fields').addEventListener('click', e => {
-          if (e.target.id === 'layout-logo-remove') { draft.logoData = ''; fields(); }
-          if (e.target.id === 'layout-government-logo-remove') { draft.governmentLogoData = ''; fields(); }
+          if (e.target.id === 'layout-logo-remove') { draft.logoData = ''; draft.showLogo = false; fields(); }
+          if (e.target.id === 'layout-government-logo-remove') { draft.governmentLogoData = ''; draft.showGovernmentLogo = false; fields(); }
         });
         el.querySelector('#layout-fields').addEventListener('change', async e => {
           const government = e.target.id === 'layout-government-logo-file';
@@ -9901,16 +9967,19 @@ DTR.ui.layouts = (function () {
           replace(data);
         };
         el.querySelector('#layout-reset').onclick = () => { replace(Object.assign(L.original(), { logoData: draft.logoData })); el.querySelector('#layout-preset').value = 'original'; };
-        el.querySelector('#layout-scope').onchange = e => { scope = e.target.value; el.querySelector('#layout-employees').hidden = scope !== 'selected'; };
-        el.querySelector('#layout-employees').onchange = e => { const id = e.target.dataset.layoutEmployee; if (id) e.target.checked ? selected.add(id) : selected.delete(id); };
+        el.querySelector('#layout-scope').onchange = e => { scope = e.target.value; el.querySelector('#layout-employees').hidden = scope !== 'selected'; scopeLabel(); };
+        el.querySelector('#layout-default').onchange = scopeLabel;
+        el.querySelector('#layout-employees').onchange = e => { const id = e.target.dataset.layoutEmployee; if (id) e.target.checked ? selected.add(id) : selected.delete(id); scopeLabel(); };
         el.querySelector('#layout-save').onclick = () => {
           try {
             const invalid = L.validate(draft); if (invalid) throw new Error(invalid);
             const ids = scope === 'current' ? [s.selectedId] : scope === 'all' ? s.data.employees.map(e => e.id) : scope === 'selected' ? [...selected] : [];
             if (scope === 'selected' && !ids.length) throw new Error('Select at least one employee.');
             for (const m of ids.length ? ids.map(id => state.model(id)) : [source]) { const issue = DTR.form48.checkFit(withDraft(m), options()); if (issue) throw new Error(issue); }
-            state.saveLayout(draft, ids, el.querySelector('#layout-default').checked);
-            close(); dialogs.toast('Layout saved.', 'success');
+            const makeDefault = el.querySelector('#layout-default').checked;
+            state.saveLayout(draft, ids, makeDefault);
+            const target = scope === 'current' ? 'this employee' : ids.length ? `${ids.length} employees` : 'the saved template';
+            close(); dialogs.toast(`Saved for ${target}${makeDefault ? ' and new months' : ''}.`, 'success');
           } catch (err) { error(err.message); }
         };
         // Keep keyboard focus inside this editor, including when opened above Settings.
@@ -9921,7 +9990,7 @@ DTR.ui.layouts = (function () {
           if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
           else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
         });
-        fields();
+        fields(); scopeLabel();
       }
     });
   }

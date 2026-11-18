@@ -310,7 +310,7 @@ const FORMATS = [
   },
   {
     name: 'Attendance Record Report', brand: null, types: ['xls', 'xlsx'],
-    lookFor: 'Title <code>Attendance Record Report</code> with an <code>Att. Time</code> range and <code>ID: · Name: · Dept.:</code>, or <code>List of Logs</code> with a <code>Period</code> range and <code>No: · Name: · Dept:</code> above day columns.',
+    lookFor: 'Title <code>Attendance Record Report</code> with an <code>Att. Time</code> range and <code>ID: · Name: · Dept.:</code>, or <code>List of Logs</code> with a <code>Period</code> range (optionally followed by a school/office label in parentheses) and <code>No: · Name: · Dept:</code> above day columns.',
     sample: [
       [['Attendance Record Report', 'ti'], '', '', '', '', ''],
       ['Att. Time:', '2026-09-01 ~ 2026-09-30', '', '', '', ''],
@@ -318,7 +318,7 @@ const FORMATS = [
       [['1', 'hd'], ['2', 'hd'], ['3', 'hd'], ['4', 'hd'], ['5', 'hd'], ['…', 'mu']],
       [['07:2411:3112:2916:39', 'tm'], ['07:1716:41', 'tm'], ['07:2416:38', 'tm'], ['', 'tm'], '', '']
     ],
-    reads: ['Times joined in one cell are split correctly (07:24 11:31 …)', 'Schedule, statistics and exception sheets are ignored, so nothing is counted twice', 'Cropped exports with only day numbers and ID / Name / Dept blocks are supported: select the month and year when asked. Unreadable numeric entries stay blank with a warning.']
+    reads: ['Times joined in one cell are split correctly (07:24 11:31 …)', 'List of Logs names stay as written; partial reports preserve saved dates outside their period.', 'Schedule, statistics and exception sheets are ignored, so nothing is counted twice', 'Cropped exports with only day numbers and ID / Name / Dept blocks are supported: select the month and year when asked. Unreadable numeric entries stay blank with a warning.']
   },
   {
     name: 'Monthly Punch Report', brand: null, types: ['xls', 'xlsx'],
