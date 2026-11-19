@@ -1769,7 +1769,7 @@ window.DTR = window.DTR || {};
 DTR.config = Object.freeze({
   APP_NAME: 'DTR Converter',
   APP_SUBTITLE: 'Biometric Timecard → CSC Form No. 48',
-    APP_VERSION: '1.36.0',
+    APP_VERSION: '1.36.1',
   MANUAL_EMPLOYEE_PREFIX: 'manual-',
   MANUAL_MONTH_LABEL: 'Manual DTRs',
 
@@ -1899,22 +1899,26 @@ DTR.config = Object.freeze({
   TAP_PLACEMENTS: Object.freeze({
     TIME_OF_DAY: 'time-of-day',
     FOUR_IN_ORDER: 'four-in-order',
+    FOUR_RECORDED: 'four-recorded',
     IN_OUT: 'in-out'
   }),
   TAP_PLACEMENT_LABELS: Object.freeze({
     'time-of-day': 'By time of day (morning taps in A.M., afternoon taps in P.M.)',
-    'four-in-order': 'Four taps a day (missing taps stay blank)',
+    'four-in-order': 'Four events — ignore identical repeats',
+    'four-recorded': 'Four taps — keep recorded order',
     'in-out': 'In and out only (first tap = arrival, last tap = departure)'
   }),
   /* Short names for small spaces (Home screen). */
   TAP_PLACEMENT_SHORT: Object.freeze({
     'time-of-day': 'By time of day',
-    'four-in-order': 'Four taps in order',
+    'four-in-order': 'Four events (filter repeats)',
+    'four-recorded': 'Four recorded taps',
     'in-out': 'In and out only'
   }),
   TAP_PLACEMENT_HINTS: Object.freeze({
     'time-of-day': 'Before 12:00 NN → A.M. boxes, from 12:00 NN → P.M. boxes. 7:00 and 5:00 → A.M. Arrival and P.M. Departure; one tap = arrival.',
     'four-in-order': 'Distinct taps fill In · Lunch out · Lunch in · Out. Three taps leave afternoon departure blank. Exact repeats stay in Day details.',
+    'four-recorded': 'Keep every recorded tap, including equal times: In · Lunch out · Lunch in · Out. Missing boxes stay blank. Repeats and more than four taps are flagged for review.',
     'in-out': 'For offices requiring only arrival and departure. Exact repeats do not fill another box. Lunch boxes fill only with 4 or more distinct taps.'
   }),
   MISSING_TAP_LABELS: Object.freeze({
@@ -4230,6 +4234,8 @@ DTR.readers.uidDaily = (function () {
   const text = value => String(value == null ? '' : value).trim().replace(/\s+/g, ' ');
   const labels = row => row.map(value => text(value).toLowerCase());
   const CLOCKS = ['am time in', 'pm time out'];
+  const ALL_CLOCKS = ['am time in','am time out','pm time in','pm time out'];
+  const NEEDS_REVIEW = 'UID_SOURCE_REVIEW';
   function signature(row) {
     const keys = labels(row);
     return ['uid', 'name', 'section'].every(key => keys.includes(key)) && CLOCKS.some(key => keys.includes(key));
@@ -4243,12 +4249,15 @@ DTR.readers.uidDaily = (function () {
     // Every date below is still required and validated; sheet/file names never supply dates.
     if (date < 0 && ['uid', 'name', 'section', ...CLOCKS].every((key, i) => keys[i + 1] === key)) date = 0;
     if (date < 0) throw new Error('The UID attendance sheet has no identifiable Date column.');
-    return { date, id: keys.indexOf('uid'), name: keys.indexOf('name'), clocks: CLOCKS.map(key => keys.indexOf(key)), repaired: keys[date] !== 'date' };
+    const clockNames=ALL_CLOCKS.filter(key=>keys.includes(key));
+    if(clockNames.some(key=>keys.filter(value=>value===key).length!==1)) throw new Error('The UID attendance sheet has duplicated clock headings.');
+    return { date, id: keys.indexOf('uid'), name: keys.indexOf('name'), section: keys.indexOf('section'), clocks: clockNames.map(key => keys.indexOf(key)), clockNames, repaired: keys[date] !== 'date' };
   }
   const matches = sheet => sheet.rows.some(signature);
-  function read(sheets) {
+  function read(sheets, fileName, options = {}) {
     const result = { format: FILE_FORMATS.UID_DAILY, employees: [], warnings: [], periods: {} };
     const people = new Map();
+    const records = [], issues = [], namesById = new Map(), idsByName = new Map();
     const selected = sheets.filter(matches);
     const dateValues = selected.flatMap(sheet => {
       const first = sheet.rows.findIndex(signature), c = columns(sheet.rows[first]);
@@ -4264,14 +4273,53 @@ DTR.readers.uidDaily = (function () {
         if (row.every(isBlank)) continue;
         if (signature(row)) { c = columns(row); continue; }
         const location = `${sheet.name} row ${index + 1}`;
+        const used = [c.date,c.id,c.name,c.section,...c.clocks];
+        if (used.every(col => isBlank(row[col]))) {
+          result.warnings.push(`${location}: values outside the named attendance columns were ignored; they are not an attendance record.`);
+          continue;
+        }
         const id = cells.employeeId(row[c.id]), rawName = text(row[c.name]);
         const date = cells.date(row[c.date]), parts = date && parseIsoDate(date);
+        const record = { sheet,c,index,row,location,id,rawName,date,parts };
+        records.push(record);
+        if (id && parts && parts.month >= 1 && parts.month <= 12 && parts.day >= 1 && parts.day <= daysInMonth(parts.year,parts.month) && rawName) {
+          if (!namesById.has(id)) namesById.set(id,new Set()); namesById.get(id).add(rawName);
+          if (!idsByName.has(rawName)) idsByName.set(rawName,new Set()); idsByName.get(rawName).add(id);
+        }
+      }
+    }
+    // Validate identity consistency without rewriting any UID. A conflicting name
+    // already attached to another UID is quarantined, not moved to that person.
+    const consistent = new Map();
+    for (const [id,names] of namesById) if (names.size > 1) {
+      const unique = [...names].filter(name => idsByName.get(name).size === 1);
+      consistent.set(id,unique.length === 1 ? unique[0] : null);
+    }
+    for (const record of records) {
+        const {sheet,c,index,row,location,id,rawName,date,parts} = record;
+        let problem = '';
         if (!id || !parts || parts.month < 1 || parts.month > 12 || parts.day < 1
           || parts.day > daysInMonth(parts.year, parts.month))
-          throw new Error(`${location}: the UID or attendance date is unreadable. No attendance was imported.`);
+          problem = 'the UID or attendance date is unreadable';
+        else if (rawName && consistent.has(id) && consistent.get(id) !== rawName)
+          problem = 'the UID has conflicting names in the source; this row was not assigned to another employee';
+        const clocks = [];
+        if (!problem) for (let side=0;side<c.clocks.length;side++) {
+          const col=c.clocks[side],value=row[col]; if(isBlank(value))continue;
+          const display=text(sheet.displayRows?.[index]?.[col]);
+          const clockValue=typeof value==='number' && /^\d{1,2}:\d{2}(?:\s*[AP]M)?$/i.test(display)?display:value;
+          const fields=typeof clockValue==='string' && /^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AP]M)?$/i.exec(text(clockValue));
+          const time=cells.time(clockValue);
+          if(!time || (typeof value==='number' && (value<0||value>=1)) || (fields && (+fields[3]>59 || (fields[4] && (+fields[1]<1 || +fields[1]>12))))) {
+            problem=`a recorded ${c.clockNames[side]} is unreadable`;break;
+          }
+          clocks.push({time,kind:c.clockNames[side].endsWith('in')?TAP_KINDS.IN:TAP_KINDS.OUT});
+        }
+        if (problem) {
+          issues.push({sheet:sheet.name,row:index+1,message:problem});
+          continue; // the whole row remains unreadable; never import just one side
+        }
         let employee = people.get(id);
-        if (employee && rawName && employee.rawName && rawName !== employee.rawName)
-          throw new Error(`${location}: one UID has conflicting names. No attendance was imported.`);
         if (!employee) {
           employee = { id, rawName, days: {}, kinds: {} };
           people.set(id, employee); result.employees.push(employee);
@@ -4280,28 +4328,21 @@ DTR.readers.uidDaily = (function () {
         if (date < period.start) period.start = date;
         if (date > period.end) period.end = date;
         employee.days[date] ||= []; employee.kinds[date] ||= [];
-        c.clocks.forEach((col, side) => {
-          const value = row[col];
-          if (isBlank(value)) return;
-          const display = text(sheet.displayRows?.[index]?.[col]);
-          const clockValue = typeof value === 'number' && /^\d{1,2}:\d{2}(?:\s*[AP]M)?$/i.test(display) ? display : value;
-          const fields = typeof clockValue === 'string' && /^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AP]M)?$/i.exec(text(clockValue));
-          const time = cells.time(clockValue);
-          if (!time || (typeof value === 'number' && (value < 0 || value >= 1))
-            || (fields && (+fields[3] > 59 || (fields[4] && (+fields[1] < 1 || +fields[1] > 12)))))
-            throw new Error(`${location}: a recorded ${CLOCKS[side]} is unreadable. No attendance was imported.`);
-          employee.days[date].push(time);
-          employee.kinds[date].push(side === 0 ? TAP_KINDS.IN : TAP_KINDS.OUT);
-        });
-      }
+        clocks.forEach(tap => { employee.days[date].push(tap.time);employee.kinds[date].push(tap.kind); });
     }
+    if (issues.length && !options.skipUnreadableUID) {
+      const first=issues[0];
+      const error=new Error(`${issues.length} source attendance record(s) need review. ${first.sheet} row ${first.row}: ${first.message}. No attendance was imported.`);
+      error.code=NEEDS_REVIEW;error.issues=issues;throw error;
+    }
+    issues.forEach(issue=>result.warnings.push(`${issue.sheet} row ${issue.row}: UNREADABLE — ${issue.message}. Enter verified attendance manually if available.`));
     for (const employee of result.employees) for (const [date, times] of Object.entries(employee.days)) {
       const taps = times.map((time, i) => ({ time, kind: employee.kinds[date][i] })).sort((a, b) => a.time.localeCompare(b.time));
       employee.days[date] = taps.map(tap => tap.time); employee.kinds[date] = taps.map(tap => tap.kind);
     }
     return result;
   }
-  return { id: FILE_FORMATS.UID_DAILY, detect: sheets => sheets.some(matches), read };
+  return { id: FILE_FORMATS.UID_DAILY, detect: sheets => sheets.some(matches), read, NEEDS_REVIEW };
 })();
 
 </script>
@@ -5577,6 +5618,7 @@ DTR.converter = (function () {
   /** Which box each tap goes to (null = not printed), by the office's tap rule. */
   function slotsFor(taps, kinds, placement) {
     if (placement === TAP_PLACEMENTS.TIME_OF_DAY) return timeOfDaySlots(taps, kinds);
+    if (placement === TAP_PLACEMENTS.FOUR_RECORDED) return taps.map((_,i) => TIME_SLOTS[i] || null);
     const [amIn, amOut, pmIn, pmOut] = TIME_SLOTS;
     // Identical repeated minutes stay in raw taps/Day details but use only one box.
     // Do not remove close-but-different clocks or reorder what the source recorded.
@@ -5611,6 +5653,10 @@ DTR.converter = (function () {
   /** Review the source without changing its clocks or pretending to know which tap was missed. */
   function placementWarnings(taps, kinds, slots, placement) {
     const warnings = [];
+    if (placement === TAP_PLACEMENTS.FOUR_RECORDED && eventIndexes(taps,kinds).length < taps.length)
+      warnings.push('Same-minute taps were kept in recorded order. Check that they are separate taps, not accidental repeats.');
+    if (placement === TAP_PLACEMENTS.FOUR_RECORDED && taps.length > TIME_SLOTS.length)
+      warnings.push('More than four recorded taps. Only the first four fill the boxes; review this day’s tap rule.');
     const nearby = taps.some((time, i) => {
       if (!i) return false;
       const gap = clockMinutes(time) - clockMinutes(taps[i - 1]);
@@ -5635,7 +5681,7 @@ DTR.converter = (function () {
 
   /** Missing boxes are visible in both editions, independently of undertime calculation. */
   function missingSlots(row, placement, edit) {
-    if (placement !== TAP_PLACEMENTS.FOUR_IN_ORDER || row.showLabel || edit.covered[row.day]) return [];
+    if (![TAP_PLACEMENTS.FOUR_IN_ORDER,TAP_PLACEMENTS.FOUR_RECORDED].includes(placement) || row.showLabel || edit.covered[row.day]) return [];
     if (!row.taps.length && !TIME_SLOTS.some(slot => row.values[slot])) return [];
     return TIME_SLOTS.filter(slot => !(row.amLabel && slot.startsWith('am')) &&
       !(row.pmLabel && slot.startsWith('pm')) && !row.values[slot]);
@@ -5725,12 +5771,15 @@ DTR.converter = (function () {
   }
 
   function buildRow(day, ctx) {
-    const { year, month, monthLength, employee, edit, timeFormat, placement, timeRules } = ctx;
+    const { year, month, monthLength, employee, edit, timeFormat, timeRules } = ctx;
+    const override=edit.tapPlacements?.[day];
+    const placement=Object.values(TAP_PLACEMENTS).includes(override)?override:ctx.placement;
     const inMonth = day <= monthLength;
     const row = {
       day, inMonth, weekday: null, iso: null, taps: [], tapKinds: [], tapSlots: [], notes: [], extraTaps: [],
       machine: {}, values: {}, edited: {}, filled: {}, label: '', labelEdited: false, time: null,
       missingSlots: [], placementWarnings: [], duplicateTapIndexes: [],
+      tapPlacement: placement, placementOverride: Object.values(TAP_PLACEMENTS).includes(override),
       // Holidays & suspensions: half-day remarks, the remark's text, and "tapped on a marked day"
       amLabel: '', pmLabel: '', markText: '', marked: false, markTapped: false, markExcluded: false
     };
@@ -5746,7 +5795,7 @@ DTR.converter = (function () {
     const { placed, slots, extra } = placeTaps(row.taps, row.tapKinds, placement);
     row.tapSlots = slots;
     row.extraTaps = extra;
-    const events = eventIndexes(row.taps, row.tapKinds);
+    const events = placement === TAP_PLACEMENTS.FOUR_RECORDED ? row.taps.map((_,i)=>i) : eventIndexes(row.taps, row.tapKinds);
     row.duplicateTapIndexes = row.taps.map((_, i) => i).filter(i => !events.includes(i));
     row.placementWarnings = placementWarnings(row.taps, row.tapKinds, slots, placement);
     // A hidden/extra third tap must never be mistaken for a two-tap day.
@@ -7236,6 +7285,7 @@ DTR.state = (function () {
         Object.assign(into.labels, e.labels);
         Object.assign(into.header, e.header);
         if (e.covered) into.covered = Object.assign(into.covered || {}, e.covered);
+        if (e.tapPlacements) into.tapPlacements = Object.assign(into.tapPlacements || {},e.tapPlacements);
       });
       Object.assign(joined.checked, w.checked);
       Object.assign(joined.layouts, w.layouts);
@@ -7604,7 +7654,18 @@ DTR.state = (function () {
     Object.keys(edit.cells).forEach((k) => { if (k.split('.')[0] === String(day)) delete edit.cells[k]; });
     delete edit.labels[day];
     if (edit.covered) delete edit.covered[day];
+    if (edit.tapPlacements) delete edit.tapPlacements[day];
     saveWork();
+  }
+
+  /** One employee/day only. Manual cell values still win over every placement rule. */
+  function setDayTapPlacement(id, day, mode) {
+    if (!employee(id) || !model(id).rows[day-1]?.inMonth || (mode && !Object.values(DTR.config.TAP_PLACEMENTS).includes(mode))) throw new Error('Choose a valid day and tap rule.');
+    if ((editFor(id).tapPlacements?.[day] || '') === mode) return true;
+    if (!mayFix(id,day,'placement')) return false;
+    const edit=editableFor(id);edit.tapPlacements ||= {};
+    if (mode) edit.tapPlacements[day]=mode;else delete edit.tapPlacements[day];
+    delete s.work.checked[id];saveWork();return true;
   }
 
   /** Pro: the AO says a Locator Slip / Undertaking covers this day — it is not computed. */
@@ -7699,7 +7760,7 @@ DTR.state = (function () {
     subscribe: (fn) => listeners.add(fn),
     openMonth, importMonth, addManualDtr, manualLayoutChoices, identity, closeMonth, reloadFromStore, importNames, unnamedCount, shortDayShare,
     person, orderedEmployees, employee, editFor, model, layoutFor, saveLayout, proFeaturesInUse, reviewOf, printableEmployees, scheduleFor, timeRulesFor,
-    setCell, setLabel, skipDayMark, setHeader, setHeaderForAll, restoreDay, resetEmployee, setChecked, setCheckedMany,
+    setCell, setLabel, setDayTapPlacement, skipDayMark, setHeader, setHeaderForAll, restoreDay, resetEmployee, setChecked, setCheckedMany,
     setInactive, setCovered, setSchedule, setSigner, savePerson, saveDirectory, saveSettings, removeSchoolLogo, select
   };
 })();
@@ -8347,7 +8408,7 @@ DTR.ui.upload = (function () {
    */
   async function suggestTapRule() {
     const { settings, data } = state.get();
-    if (settings.tapPlacement !== TAP_PLACEMENTS.FOUR_IN_ORDER && DTR.converter.hasFourTapPattern(data.employees)) {
+    if (![TAP_PLACEMENTS.FOUR_IN_ORDER,TAP_PLACEMENTS.FOUR_RECORDED].includes(settings.tapPlacement) && DTR.converter.hasFourTapPattern(data.employees)) {
       const answer = await dialogDone({
         title: 'This file includes lunch taps',
         body: `<p class="modal-text">Use four taps a day to keep missing departures blank.</p>
@@ -8358,7 +8419,7 @@ DTR.ui.upload = (function () {
       if (answer) state.saveSettings({ tapPlacement: answer, tapPlacementChosen: true });
       return;
     }
-    if (settings.tapPlacement !== TAP_PLACEMENTS.FOUR_IN_ORDER) return;
+    if (![TAP_PLACEMENTS.FOUR_IN_ORDER,TAP_PLACEMENTS.FOUR_RECORDED].includes(settings.tapPlacement)) return;
     if (state.shortDayShare() < IN_OUT_SUGGEST_SHARE) return;
     const [first, last] = twoTapExample();
     const answer = await dialogDone({
@@ -8373,7 +8434,7 @@ DTR.ui.upload = (function () {
             <small>Strictly 1st, 2nd, 3rd, 4th tap — for offices that always tap out and back in for lunch.</small></div>
         </div>
         <p class="panel-note">You can change this any time in Settings → General.</p>`,
-      footer: `<button class="btn btn-ghost" data-answer="${TAP_PLACEMENTS.FOUR_IN_ORDER}">Keep four taps in order</button>
+      footer: `<button class="btn btn-ghost" data-answer="${settings.tapPlacement}">Keep current four-tap rule</button>
                <button class="btn btn-primary" data-answer="${TAP_PLACEMENTS.TIME_OF_DAY}">Use by time of day</button>`
     });
     if (answer) state.saveSettings({ tapPlacement: answer, tapPlacementChosen: true });
@@ -8488,6 +8549,14 @@ DTR.ui.upload = (function () {
           const index = await askWorksheet(err.choices);
           if (index === null || index === undefined) return null;
           chosen.sheetIndex = index;
+        } else if (err.code === DTR.readers.uidDaily.NEEDS_REVIEW && !chosen.skipUnreadableUID) {
+          const answer = await dialogDone({
+            title: `${err.issues.length} source records cannot be read`,
+            body: `<p class="modal-text">Import the readable records and leave these rows unreadable for manual correction?</p><ul class="warn-list">${err.issues.map(issue=>`<li><b>${esc(issue.sheet)}, row ${issue.row}</b>: ${esc(issue.message)}.</li>`).join('')}</ul><p class="panel-note">No date, employee ID or time will be guessed. The warnings stay with the saved month.</p>`,
+            footer: '<button class="btn btn-ghost" data-close>Cancel</button><button class="btn btn-primary" data-answer="skip">Import readable records</button>'
+          });
+          if (answer !== 'skip') return null;
+          chosen.skipUnreadableUID = true;
         } else throw err;
       }
     }
@@ -9074,7 +9143,7 @@ DTR.ui.workspace = (function () {
       ? `<div class="sub-label">Note in the file</div><ul class="file-notes">${row.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>`
       : '';
     const hasTimes = TIME_SLOTS.some((slot) => row.values[slot]);
-    const dayEdited = Object.values(row.edited).some(Boolean) || row.labelEdited || row.markExcluded;
+    const dayEdited = Object.values(row.edited).some(Boolean) || row.labelEdited || row.markExcluded || row.placementOverride;
 
     return `
       <section class="panel">
@@ -9083,7 +9152,8 @@ DTR.ui.workspace = (function () {
         ${row.placementWarnings.length ? `<ul class="file-notes day-placement-warnings">${row.placementWarnings.map(note => `<li>${esc(note)}</li>`).join('')}</ul>` : ''}
         <div class="sub-label">Machine record</div>
         ${taps}
-        ${row.extraTaps.length ? `<p class="panel-note panel-note--extra">Taps marked "Not printed" have no box under the tap rule (${esc(TAP_PLACEMENT_LABELS[s.settings.tapPlacement])}). Edit the boxes if a different tap should appear.</p>` : ''}
+        <label class="field"><span class="field-label">Tap rule for this day</span><select id="day-tap-rule" class="time-schedule-select" style="width:100%;min-width:0" aria-label="Tap rule for this day"><option value="">Office rule — ${esc(TAP_PLACEMENT_LABELS[s.settings.tapPlacement])}</option>${Object.entries(TAP_PLACEMENT_LABELS).map(([value,label])=>`<option value="${value}" ${state.editFor(s.selectedId).tapPlacements?.[day]===value?'selected':''}>${esc(label)}</option>`).join('')}</select></label>
+        ${row.extraTaps.length ? `<p class="panel-note panel-note--extra">Taps marked "Not printed" have no box under the tap rule (${esc(TAP_PLACEMENT_LABELS[row.tapPlacement])}). Edit the boxes if a different tap should appear.</p>` : ''}
         ${notes}
         ${dayMarkHtml(row)}
         ${dayTimeHtml(row, m.time && m.time.scheduleName)}
@@ -9214,6 +9284,7 @@ DTR.ui.workspace = (function () {
     const day = s.selectedDay;
     if (day) {
       $('#day-close').addEventListener('click', () => state.select(undefined, null));
+      $('#day-tap-rule').addEventListener('change', event => { if(!state.setDayTapPlacement(e.id,day,event.target.value)) DTR.ui.getPro.fixesUsedUp(); });
       const covered = $('#day-covered');
       if (covered) covered.addEventListener('click', () => state.setCovered(e.id, day, covered.dataset.covered === '1'));
       const skipMark = $('#day-skip-mark');
@@ -11311,13 +11382,16 @@ DTR.ui.help = (function () {
           ['Taps before 12:00 NN', 'A.M. boxes: first = Arrival, last = Departure'],
           ['Taps from 12:00 NN', 'P.M. boxes: first = Arrival, last = Departure — but after a morning tap, a single afternoon tap is the P.M. Departure (e.g. 7:00 and 5:00)'],
           ['One tap only', 'A time in: A.M. or P.M. Arrival by its time — you can fix it by hand'],
-          ['Taps within 5 minutes of each other', 'A double tap: counted once, the repeat is marked with an orange dot'],
+          ['Close but different times, including 12:00 and 12:01', 'Both remain. There is no five-minute deletion rule.'],
+          ['Identical repeated times', 'Four events ignores identical repeats unless opposite machine directions distinguish them. Four taps — keep recorded order keeps them and flags unclear repeats for review.'],
           ['More taps than boxes', 'The first ones; the rest are marked with an orange dot on screen'],
           ['Fewer taps', 'The missing boxes stay blank — nothing is guessed'],
           ['Saturday/Sunday with no taps', '<b>SAT</b> / <b>SUN</b> across the row'],
           ['Saturday/Sunday with taps', 'The times, like any other day'],
           ['Anything else', 'Nothing is calculated (Standard). With Pro, see "Under Time".']
         ])}
+        <h4>Different behavior on one day</h4>
+        <p>Choose the usual rule in <b>Settings → Form &amp; taps</b>. Click a <b>day number</b> and choose <b>Tap rule for this day</b> to override only that employee and date. <b>Office rule</b> removes the override. Manual cell corrections still win; missing times are never invented.</p>
         <h4>Remarks across a row</h4>
         <p>Click a day number, then use <b>Remark across the row</b> for HOLIDAY, ON LEAVE, OFFICIAL BUSINESS and so on.</p>
         <h4>Names</h4>

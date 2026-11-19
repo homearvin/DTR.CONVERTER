@@ -224,7 +224,7 @@ const FORMATS = [
       ['2026-10-01', '0007', 'Juan Dela Cruz', 'Office', ['07:56:59', 'tm'], ['17:02:01', 'tm']],
       ['2026-10-02', '0007', 'Juan Dela Cruz', 'Office', ['08:01:00', 'tm'], '']
     ],
-    reads: ['Both recorded time columns, employee names and UID numbers', 'Separate month choices when the workbook contains more than one month; dates come from cells', 'Blank times stay blank. Roster-only people and picture paths are not attendance. Workbook macros do not run.']
+    reads: ['Recorded arrival/departure columns, optional AM Time Out / PM Time In lunch columns, employee names and UID numbers', 'Separate month choices when the workbook contains more than one month; dates come from cells', 'Blank times stay blank. Review unreadable rows or conflicting employee identities before importing readable records; dates, IDs and clocks are never guessed.', 'Roster-only people and picture paths are not attendance. Workbook macros do not run.']
   },
   {
     name: 'Card Report', brand: null, types: ['xls', 'xlsx'],
