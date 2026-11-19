@@ -1503,7 +1503,11 @@ button.home-review-item:hover { box-shadow: inset 0 0 0 1px var(--line-2); }
 .f48-teacher .f48-rule-thick { margin-top: 4pt; border-top: 0.5pt solid #000; }
 .f48-teacher .f48-incharge { width: 100%; margin-top: 18pt; }
 .f48-teacher .f48-incharge-name { font-size: 8.5pt; min-height: 11pt; border-bottom: 0.5pt solid #000; }
-.f48-teacher .f48-incharge-title { font-size: 8pt; font-weight: 700; text-transform: uppercase; white-space: normal; line-height: 1.1; }
+.f48-teacher .f48-incharge-title { font-size: 8pt; font-weight: 700; text-transform: uppercase; white-space: normal; line-height: 1.1; letter-spacing: 0; }
+/* Client photo (Nov-19 check): day numbers centred, "Day" not bold, one line under the printed name. */
+.f48-teacher .f48-table td.f48-col-day { text-align: center; padding-right: 0; }
+.f48-teacher .f48-table th.f48-col-day { font-weight: 400; }
+.f48-teacher .f48-employee-printed-name ~ .f48-rule-thick { display: none; }
 
 </style>
   <style>
@@ -1765,7 +1769,7 @@ window.DTR = window.DTR || {};
 DTR.config = Object.freeze({
   APP_NAME: 'DTR Converter',
   APP_SUBTITLE: 'Biometric Timecard → CSC Form No. 48',
-    APP_VERSION: '1.35.0',
+    APP_VERSION: '1.36.0',
   MANUAL_EMPLOYEE_PREFIX: 'manual-',
   MANUAL_MONTH_LABEL: 'Manual DTRs',
 
@@ -1852,6 +1856,12 @@ DTR.config = Object.freeze({
     undertaking: 'Undertaking list',
     lunch: 'Lunch break filled from the official time on 2-tap days'
   }),
+  /*
+   * Pro ONLY (owner, Nov-19): unlike PRO_FEATURES these cannot be tried in Standard — the
+   * button shows a PRO chip and a click opens the versions. DTRs already made stay printable.
+   */
+  PRO_ONLY_FEATURES: Object.freeze({ MANUAL_DTR: 'manual-dtr' }),
+  PRO_ONLY_LABELS: Object.freeze({ 'manual-dtr': 'Add employee / Create a blank DTR' }),
 
   /*
    * License check in the page itself. false while developing (index.html); build.ps1
@@ -5993,6 +6003,21 @@ DTR.layouts = (function () {
     if (!a.showLegend) { delete a.legend; delete b.legend; delete a.legendStyle; delete b.legendStyle; }
     return JSON.stringify(a) !== JSON.stringify(b);
   }
+  /** The built-in layouts a DTR can start from: [preset key, name]. One list for every chooser. */
+  const PRESET_CHOICES = Object.freeze([
+    ['original', 'Original Form 48'],
+    ['verification', 'Form 48 with verification'],
+    ['school', 'Custom school layout'],
+    ['teacher', 'Teacher DTR (compact)']
+  ]);
+  /** <option>s for a layout chooser: built-in and saved layouts in separate groups, so a saved
+   * copy named like a built-in one ("Teacher DTR (compact)") is still told apart. */
+  function choiceOptions(builtIn, saved) {
+    const esc = DTR.util.escapeHtml;
+    const options = list => list.map(([value, name]) => `<option value="${esc(value)}">${esc(name)}</option>`).join('');
+    return `<optgroup label="Built-in layouts">${options(builtIn)}</optgroup>`
+      + (saved.length ? `<optgroup label="Your saved layouts">${options(saved)}</optgroup>` : '');
+  }
   function preset(key) {
     const v = original();
     if (key === 'verification') { v.name = 'Form 48 with verification'; v.verification = 'VERIFIED as to the prescribed office hours:'; v.signerCaption = 'In Charge'; }
@@ -6067,7 +6092,7 @@ DTR.layouts = (function () {
       + (v.showEmployeeName ? 14 : 0)
       + Math.max(0, lines(v.certification) * f - 42);
   }
-  return { original, normalize, validate, isCustom, preset, css, timeText, dayLabel, weekendParts, isSunday, SUNDAY_COLOR, legendItems, lines, logos, headerHeight, extraHeight, LIMITS, imageOK };
+  return { original, normalize, validate, isCustom, preset, PRESET_CHOICES, choiceOptions, css, timeText, dayLabel, weekendParts, isSunday, SUNDAY_COLOR, legendItems, lines, logos, headerHeight, extraHeight, LIMITS, imageOK };
 })();
 
 </script>
@@ -6997,7 +7022,8 @@ DTR.excel = (function () {
     block(r, teacher ? 0 : 3, r, LAST, '', { border: teacher ? undefined : { b: 'thin' } }); height(r++, teacher ? 13 : 22);
     if (l && l.showEmployeeName) { block(r,0,r,LAST,model.name,{sz:sz(teacher ? 8.5 : 9),b:true,h:'center',border:{b:'thin'}});height(r++,14); }
     if (l && l.employeeCaption) styledText(l.employeeCaption, l.footerStyle, 3);
-    block(r, 0, r, LAST, '', { border: { b: 'medium' } }); height(r++, 6);
+    // Teacher photo: one line under the printed employee name, no second rule below it.
+    if (!(teacher && l.showEmployeeName)) { block(r, 0, r, LAST, '', { border: { b: 'medium' } }); height(r++, 6); }
     if (l && l.verification) styledText(l.verification, l.footerStyle);
     height(r++, teacher ? 18 : 22);
     block(r, teacher ? 0 : 3, r, LAST, model.inChargeName, { sz: sz(teacher ? 8.5 : 9.5), b: true, h: 'center', border: { b: 'thin' } }); height(r++, teacher ? 12 : 15);
@@ -7259,10 +7285,12 @@ DTR.state = (function () {
   }
 
   /** Add a blank employee record, never synthetic machine taps. A known biometric ID
-   * lets a later upload join naturally; otherwise a private internal ID is hidden. */
-  function addManualDtr({ year, month, existingId, parts, biometricId = '', employeeNumber = '' }) {
-    if (!DTR.plan.allows(DTR.config.STANDARD_FEATURES.EMPLOYEE_LIST)) throw new Error('Adding employees requires Standard or Pro.');
-    year = Number(year); month = Number(month);
+   * lets a later upload join naturally; otherwise a private internal ID is hidden.
+   * Pro only (config PRO_ONLY_FEATURES). `layoutChoice` (optional, from manualLayoutChoices):
+   * a built-in layout key or 'saved-<n>'; without it the person gets the month's common layout
+   * or the saved default. */
+  function addManualDtr({ year, month, existingId, parts, biometricId = '', employeeNumber = '', layoutChoice = '' }) {
+    if (!DTR.licenseGate.isPro()) throw new Error(`${DTR.config.PRO_ONLY_LABELS[DTR.config.PRO_ONLY_FEATURES.MANUAL_DTR]} comes with Pro.`);    year = Number(year); month = Number(month);
     if (!Number.isInteger(year) || year < 1900 || year > 2199 || !Number.isInteger(month) || month < 1 || month > 12) {
       throw new Error('Choose the month and year for this DTR.');
     }
@@ -7302,14 +7330,19 @@ DTR.state = (function () {
     const data = Object.assign({}, older || { format: DTR.config.FILE_FORMATS.MANUAL, source: '', mergeable: true, warnings: [] },
       { period, employees: (older?.employees || []).concat(employee) });
     const work = joinWork(oldKeys, [id]);
-    // New employees use the common current-month layout, or the saved default.
+    // The layout chosen in the dialog; otherwise the common current-month layout, or the saved default.
     const layoutKeys = [...new Set(Object.values(work.layouts))];
     const commonLayout = older?.employees.length && older.employees.every(e => work.layouts[e.id] === layoutKeys[0]);
-    if (layoutKeys.length === 1 && commonLayout && work.layoutTemplates[layoutKeys[0]]) work.layouts[id] = layoutKeys[0];
-    else if (s.settings.defaultLayout) {
+    const ownLayout = (value) => {
       const key = `manual-layout-${crypto.randomUUID()}`;
-      work.layoutTemplates[key] = DTR.layouts.normalize(s.settings.defaultLayout); work.layouts[id] = key;
-    }
+      work.layoutTemplates[key] = DTR.layouts.normalize(value); work.layouts[id] = key;
+    };
+    const usual = layoutKeys.length === 1 && commonLayout && work.layoutTemplates[layoutKeys[0]]
+      ? work.layoutTemplates[layoutKeys[0]] : s.settings.defaultLayout;
+    const chosen = chosenLayout(layoutChoice, usual);
+    if (chosen) ownLayout(chosen);
+    else if (layoutKeys.length === 1 && commonLayout && work.layoutTemplates[layoutKeys[0]]) work.layouts[id] = layoutKeys[0];
+    else if (s.settings.defaultLayout) ownLayout(s.settings.defaultLayout);
     const directory = Object.assign({}, s.directory, { [id]: entry });
     const fileName = [...new Set(saved.map(m => m.fileName).filter(Boolean))].join(' + ') || DTR.config.MANUAL_MONTH_LABEL;
     const key = store.saveManualMonth(data,fileName,work,directory,oldKeys);
@@ -7317,6 +7350,27 @@ DTR.state = (function () {
     s.directory = directory; s.monthKey = key; s.data = data; s.work = work;
     s.selectedId = id; s.selectedDay = null; noteSave(true); emit('month');
     return id;
+  }
+
+  /** Layouts the Add employee dialog offers: [value, name]. '' = the month's usual layout. */
+  function manualLayoutChoices() {
+    return [['', 'Same as this month']].concat(DTR.layouts.PRESET_CHOICES,
+      (s.settings.dtrLayouts || []).map((x, i) => [`saved-${i}`, DTR.layouts.normalize(x).name || `Saved layout ${i + 1}`]));
+  }
+
+  /** The layout for a manualLayoutChoices value, or null for the usual one. A built-in layout
+   * keeps the logos the person would otherwise have had (as the layout editor does). */
+  function chosenLayout(choice, usual) {
+    if (!choice) return null;
+    const saved = /^saved-(\d+)$/.exec(choice);
+    if (saved) {
+      const value = (s.settings.dtrLayouts || [])[Number(saved[1])];
+      if (!value) throw new Error('Choose a layout from the list.');
+      return DTR.layouts.normalize(value);
+    }
+    if (!DTR.layouts.PRESET_CHOICES.some(([key]) => key === choice)) throw new Error('Choose a layout from the list.');
+    const from = usual ? DTR.layouts.normalize(usual) : { logoData: s.settings.schoolLogo || '', governmentLogoData: '' };
+    return Object.assign(DTR.layouts.preset(choice), { logoData: from.logoData || '', governmentLogoData: from.governmentLogoData || '' });
   }
 
   const identity = id => person(id).manualEntry ? 'Manually added' : `ID ${id}`;
@@ -7643,7 +7697,7 @@ DTR.state = (function () {
     get: () => s,
     settings,
     subscribe: (fn) => listeners.add(fn),
-    openMonth, importMonth, addManualDtr, identity, closeMonth, reloadFromStore, importNames, unnamedCount, shortDayShare,
+    openMonth, importMonth, addManualDtr, manualLayoutChoices, identity, closeMonth, reloadFromStore, importNames, unnamedCount, shortDayShare,
     person, orderedEmployees, employee, editFor, model, layoutFor, saveLayout, proFeaturesInUse, reviewOf, printableEmployees, scheduleFor, timeRulesFor,
     setCell, setLabel, skipDayMark, setHeader, setHeaderForAll, restoreDay, resetEmployee, setChecked, setCheckedMany,
     setInactive, setCovered, setSchedule, setSigner, savePerson, saveDirectory, saveSettings, removeSchoolLogo, select
@@ -7769,7 +7823,7 @@ DTR.ui = DTR.ui || {};
 
 DTR.ui.getPro = (function () {
   const { escapeHtml: esc, readFileAsText } = DTR.util;
-  const { PRICES, PAYMENT_METHODS, CONTACT, PRO_FEATURE_LABELS, STANDARD_FEATURE_LABELS, EDITIONS, PASS_DAYS, PASS_REMIND_DAYS, MONTH_NAMES, FREE_FIXES_PER_MONTH } = DTR.config;
+  const { PRICES, PAYMENT_METHODS, CONTACT, PRO_FEATURE_LABELS, PRO_ONLY_LABELS, STANDARD_FEATURE_LABELS, EDITIONS, PASS_DAYS, PASS_REMIND_DAYS, MONTH_NAMES, FREE_FIXES_PER_MONTH } = DTR.config;
   const dialogs = DTR.ui.dialogs;
 
   const isPro = () => DTR.licenseGate.isPro();
@@ -7930,6 +7984,7 @@ DTR.ui.getPro = (function () {
     ['Under Time & TOTAL from your official time', [true, false, true]],
     ['School logo & custom DTR layouts', [true, false, true]],
     ['Undertaking list', [true, false, true]],
+    ['Add employees / blank DTRs', [true, false, true]],                // config PRO_ONLY_FEATURES
     ['Pay once — yours for life', [false, true, true]]       // the pass is full Pro, but 30 days
   ]);
 
@@ -8065,7 +8120,14 @@ DTR.ui.getPro = (function () {
     return false;
   }
 
-  const resetText = () => { const d = DTR.plan.fixesReset(); return `${MONTH_NAMES[d.getMonth()]} ${d.getDate()}`; };
+  /** A click on a Pro-only item (config PRO_ONLY_FEATURES): true with Pro; otherwise the versions open and false. */
+  function needPro(feature) {
+    if (isPro()) return true;
+    plans(`<b>${esc(PRO_ONLY_LABELS[feature])}</b> comes with Pro.`);
+    return false;
+  }
+
+  const resetText =() => { const d = DTR.plan.fixesReset(); return `${MONTH_NAMES[d.getMonth()]} ${d.getDate()}`; };
 
   /** Shown when a Free fix is refused: everything still opens and prints, only changing stops. */
   function fixesUsedUp() {
@@ -8082,6 +8144,8 @@ DTR.ui.getPro = (function () {
 
   /** The STANDARD chip beside a locked item ('' when this copy has it). */
   const lockChip = (feature) => (DTR.plan.allows(feature) ? '' : '<span class="pro-chip pro-chip--standard">STANDARD</span>');
+  /** The PRO chip beside a Pro-only item ('' with Pro). */
+  const proOnlyChip = () => (isPro() ? '' : '<span class="pro-chip">PRO</span>');
 
   let freeBannerClosed = false;      // closed for this opening only
 
@@ -8119,7 +8183,7 @@ DTR.ui.getPro = (function () {
     }
   });
 
-  return { open, plans, contactHtml, choosePrint, tryBanner, chooseKeyFile, canPrint, passChip, passBanner, accessBanner, needStandard, lockChip, freeBanner, fixesUsedUp, fixesNote };
+  return { open, plans, contactHtml, choosePrint, tryBanner, chooseKeyFile, canPrint, passChip, passBanner, accessBanner, needStandard, needPro, lockChip, proOnlyChip, freeBanner, fixesUsedUp, fixesNote };
 })();
 
 </script>
@@ -8692,7 +8756,7 @@ DTR.ui.workspace = (function () {
     els.toolbar.innerHTML = `
       <div class="blue-employee-controls"><label>Employee<select id="employee-select" aria-label="Employee">
           ${state.orderedEmployees().map(e => `<option value="${esc(e.id)}" ${e.id === state.get().selectedId ? 'selected' : ''}>${esc(DTR.names.format(state.person(e.id)) || e.rawName || 'No name')} · ${esc(state.identity(e.id))}</option>`).join('')}
-        </select></label><button class="btn btn-secondary" id="employee-list-toggle" aria-expanded="false">Review list</button><button class="btn btn-secondary" id="add-manual-employee"><svg aria-hidden="true"><use href="#i-plus"/></svg>Add employee ${DTR.ui.getPro.lockChip(STANDARD_FEATURES.EMPLOYEE_LIST)}</button></div>
+        </select></label><button class="btn btn-secondary" id="employee-list-toggle" aria-expanded="false">Review list</button><button class="btn btn-secondary" id="add-manual-employee"><svg aria-hidden="true"><use href="#i-plus"/></svg>Add employee ${DTR.ui.getPro.proOnlyChip()}</button></div>
       <div class="tb-group">
         <button class="icon-btn" id="emp-prev" ${prev ? '' : 'disabled'} title="Previous employee (Page Up)"><svg><use href="#i-chevron-left"/></svg></button>
         <span class="tb-count">${i + 1} / ${list.length}</span>
@@ -10157,7 +10221,7 @@ DTR.ui.layouts = (function () {
         <label class="layout-check"><input type="checkbox" data-layout-key="${key}.italic" ${st.italic ? 'checked' : ''}>Italic</label></fieldset>`;
     }
     dialogs.open({ title: 'DTR layouts · Pro', className: 'modal--layouts', autoFocus: false,
-      body: `<div class="layout-top"><label>Start from<select id="layout-preset"><option value="draft">Current layout</option><option value="original">Original Form 48</option><option value="verification">Form 48 with verification</option><option value="school">Custom school layout</option><option value="teacher">Teacher DTR (compact)</option>${saved.map((x,i) => `<option value="saved-${i}">${esc(x.name)}</option>`).join('')}</select></label>
+      body: `<div class="layout-top"><label>Start from<select id="layout-preset"><option value="draft">Current layout</option>${L.choiceOptions(L.PRESET_CHOICES, saved.map((x,i) => [`saved-${i}`, x.name]))}</select></label>
         <label>Layout name<input id="layout-name" maxlength="50" value="${esc(draft.name)}"></label></div>
         ${DTR.ui.getPro.tryBanner('Custom DTR layouts')}
         <div class="layout-editor"><section class="layout-preview-pane" aria-label="Layout preview">
@@ -10628,7 +10692,7 @@ DTR.ui.settings = (function () {
     const signers = DTR.signers.all(settings);
     const withSigners = signers.length > 1;   // only when an office has more than one signer
     const unused = ids.filter((id) => !months[id]).length;
-    const importButton = '<button class="btn btn-secondary btn-sm" id="dir-add-manual"><svg><use href="#i-plus"/></svg>Add employee / blank DTR</button><button class="btn btn-secondary btn-sm" id="dir-import"><svg><use href="#i-upload"/></svg>Import names…</button>';
+    const importButton = '<button class="btn btn-secondary btn-sm" id="dir-add-manual"><svg><use href="#i-plus"/></svg>Add employee / blank DTR ${DTR.ui.getPro.proOnlyChip()}</button><button class="btn btn-secondary btn-sm" id="dir-import"><svg><use href="#i-upload"/></svg>Import names…</button>';
     if (!ids.length) {
       return `<div class="empty-state"><svg><use href="#i-users"/></svg><b>No employees yet</b>
         <span>Upload a biometric file or create a blank DTR.</span>${importButton}</div>`;
@@ -10966,8 +11030,14 @@ window.DTR = window.DTR || {};
 DTR.ui = DTR.ui || {};
 DTR.ui.manual = (function () {
   const { escapeHtml: esc } = DTR.util;
+  /** "Same as this month", then the built-in and saved layouts in their groups (state.manualLayoutChoices). */
+  function layoutOptions() {
+    const [usual, ...rest] = DTR.state.manualLayoutChoices();
+    const saved = rest.filter(([v]) => v.startsWith('saved-')), builtIn = rest.filter(([v]) => !v.startsWith('saved-'));
+    return `<option value="${esc(usual[0])}">${esc(usual[1])}</option>${DTR.layouts.choiceOptions(builtIn, saved)}`;
+  }
   function open() {
-    if (!DTR.ui.getPro.needStandard(DTR.config.STANDARD_FEATURES.EMPLOYEE_LIST)) return;
+    if (!DTR.ui.getPro.needPro(DTR.config.PRO_ONLY_FEATURES.MANUAL_DTR)) return;
     const state = DTR.state, current = state.get(), period = current.data?.period;
     const people = Object.entries(current.directory).filter(([,p]) => !p.inactive)
       .sort(([,a],[,b]) => DTR.names.sortKey(a).localeCompare(DTR.names.sortKey(b)));
@@ -10988,6 +11058,7 @@ DTR.ui.manual = (function () {
             ${field('Biometric ID (optional)', '<input id="manual-biometric" maxlength="80">', 'Leave blank if not registered. An exact ID lets future uploads match this employee.')}
           </details>
         </div>
+        ${field('DTR layout',`<select id="manual-layout">${layoutOptions()}</select>`, 'You can still change it later in DTR layout.')}
         <p class="manual-summary"><svg aria-hidden="true"><use href="#i-checklist"/></svg>Times start blank. Enter verified times directly on the DTR.</p>
         <p id="manual-error" role="alert" class="field-hint" hidden></p>
       </form>`,
@@ -11005,7 +11076,7 @@ DTR.ui.manual = (function () {
           try {
             state.addManualDtr({ year,month,existingId:existing?.value,
               parts:{last:read('last'),first:read('first'),middleInitial:read('mi'),extension:read('ext')},
-              employeeNumber:read('number'),biometricId:read('biometric') });
+              employeeNumber:read('number'),biometricId:read('biometric'),layoutChoice:read('layout') });
             close(); DTR.ui.dialogs.toast('Blank DTR created. Click a time box to enter attendance.','success');
           } catch(error) {
             const message = el.querySelector('#manual-error'); message.hidden = false; message.textContent = error.message;
@@ -11175,10 +11246,11 @@ DTR.ui.help = (function () {
 
   /* id: used by open(id) from other screens. pro: shown with a PRO mark. */
   const TOPICS = Object.freeze([
-    { id: 'manual', title: 'Add an employee / blank DTR', sub: 'For staff missing from the biometric file',
+    { id: 'manual', title: 'Add an employee / blank DTR', sub: 'For staff missing from the biometric file', pro: true,
       body: () => `${steps([
-        'Click <b>Add employee</b> beside the employee selector, or <b>Create a blank DTR</b> on Upload when starting without a file. This is included in Standard and Pro.',
+        'Click <b>Add employee</b> beside the employee selector, or <b>Create a blank DTR</b> on Upload when starting without a file. This is a Pro feature.',
         'Choose the month, then enter the name or select someone from <b>Existing employee</b>. The employee number is optional. If already registered, enter the exact biometric ID under <b>Already has a biometric ID?</b> to match later uploads.',
+        'Choose the <b>DTR layout</b>: the same as this month, any built-in layout (Original Form 48, with verification, Custom school, Teacher DTR compact) or one of your saved layouts. You can change it later in DTR layout.',
         'Click <b>Create blank DTR</b>. Times start blank. Click the DTR boxes to enter verified times or remarks; the original machine taps remain separate in Day details.',
         'Review, mark as checked and print or save normally. A manually added DTR is included even without machine taps, and reuploading retains it and its manual entries.'
       ])}` },
@@ -11656,7 +11728,7 @@ DTR.ui.home = (function () {
       </div>
       <div class="blue-formats" aria-hidden="true">${['CSV','XLS','XLSX','TXT','DAT'].map(x => `<span class="blue-format"><i class="file-${x.toLowerCase()}">${x}</i>${x}</span>`).join('')}</div>
       ${DTR.demo.sampleButtonHtml()}
-      <div class="blue-manual-start"><button class="btn btn-secondary" id="create-blank-dtr"><svg aria-hidden="true"><use href="#i-plus"/></svg>Create a blank DTR ${DTR.ui.getPro.lockChip(DTR.config.STANDARD_FEATURES.EMPLOYEE_LIST)}</button></div>
+      <div class="blue-manual-start"><button class="btn btn-secondary" id="create-blank-dtr"><svg aria-hidden="true"><use href="#i-plus"/></svg>Create a blank DTR ${DTR.ui.getPro.proOnlyChip()}</button></div>
       <div class="blue-setup">${icon('lock')} Works offline · Changes save automatically${DTR.licenseGate.isFree() ? ' · <button class="link" id="have-key">Have a key?</button>' : ''}</div>
       ${month ? `<button class="link blue-resume" data-open="${esc(recent)}">Continue ${esc(title(month.period))} DTRs ${icon('arrow-right')}</button>` : ''}
     </section>`;

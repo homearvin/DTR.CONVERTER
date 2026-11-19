@@ -1,22 +1,23 @@
 {
-  "latest": "1.35.0",
+  "latest": "1.36.0",
   "released": "2026-11-19",
   "download_url": "https://homearvin.github.io/DTR.CONVERTER/#get",
   "changes": [
-    "New: Add employee / Create a blank DTR for someone missing from the biometric file (Standard and Pro). Times start blank; type the verified times on the DTR.",
-    "Pro: new \"Teacher DTR (compact)\" layout: AM/PM times, weekend names spread across the boxes, Sundays in red, legend and printed employee name.",
+    "Pro: Add employee / Create a blank DTR for someone missing from the biometric file, with any DTR layout or your saved layouts. Times start blank; type the verified times on the DTR.",
+    "Pro: new \"Teacher DTR (compact)\" layout: AM/PM times, weekend names spread across the boxes, Sundays in red, centred day numbers, legend and printed employee name.",
+    "Layout lists now show \"Built-in layouts\" and \"Your saved layouts\" separately.",
     "Pro: optional legend under the table ([T]-Travel [L]-Leave [H]-Holiday [OB]-Official Business), in DTR layout > Legend.",
     "Fixed: a school logo removed in DTR layout no longer comes back on new uploads."
   ],
   "package": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.35.0/DTR-Converter-1.35.0-portable.zip",
-    "sha256": "90db92a33689dffa8b6f6fb33b92b5d22c59f39db8b18de485f116641fe129db",
-    "size": 13262573,
-    "signature": "uEZxEwoJMXogrqzW59mndrW6PmjN9+TrzNabTXOvYmqwS7kGtOee/K1N057wlGsBXXdD4dp5Gzf3y7heJISvCw=="
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.36.0/DTR-Converter-1.36.0-portable.zip",
+    "sha256": "d4c0ad7daf61fe57914db7b19782d85191c9da547d23805acfaa8cde52814ced",
+    "size": 12224971,
+    "signature": "9+PTlEvueFb9A8On89ZLua770EelDdod6Q7wgS+ZWQF3rwBLEWpH4IpTVUrvkjBWRgMMPv/sP8SOpAT88x/RAw=="
   },
   "installer": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.35.0/DTR-Converter-1.35.0-setup.exe",
-    "sha256": "17007c035f813b54c77efae0d60ae36e62e7a208df4674b8dabae5174a3cba57",
-    "size": 15196430
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.36.0/DTR-Converter-1.36.0-setup.exe",
+    "sha256": "ae2a20c34df1c6768de66853f1898220981436280687d647e759b0c77b1f4c4c",
+    "size": 14169171
   }
 }
