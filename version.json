@@ -1,21 +1,21 @@
 {
-  "latest": "1.31.2",
-  "released": "2026-11-18",
+  "latest": "1.34.0",
+  "released": "2026-11-19",
   "download_url": "https://homearvin.github.io/DTR.CONVERTER/#get",
   "changes": [
-    "Reads List of Logs files with a school/office label after the period; names stay as written without guessed initials.",
-    "Partial-period uploads keep saved dates outside the report. Recorded taps, blank days and manual edits are preserved.",
-    "Pro logo save scope is always visible. School-logo removal updates current layout copies and the new-month default while keeping historical layouts."
+    "Pro: new \"Teacher DTR (compact)\" layout: AM/PM times, weekend names spread across the boxes, Sundays in red, legend and printed employee name.",
+    "Pro: optional legend under the table ([T]-Travel [L]-Leave [H]-Holiday [OB]-Official Business), in DTR layout > Legend.",
+    "Fixed: a school logo removed in DTR layout no longer comes back on new uploads."
   ],
   "package": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.31.2/DTR-Converter-1.31.2-portable.zip",
-    "sha256": "d7d5e21f0a7361480ee6f52e9a9b1680933f59738d0daab19397a05ea70564e6",
-    "size": 13254306,
-    "signature": "xTcneW6CZoTZ/ExrZJ8dHBzoTIilvRNGTm6EFAGiutVsoop6qUWolEwl1/NO6hmZf6QgZLeRKFWL1RqF54KJAw=="
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.34.0/DTR-Converter-1.34.0-portable.zip",
+    "sha256": "421507507d155beee0e9f74cb082a450647a96dcbd657926d967b5e66a265ec3",
+    "size": 12220423,
+    "signature": "Zhv3IJypcDO1MvzPiiNWjPdOrsAMPQCbvNKv7TBQjkYOqHSwny2oB4cCENOV4zPO6iCsFxctZ7ePgXCaMUsUDQ=="
   },
   "installer": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.31.2/DTR-Converter-1.31.2-setup.exe",
-    "sha256": "0c325cf322d292b269066a8855cfdf53bde58bf774e39d1d2d6ce46acebd40c4",
-    "size": 15188084
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.34.0/DTR-Converter-1.34.0-setup.exe",
+    "sha256": "756c0e6bbcb5b6186c77619e89fdcabbb1b1c64ce97b459631a63ba8b8349f6a",
+    "size": 14164232
   }
 }

@@ -1442,10 +1442,54 @@ button.home-review-item:hover { box-shadow: inset 0 0 0 1px var(--line-2); }
 .sheet .f48-has-branding .f48-table tbody td { line-height: 1; height: max(9pt, calc(var(--f48-row-h) - var(--layout-row-reduction, 0pt) - var(--number-row-reduction, 0pt))); }
 .f48-branding .f48-logo { top: 0; object-fit: contain; }
 .f48-custom-layout .f48-cert { white-space: pre-wrap; overflow-wrap: anywhere; }
+.f48-legend { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.3; margin: 5pt 0 0; }
 .f48-verification,.f48-footer-note { white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 5pt; line-height: 1.3; }
 .f48-employee-caption,.f48-signer-caption { width: 2.45in; margin-left: auto; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.3; }
 .f48-layout-top { position: relative; }
 .f48-custom-layout .f48-logo { border-radius: 0; object-fit: contain; }
+.f48-employee-printed-name { text-align: center; font-weight: 700; font-size: 9pt; }
+/* Teacher preset: compact Arial cards with the photographed form's solid grid. */
+.f48-teacher { font-family: Arial, sans-serif; font-size: 8pt; }
+.f48-teacher .f48-formno { font-size: 7pt; font-style: normal; text-transform: uppercase; }
+.f48-teacher .f48-title { margin-top: 9pt; font-size: 11pt; letter-spacing: 0; }
+.f48-teacher .f48-title-rule { display: none; }
+.f48-teacher .f48-name { margin-top: 12pt; min-height: 12pt; font-size: 9pt; border: 0; letter-spacing: 0; }
+.f48-teacher .f48-name.is-long { font-size: 8pt; }
+.f48-teacher .f48-name.is-longer { font-size: 7.5pt; }
+.f48-teacher .f48-caption { font-size: 7.5pt; font-weight: 400; font-style: normal; }
+.f48-teacher-month { display: flex; gap: 8pt; margin-top: 6pt; font-size: 8pt; }
+.f48-teacher-month b { text-transform: uppercase; }
+.f48-teacher-meta { font-size: 7pt; margin-top: 3pt; }
+.f48-teacher-meta > div { display: flex; align-items: baseline; gap: 2pt; min-height: 12pt; }
+.f48-teacher-meta > div > span:first-child { width: 1.24in; flex-shrink: 0; }
+.f48-teacher-meta .f48-fill--meta { width: auto; flex: 1; min-width: 0; min-height: 10pt; font-size: 7pt; font-weight: 400; white-space: normal; overflow-wrap: anywhere; }
+.f48-teacher .f48-table { margin-top: 5pt; border: 0.5pt solid #000; }
+.f48-teacher .f48-table th { border-color: #000; border-width: 0.5pt; font-size: 8pt; }
+.f48-teacher .f48-group,.f48-teacher .f48-subhead th { height: 13pt; font-style: normal; font-weight: 400; }
+.f48-teacher .f48-group { font-weight: 700; }          /* AM, PM, UnderTime are bold in the photo */
+/* Weekend letters spread inside each of the four boxes, box lines kept; Sunday in red. */
+.f48-teacher .f48-table td.f48-weekend { letter-spacing: 0; padding: 0 2pt; }
+.f48-teacher .f48-spread { display: flex; justify-content: space-around; }
+.f48-teacher .is-sunday { color: #c00000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.f48-teacher .f48-th-ut br { display: none; }
+.f48-teacher .f48-table td { font-size: 8pt; font-weight: 400; vertical-align: middle; }
+.sheet .f48-teacher .f48-table tbody td { height: max(9pt,calc(min(var(--f48-row-h),0.22in) - var(--layout-row-reduction,0pt) - var(--number-row-reduction,0pt))); }
+.f48-teacher .f48-cell { border-bottom: 0.5pt solid #000; }
+.f48-teacher .f48-table .f48-g-start { border-left: 0.5pt solid #000; }
+.f48-teacher .f48-label { font-weight: 400; font-size: 8pt; letter-spacing: 2pt; }
+.f48-teacher .f48-label-code { letter-spacing: 0; }
+.f48-teacher .f48-label.is-s,.f48-teacher .f48-label.is-xs { font-size: 6.5pt; letter-spacing: 0; }
+/* Photo: legend spread over the full width, then a line, then a deeply indented certification. */
+.f48-teacher .f48-legend { margin-top: 4pt; padding-bottom: 3pt; border-bottom: 0.5pt solid #000; }
+.f48-teacher .f48-legend-items { display: flex; justify-content: space-between; gap: 4pt; }
+.f48-teacher .f48-legend-items > span { white-space: nowrap; }
+.f48-teacher .f48-cert { margin-top: 6pt; text-indent: 6em; }
+.f48-teacher .f48-sign-employee { width: 100%; height: 13pt; border: 0; }
+.f48-teacher .f48-employee-printed-name { font-size: 8.5pt; border-bottom: 0.5pt solid #000; padding-bottom: 2pt; }
+.f48-teacher .f48-rule-thick { margin-top: 4pt; border-top: 0.5pt solid #000; }
+.f48-teacher .f48-incharge { width: 100%; margin-top: 18pt; }
+.f48-teacher .f48-incharge-name { font-size: 8.5pt; min-height: 11pt; border-bottom: 0.5pt solid #000; }
+.f48-teacher .f48-incharge-title { font-size: 8pt; font-weight: 700; text-transform: uppercase; white-space: normal; line-height: 1.1; }
 
 </style>
   <style>
@@ -1707,7 +1751,7 @@ window.DTR = window.DTR || {};
 DTR.config = Object.freeze({
   APP_NAME: 'DTR Converter',
   APP_SUBTITLE: 'Biometric Timecard → CSC Form No. 48',
-    APP_VERSION: '1.31.2',
+    APP_VERSION: '1.34.0',
 
   /* Where clients ask for help and keys (same as desktop/licensing.py CONTACT_*). */
   // The "Contact us to buy" box (ui/getpro.js contactHtml): Facebook page, call/text, email.
@@ -1990,6 +2034,8 @@ DTR.config = Object.freeze({
     REGULAR_DAYS: 'Regular Days',
     SATURDAYS: 'Saturdays',
     DAYS: 'Days',
+    TEACHER_DAY: 'Day',
+    TEACHER_UNDERTIME: 'UnderTime',
     AM: 'A. M.',
     PM: 'P. M.',
     UNDERTIME: ['UNDER', 'TIME'],
@@ -1998,6 +2044,7 @@ DTR.config = Object.freeze({
     HOURS: 'Hours',
     MINUTES: 'Minutes',
     TOTAL: 'TOTAL',
+    LEGEND: '[T]-Travel   [L]-Leave   [H]-Holiday   [OB]-Official Business',
     CERTIFY: 'I CERTIFY on my honor that the above is a true and correct report of the hours of work performed, record of which was made daily at the time of arrival and departure from office.',
     IN_CHARGE: 'In-Charge'
   }),
@@ -5643,6 +5690,7 @@ DTR.converter = (function () {
     row.placementWarnings = placementWarnings(row.taps, row.tapKinds, slots, placement);
     // A hidden/extra third tap must never be mistaken for a two-tap day.
     if (row.taps.length === 2) fillLunch(placed, timeRules && timeRules.lunch, row.weekday).forEach((slot) => { row.filled[slot] = true; });
+    row.clockValues = Object.assign({}, placed); // unformatted display source; never written back as attendance
     TIME_SLOTS.forEach((slot) => { row.machine[slot] = formatTime(placed[slot], timeFormat); });
     TIME_SLOTS.forEach((slot) => applyEdit(row, slot, edit));
 
@@ -5834,18 +5882,20 @@ DTR.layouts = (function () {
   const T = DTR.config.FORM_TEXT;
   const LIMITS = Object.freeze({ name: 50, header: 160, am: 16, pm: 16,
     amIn: 16, amOut: 16, pmIn: 16, pmOut: 16, certification: 360,
-    employeeCaption: 60, verification: 140, signerCaption: 60, footer: 160 });
-  const original = () => ({ version: 1, name: 'Original Form 48', header: '',
+    employeeCaption: 60, verification: 140, signerCaption: 60, footer: 160, legend: 160 });
+  const original = () => ({ version: 1, name: 'Original Form 48', design: 'original', header: '', showTotal: true, showEmployeeName: false,
     am: T.AM, pm: T.PM, amIn: T.ARRIVAL, amOut: T.DEPARTURE.join('\n'),
     pmIn: T.ARRIVAL, pmOut: T.DEPARTURE.join('\n'), certification: T.CERTIFY,
     employeeCaption: '', verification: '', signerCaption: '', footer: '',
+    showLegend: false, legend: T.LEGEND,
+    legendStyle: { align: 'left', size: 8, bold: false, italic: false },
     showLogo: true, logoPosition: 'right', logoSize: 0.56, logoData: '',
     showGovernmentLogo: true, governmentLogoSize: 0.56, governmentLogoData: '',
     headerStyle: { align: 'center', size: 9, bold: true, italic: false },
     footerStyle: { align: 'left', size: 8.5, bold: false, italic: true } });
   const imageOK = value => /^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(String(value || ''));
   const style = (value, base) => ({ align: ['left', 'center', 'right'].includes(value?.align) ? value.align : base.align,
-    size: [8, 8.5, 9, 10, 11].includes(Number(value?.size)) ? Number(value.size) : base.size,
+    size: [7.5, 8, 8.5, 9, 10, 11].includes(Number(value?.size)) ? Number(value.size) : base.size,
     bold: typeof value?.bold === 'boolean' ? value.bold : base.bold,
     italic: typeof value?.italic === 'boolean' ? value.italic : base.italic });
   function normalize(value) {
@@ -5862,6 +5912,11 @@ DTR.layouts = (function () {
     if (base.showGovernmentLogo && base.governmentLogoData) base.logoPosition = 'right';
     base.headerStyle = style(v.headerStyle, base.headerStyle);
     base.footerStyle = style(v.footerStyle, base.footerStyle);
+    base.showLegend = v.showLegend === true;
+    base.legendStyle = style(v.legendStyle, base.legendStyle);
+    base.design = v.design === 'teacher' ? 'teacher' : 'original';
+    base.showTotal = v.showTotal !== false;
+    base.showEmployeeName = v.showEmployeeName === true;
     return base;
   }
   function validate(value) {
@@ -5871,6 +5926,8 @@ DTR.layouts = (function () {
     }
     if (!v.name.trim()) return 'Give this layout a name.';
     if (v.header.split('\n').length > 4) return 'Use at most four header lines.';
+    if (v.showLegend && !v.legend.trim()) return 'Enter the legend text or turn off the legend.';
+    if (v.showLegend && v.legend.split('\n').length > 2) return 'Use at most two legend lines.';
     for (const k of ['am', 'pm', 'amIn', 'amOut', 'pmIn', 'pmOut']) if (!v[k].trim()) return 'Keep a label in every time heading.';
     return '';
   }
@@ -5880,15 +5937,55 @@ DTR.layouts = (function () {
     if (a.showGovernmentLogo && a.governmentLogoData) return true;
     delete a.name; delete b.name; delete a.logoData; delete b.logoData;
     delete a.governmentLogoData; delete b.governmentLogoData;
+    if (!a.showLegend) { delete a.legend; delete b.legend; delete a.legendStyle; delete b.legendStyle; }
     return JSON.stringify(a) !== JSON.stringify(b);
   }
   function preset(key) {
     const v = original();
     if (key === 'verification') { v.name = 'Form 48 with verification'; v.verification = 'VERIFIED as to the prescribed office hours:'; v.signerCaption = 'In Charge'; }
     if (key === 'school') { v.name = 'Custom school layout'; v.header = 'SAMPLE NATIONAL HIGH SCHOOL\nSchool address'; }
+    if (key === 'teacher') {
+      v.name = 'Teacher DTR (compact)'; v.design = 'teacher';
+      v.am = 'AM'; v.pm = 'PM'; v.amIn = v.pmIn = 'Arrival'; v.amOut = v.pmOut = 'Departure';
+      v.showLegend = true; v.showTotal = false; v.showEmployeeName = true;
+      v.showLogo = false; v.showGovernmentLogo = false;
+      v.verification = 'Verified as to the prescribed office hours.';
+      v.legendStyle = { align: 'left', size: 7.5, bold: false, italic: false };
+      v.footerStyle = { align: 'left', size: 7.5, bold: false, italic: false };
+    }
     return v;
   }
   const css = s => `text-align:${s.align};font-size:${s.size}pt;font-weight:${s.bold ? 700 : 400};font-style:${s.italic ? 'italic' : 'normal'}`;
+  // Teacher style changes presentation only. Source clocks and manual text stay intact.
+  function timeText(row, slot, layout) {
+    const value = row.values[slot] || '';
+    if (!value || layout?.design !== 'teacher' || row.edited?.[slot]) return value;
+    const match = /^(\d{2}):([0-5]\d)$/.exec(row.clockValues?.[slot] || '');
+    if (!match) return value;
+    const hour = Number(match[1]);
+    return `${hour % 12 || 12}:${match[2]} ${hour < 12 ? 'AM' : 'PM'}`;
+  }
+  function dayLabel(row, layout) {
+    return layout?.design === 'teacher' && !row.labelEdited && ['SAT','SUN'].includes(row.label)
+      ? (row.label === 'SAT' ? 'Saturday' : 'Sunday') : row.label;
+  }
+  /**
+   * Teacher style, owner photo Nov-18: an automatic weekend word is spread over the four time
+   * boxes with their lines kept ("S a | t u | r d | a y", "S | u n | d a | y"). The letters are
+   * split as evenly as possible, extra letters going to the middle boxes. null = print as usual.
+   */
+  function weekendParts(row, layout) {
+    if (layout?.design !== 'teacher' || row.labelEdited || !['SAT', 'SUN'].includes(row.label)) return null;
+    const letters = [...dayLabel(row, layout)], boxes = 4;
+    const base = Math.floor(letters.length / boxes), extra = letters.length % boxes;
+    const sizes = Array.from({ length: boxes }, (_, i) => base + (i >= (boxes - extra) / 2 && i < (boxes + extra) / 2 ? 1 : 0));
+    let at = 0;
+    return sizes.map(n => letters.slice(at, at += n).join(''));
+  }
+  /** "[T]-Travel [L]-Leave [OB]-Official Business" → one entry per bracketed code (shared by HTML and Excel). */
+  const legendItems = line => String(line).trim().split(/\s+(?=\[)/).filter(Boolean);
+  const SUNDAY_COLOR = 'C00000';   // Teacher photo: Sundays in red (Excel; css/layouts.css uses the same #c00000)
+  const isSunday = (row, layout) => layout?.design === 'teacher' && row.weekday === 0;
   // Reserve space for additions by shortening the day rows, never changing their values.
   const lines = (text, width = 48) => String(text).split('\n').reduce((n, x) => n + Math.max(1, Math.ceil(x.length / width)), 0);
   /** One position rule for HTML, print and Excel; no remotely loaded pictures. */
@@ -5913,9 +6010,11 @@ DTR.layouts = (function () {
       + (v.employeeCaption ? lines(v.employeeCaption, 34) * f : 0)
       + (v.signerCaption ? lines(v.signerCaption, 34) * f : 0)
       + (v.footer ? lines(v.footer) * f + 5 : 0)
+      + (v.showLegend && v.legend.trim() ? lines(v.legend) * v.legendStyle.size * 1.3 + 5 : 0)
+      + (v.showEmployeeName ? 14 : 0)
       + Math.max(0, lines(v.certification) * f - 42);
   }
-  return { original, normalize, validate, isCustom, preset, css, lines, logos, headerHeight, extraHeight, LIMITS, imageOK };
+  return { original, normalize, validate, isCustom, preset, css, timeText, dayLabel, weekendParts, isSunday, SUNDAY_COLOR, legendItems, lines, logos, headerHeight, extraHeight, LIMITS, imageOK };
 })();
 
 </script>
@@ -5973,7 +6072,12 @@ DTR.form48 = (function () {
       </div>
       <div class="${cls('f48-name', besideName && 'f48-name-with-number', nameSize(model.name), opts.editable && 'is-editable', opts.marks && !model.name && 'is-placeholder')}"${attr(opts.editable, 'data-name', '1')}${attr(opts.marks && !model.name, 'data-placeholder', `No name yet — employee no. ${model.employeeId}`)}>${besideName ? `<span class="f48-person-name">${esc(model.name)}</span> <span class="f48-employee-number f48-number-inline">· No. ${esc(number)}</span>` : esc(model.name)}</div>
       <div class="f48-caption">${esc(T.NAME_CAPTION)}</div>
-      <div class="f48-month">
+      ${l?.design === 'teacher' ? `
+      <div class="f48-teacher-month"><span>${esc(T.MONTH_LEAD)}:</span><b>${esc(model.monthName)} ${esc(model.year)}</b></div>
+      <div class="f48-teacher-meta">
+        <div><span>${esc(T.OFFICIAL_HOURS[0])}</span><span>(Regular days:</span>${fill(model.header.regularDays, opts, 'regularDays', 'f48-fill--meta')}<span>)</span></div>
+        <div><span>${esc(T.OFFICIAL_HOURS[1])}</span><span>(Saturdays:</span>${fill(model.header.saturdays, opts, 'saturdays', 'f48-fill--meta')}<span>)</span></div>
+      </div>` : `<div class="f48-month">
         <span>${esc(T.MONTH_LEAD)}</span>
         <span class="f48-fill f48-fill--month">${esc(model.monthName)}</span><span>,</span>
         <span class="f48-fill f48-fill--year">${esc(model.year)}</span>
@@ -5984,7 +6088,7 @@ DTR.form48 = (function () {
           <div class="f48-meta-line"><span>${esc(T.REGULAR_DAYS)}</span>${fill(model.header.regularDays, opts, 'regularDays', 'f48-fill--meta')}</div>
           <div class="f48-meta-line"><span>${esc(T.SATURDAYS)}</span>${fill(model.header.saturdays, opts, 'saturdays', 'f48-fill--meta')}</div>
         </div>
-      </div>`;
+      </div>`}`;
   }
 
   function tableHead(model) {
@@ -5993,10 +6097,10 @@ DTR.form48 = (function () {
     return `
       <thead>
         <tr>
-          <th rowspan="2" class="f48-col-day f48-th-days">${esc(T.DAYS)}</th>
+          <th rowspan="2" class="f48-col-day f48-th-days">${esc(l.design === 'teacher' ? T.TEACHER_DAY : T.DAYS)}</th>
           <th colspan="2" class="f48-group">${esc(l.am)}</th>
           <th colspan="2" class="f48-group f48-g-start">${esc(l.pm)}</th>
-          <th colspan="2" class="f48-group f48-g-start f48-th-ut">${esc(T.UNDERTIME[0])}<br>${esc(T.UNDERTIME[1])}</th>
+          <th colspan="2" class="f48-group f48-g-start f48-th-ut">${l.design === 'teacher' ? esc(T.TEACHER_UNDERTIME) : esc(T.UNDERTIME[0])+'<br>'+esc(T.UNDERTIME[1])}</th>
         </tr>
         <tr class="f48-subhead">
           <th>${label(l.amIn)}</th><th>${label(l.amOut)}</th>
@@ -6014,7 +6118,7 @@ DTR.form48 = (function () {
     const filled = opts.marks && row.filled && row.filled[slot] && !row.edited[slot];
     const classes = cls('f48-cell', 'f48-time', groupStart && 'f48-g-start', editable && 'is-editable',
       opts.marks && row.edited[slot] && 'is-edited', computed && 'is-computed', filled && 'is-filled');
-    return `<td class="${classes}"${attr(editable, 'data-day', row.day)}${attr(editable, 'data-slot', slot)}>${esc(row.values[slot])}</td>`;
+    return `<td class="${classes}"${attr(editable, 'data-day', row.day)}${attr(editable, 'data-slot', slot)}>${esc(DTR.layouts.timeText(row, slot, opts.layout))}</td>`;
   }
 
   function rowHtml(row, opts) {
@@ -6026,7 +6130,8 @@ DTR.form48 = (function () {
       marks && ((row.missingSlots || []).length || status === DTR.timecalc.DAY_STATUS.INCOMPLETE) && 'is-incomplete',
       marks && status && status === DTR.timecalc.DAY_STATUS.COVERED && 'is-covered'
     );
-    const dayClasses = cls('f48-col-day', opts.editable && row.inMonth && 'is-pickable', marks && row.extraTaps.length && 'has-extra');
+    const sunday = DTR.layouts.isSunday(row, opts.layout);
+    const dayClasses = cls('f48-col-day', opts.editable && row.inMonth && 'is-pickable', marks && row.extraTaps.length && 'has-extra', sunday && 'is-sunday');
     const dayCell = `<td class="${dayClasses}"${attr(opts.editable && row.inMonth, 'data-pick-day', row.day)}>${row.day}</td>`;
 
     // A half-day holiday / suspension (Holidays & suspensions) fills that half only.
@@ -6035,7 +6140,13 @@ DTR.form48 = (function () {
     let timeCells;
     if (row.showLabel) {
       const labelClasses = cls('f48-cell', 'f48-label', remarkSize(row.label, REMARK_STEPS), opts.editable && 'is-editable', marks && row.labelEdited && 'is-edited', marks && row.marked && 'is-marked');
-      timeCells = `<td colspan="4" class="${labelClasses}"${attr(opts.editable, 'data-label-day', row.day)}>${esc(row.label)}</td>`;
+      const label = DTR.layouts.dayLabel(row, opts.layout);
+      const parts = DTR.layouts.weekendParts(row, opts.layout);
+      // Teacher style: one box each for short codes (T, L, H, OB) and for the spread weekend letters.
+      const boxes = (texts, extra) => texts.map((text, i) => `<td class="${cls(labelClasses, extra, i === 2 && 'f48-g-start')}"${attr(opts.editable, 'data-label-day', row.day)}>${text}</td>`).join('');
+      if (parts) timeCells = boxes(parts.map(p => `<span class="f48-spread">${[...p].map(ch => `<span>${esc(ch)}</span>`).join('')}</span>`), cls('f48-weekend', sunday && 'is-sunday'));
+      else if (opts.layout?.design === 'teacher' && /^(?:T|L|H|OB)$/i.test(label)) timeCells = boxes(TIME_SLOTS.map(() => esc(label)), 'f48-label-code');
+      else timeCells = `<td colspan="4" class="${labelClasses}"${attr(opts.editable, 'data-label-day', row.day)}>${esc(label)}</td>`;
     } else if (row.amLabel || row.pmLabel) {
       const [amIn, amOut, pmIn, pmOut] = TIME_SLOTS;
       timeCells = (row.amLabel ? halfLabel(row.amLabel, false) : slotCell(row, amIn, opts, false) + slotCell(row, amOut, opts, false))
@@ -6063,13 +6174,26 @@ DTR.form48 = (function () {
       </tfoot>`;
   }
 
+  /** Teacher style, left-aligned: each "[X]-Word" item of a line is spread across the width, as in the photo. */
+  function legendHtml(l) {
+    if (l.design !== 'teacher' || l.legendStyle.align !== 'left') return esc(l.legend);
+    return l.legend.split('\n').map((line) => {
+      const items = DTR.layouts.legendItems(line);
+      return items.length > 1
+        ? `<div class="f48-legend-items">${items.map((x) => `<span>${esc(x)}</span>`).join('')}</div>`
+        : `<div>${esc(line)}</div>`;
+    }).join('');
+  }
+
   function footerHtml(model) {
     const l = model.layout && DTR.layouts.normalize(model.layout);
     const style = l ? ` style="${DTR.layouts.css(l.footerStyle)}"` : '';
     const text = (key, className) => l && l[key] ? `<div class="${className}"${style}>${esc(l[key])}</div>` : '';
     return `
+      ${l && l.showLegend && l.legend.trim() ? `<div class="f48-legend" style="${DTR.layouts.css(l.legendStyle)}">${legendHtml(l)}</div>` : ''}
       <p class="f48-cert"${style}>${esc(l ? l.certification : T.CERTIFY)}</p>
       <div class="f48-sign-employee"></div>
+      ${l?.showEmployeeName ? `<div class="f48-employee-printed-name ${nameSize(model.name)}">${esc(model.name)}</div>` : ''}
       ${text('employeeCaption', 'f48-employee-caption')}
       <div class="f48-rule-thick"></div>
       ${text('verification', 'f48-verification')}
@@ -6077,7 +6201,7 @@ DTR.form48 = (function () {
         <div class="${cls('f48-incharge-name', nameSize(model.inChargeName))}">${esc(model.inChargeName)}</div>
         ${model.inChargeTitle
           ? `<div class="${cls('f48-incharge-title', nameSize(model.inChargeTitle))}">${esc(model.inChargeTitle)}</div>`
-          : `<div class="f48-incharge-caption">${esc(l && l.signerCaption ? '' : T.IN_CHARGE)}</div>`}
+          : `<div class="f48-incharge-caption">${esc(l && (l.signerCaption || l.design === 'teacher') ? '' : T.IN_CHARGE)}</div>`}
       </div>
       ${text('signerCaption', 'f48-signer-caption')}
       ${text('footer', 'f48-footer-note')}`;
@@ -6091,14 +6215,14 @@ DTR.form48 = (function () {
     const extra = model.layout ? DTR.layouts.extraHeight(model.layout) : DTR.layouts.headerHeight(model);
     const watermark = DTR.config.DEMO_MODE ? `<div class="f48-demo-mark" aria-hidden="true">${esc(DTR.config.DEMO_WATERMARK)}</div>` : '';
     return `
-      <div class="f48${model.layout ? ' f48-custom-layout' : ''}${hasLogos ? ' f48-has-branding' : ''}${hasNumber ? ' f48-with-number' : ''}"${model.layout || hasNumber || hasLogos ? ` style="--layout-row-reduction:${extra / 31}pt;--number-row-reduction:${numberSpace / 31}pt"` : ''}>
+      <div class="f48${model.layout ? ' f48-custom-layout' : ''}${model.layout?.design === 'teacher' ? ' f48-teacher' : ''}${hasLogos ? ' f48-has-branding' : ''}${hasNumber ? ' f48-with-number' : ''}"${model.layout || hasNumber || hasLogos ? ` style="--layout-row-reduction:${extra / 31}pt;--number-row-reduction:${numberSpace / 31}pt"` : ''}>
         ${watermark}
         ${headerHtml(model, opts)}
         <table class="f48-table">
           <colgroup><col class="c-day"><col><col><col><col><col><col></colgroup>
           ${tableHead(model)}
-          <tbody>${model.rows.map((row) => rowHtml(row, opts)).join('')}</tbody>
-          ${totalRow(model, opts)}
+          <tbody>${model.rows.map((row) => rowHtml(row, Object.assign({}, opts, { layout: model.layout }))).join('')}</tbody>
+          ${model.layout?.showTotal === false ? '' : totalRow(model, opts)}
         </table>
         ${footerHtml(model)}
       </div>`;
@@ -6157,7 +6281,7 @@ DTR.form48 = (function () {
       const paper = box.querySelector('.sheet'), copy = paper.querySelector('.copy'), form = copy.querySelector('.f48');
       const bottom = opts.size === 'card' ? copy.getBoundingClientRect().bottom - 8 : paper.getBoundingClientRect().bottom - 24;
       if (form.getBoundingClientRect().bottom > bottom) error = 'This layout is too tall for this print size. Shorten the header, footer or employee number, or choose Full page.';
-      for (const el of form.querySelectorAll('.f48-school-header,.f48-cert,.f48-verification,.f48-footer-note,.f48-employee-caption,.f48-signer-caption,.f48-name-with-number,.f48-employee-number,th')) {
+      for (const el of form.querySelectorAll('.f48-school-header,.f48-legend,.f48-cert,.f48-verification,.f48-footer-note,.f48-employee-caption,.f48-signer-caption,.f48-name-with-number,.f48-employee-number,th')) {
         if (el.scrollWidth > el.clientWidth + 2) error = 'Some layout text is too wide. Shorten the text or reduce its font size.';
       }
     } finally { box.remove(); }
@@ -6423,8 +6547,10 @@ DTR.xlsx = (function () {
     };
 
     function fontId(s) {
-      const key = `${s.sz || 11}|${s.b ? 1 : 0}|${s.i ? 1 : 0}`;
-      return remember('font', fonts, key, () => `<font>${s.b ? '<b/>' : ''}${s.i ? '<i/>' : ''}<sz val="${s.sz || 11}"/><name val="${FONT}"/></font>`);
+      const font = s.fontName === 'Arial' ? 'Arial' : FONT;
+      const color = /^[0-9A-F]{6}$/i.test(s.color || '') ? s.color.toUpperCase() : '';   // e.g. 'C00000' (Teacher Sundays)
+      const key = `${font}|${s.sz || 11}|${s.b ? 1 : 0}|${s.i ? 1 : 0}|${color}`;
+      return remember('font', fonts, key, () => `<font>${s.b ? '<b/>' : ''}${s.i ? '<i/>' : ''}<sz val="${s.sz || 11}"/>${color ? `<color rgb="FF${color}"/>` : ''}<name val="${font}"/></font>`);
     }
     function borderId(border) {
       const b = border || {};
@@ -6436,7 +6562,7 @@ DTR.xlsx = (function () {
       if (!s) return 0;
       const f = fontId(s);
       const bd = borderId(s.border);
-      const align = [s.h && `horizontal="${s.h}"`, `vertical="${s.v || 'bottom'}"`, s.wrap && 'wrapText="1"', s.indent && `indent="${s.indent}"`].filter(Boolean).join(' ');
+      const align = [s.h && `horizontal="${s.h}"`, `vertical="${s.v || 'bottom'}"`, s.wrap && 'wrapText="1"', s.shrink && 'shrinkToFit="1"', s.indent && `indent="${s.indent}"`].filter(Boolean).join(' ');
       const key = `${f}|${bd}|${align}`;
       return remember('xf', xfs, key, () => `<xf numFmtId="0" fontId="${f}" fillId="0" borderId="${bd}" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment ${align}/></xf>`);
     }
@@ -6621,6 +6747,7 @@ DTR.excel = (function () {
   });
   const DAY_COL_SHARE = 0.42 / 3.62;
   const COPY_COLS = 7;
+  const CERT_INDENT = '\u00a0'.repeat(14);   // Teacher photo: deep first-line indent on "I CERTIFY"
   /*
    * PX_PER_CHAR: one Excel width unit on paper, in 1/96 in (measured with Excel 365's printout).
    * Excel's "fit to one page" only shrinks — it stays as a safety net for printers with wide margins —
@@ -6663,10 +6790,11 @@ DTR.excel = (function () {
    */
   function addCopy(out, model, c0, layout) {
     const l = model.layout && DTR.layouts.normalize(model.layout);
+    const teacher = l?.design === 'teacher';
     const k = layout.k;
     const sz = (pt) => Math.round(pt * k * 2) / 2;
     const ht = (pt) => Math.round(pt * k * 10) / 10;
-    const put = (r, c, v, s) => out.cells.push({ r, c: c0 + c, v, s });
+    const put = (r, c, v, s) => { if (teacher) { s = s || {}; s.fontName = 'Arial'; } out.cells.push({ r, c: c0 + c, v, s }); };
     /** A merged block; the style goes on every cell so its borders show along the whole block. */
     const block = (r1, c1, r2, c2, v, s) => {
       for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) put(r, c, r === r1 && c === c1 ? v : '', s);
@@ -6682,7 +6810,7 @@ DTR.excel = (function () {
       let measure = text => String(text).length * textStyle.size;
       if (typeof document !== 'undefined') {
         const ctx = document.createElement('canvas').getContext('2d');
-        ctx.font = `${textStyle.italic ? 'italic ' : ''}${textStyle.bold ? 'bold ' : ''}${textStyle.size * 96 / 72}px Calibri`;
+        ctx.font = `${textStyle.italic ? 'italic ' : ''}${textStyle.bold ? 'bold ' : ''}${textStyle.size * 96 / 72}px ${teacher ? 'Arial' : 'Calibri'}`;
         measure = text => ctx.measureText(text).width * 0.75;
       }
       let count = 0;
@@ -6705,7 +6833,7 @@ DTR.excel = (function () {
     const logoHeight = Math.max(logos.left?.size || 0, logos.right?.size || 0) * 72;
     // --- top of the form ---
     // Fixed identity is always the very first row, outside editable branding.
-    block(r, 0, r, LAST, T.FORM_NO, { sz: sz(8), i: true }); height(r++, 13);
+    block(r, 0, r, LAST, teacher ? T.FORM_NO.toUpperCase() : T.FORM_NO, { sz: sz(teacher ? 7 : 8), i: !teacher }); height(r++, teacher ? 11 : 13);
     const brandingRow = r;
     if (l && l.header) {
       // A merged header cannot have left/right padding. Reserve whole columns
@@ -6721,15 +6849,23 @@ DTR.excel = (function () {
       styledText(l.header, l.headerStyle, left, right, logoHeight + 8);
     } else if (logoHeight) height(r++, logoHeight + 8);
     if (aboveTitle) styledText(`Employee No. ${number}`, { size: 8, align: 'right' });
-    block(r, 0, r, LAST, T.TITLE, { sz: sz(13.5), b: true, h: 'center' }); height(r++, 22);
+    block(r, 0, r, LAST, T.TITLE, { sz: sz(teacher ? 11 : 13.5), b: true, h: 'center' }); height(r++, teacher ? 20 : 22);
     height(r++, 6);
     if (number && model.employeeNumberPosition === 'name') {
       styledText(`${model.name} · No. ${number}`, { size: nameSize(model.name), bold: true, align: 'center' });
       out.cells.filter(cell => cell.r === r - 1 && cell.c >= c0 && cell.c <= c0 + LAST).forEach(cell => { cell.s.border = { b: 'dashed' }; });
     } else {
-      block(r, 0, r, LAST, model.name, { sz: sz(nameSize(model.name)), b: true, h: 'center', border: { b: 'dashed' } }); height(r++, 17);
+      block(r, 0, r, LAST, model.name, { sz: sz(teacher ? Math.min(9,nameSize(model.name)) : nameSize(model.name)), b: true, h: 'center', border: teacher ? undefined : { b: 'dashed' } }); height(r++, teacher ? 15 : 17);
     }
-    block(r, 0, r, LAST, T.NAME_CAPTION, { sz: sz(9), b: true, i: true, h: 'center', v: 'top' }); height(r++, 13);
+    block(r, 0, r, LAST, T.NAME_CAPTION, { sz: sz(teacher ? 7.5 : 9), b: !teacher, i: !teacher, h: 'center', v: 'top' }); height(r++, teacher ? 12 : 13);
+    if (teacher) {
+      block(r,0,r,1,T.MONTH_LEAD+':',{sz:sz(8)});
+      block(r,2,r,LAST,`${model.monthName.toUpperCase()} ${model.year}`,{sz:sz(8),b:true}); height(r++,15);
+      block(r,0,r,2,T.OFFICIAL_HOURS[0],{sz:sz(7),v:'center'});
+      styledText(`(Regular days: ${model.header.regularDays})`,{size:7,align:'left'},3,LAST,13);
+      block(r,0,r,2,T.OFFICIAL_HOURS[1],{sz:sz(7),v:'center'});
+      styledText(`(Saturdays: ${model.header.saturdays})`,{size:7,align:'left'},3,LAST,13);
+    } else {
     block(r, 0, r, 1, T.MONTH_LEAD, { sz: sz(9.5), i: true });
     block(r, 2, r, 4, model.monthName, { sz: sz(9.5), b: true, h: 'center', border: { b: 'thin' } });
     block(r, 5, r, LAST, model.year, { sz: sz(9.5), b: true, h: 'center', border: { b: 'thin' } }); height(r++, 15);
@@ -6739,34 +6875,42 @@ DTR.excel = (function () {
     block(r, 0, r, 2, T.OFFICIAL_HOURS[1], { sz: sz(9.5), i: true, indent: 4 });
     block(r, 3, r, 4, T.SATURDAYS, { sz: sz(9.5), i: true, h: 'right' });
     block(r, 5, r, LAST, model.header.saturdays, { sz: sz(8.5), b: true, h: 'center', border: { b: 'thin' } }); height(r++, 15);
+    }
     height(r++, 5);
 
     // --- column headings (double line where P.M. and Under Time start) ---
-    const leftLine = (c) => (c === 0 ? undefined : c === 3 || c === 5 ? 'double' : 'thin');
-    const head = { sz: sz(9.5), b: true, h: 'center', v: 'center' };
-    block(r, 0, r + 1, 0, T.DAYS, Object.assign({}, head, { h: 'left', border: { t: 'medium', b: 'thin' } }));
-    block(r, 1, r, 2, l ? l.am : T.AM, Object.assign({}, head, { border: { t: 'medium', b: 'thin', l: 'thin' } }));
-    block(r, 3, r, 4, l ? l.pm : T.PM, Object.assign({}, head, { border: { t: 'medium', b: 'thin', l: 'double' } }));
-    block(r, 5, r, 6, `${T.UNDERTIME[0]}\n${T.UNDERTIME[1]}`, Object.assign({}, head, { sz: sz(9), wrap: true, border: { t: 'medium', b: 'thin', l: 'double' } }));
-    height(r++, 22);
+    const leftLine = (c) => (c === 0 ? undefined : !teacher && (c === 3 || c === 5) ? 'double' : 'thin');
+    const head = { sz: sz(teacher ? 8 : 9.5), b: !teacher, h: 'center', v: 'center' };
+    block(r, 0, r + 1, 0, teacher ? T.TEACHER_DAY : T.DAYS, Object.assign({}, head, { h: 'left', border: { t: teacher ? 'thin' : 'medium', b: 'thin', l: teacher ? 'thin' : undefined } }));
+    const groupHead = Object.assign({}, head, teacher ? { b: true } : {});   // Teacher photo: AM, PM, UnderTime bold
+    block(r, 1, r, 2, l ? l.am : T.AM, Object.assign({}, groupHead, { border: { t: teacher ? 'thin' : 'medium', b: 'thin', l: 'thin' } }));
+    block(r, 3, r, 4, l ? l.pm : T.PM, Object.assign({}, groupHead, { border: { t: teacher ? 'thin' : 'medium', b: 'thin', l: teacher ? 'thin' : 'double' } }));
+    block(r, 5, r, 6, teacher ? T.TEACHER_UNDERTIME : `${T.UNDERTIME[0]}\n${T.UNDERTIME[1]}`, Object.assign({}, groupHead, { sz: sz(teacher ? 8 : 9), wrap: true, border: { t: teacher ? 'thin' : 'medium', b: 'thin', l: teacher ? 'thin' : 'double', r: teacher ? 'thin' : undefined } }));
+    height(r++, teacher ? 13 : 22);
     const sub = l ? [l.amIn, l.amOut, l.pmIn, l.pmOut, T.HOURS, T.MINUTES] : [T.ARRIVAL, T.DEPARTURE.join('\n'), T.ARRIVAL, T.DEPARTURE.join('\n'), T.HOURS, T.MINUTES];
-    sub.forEach((text, i) => put(r, i + 1, text, { sz: sz(6.5), b: true, i: true, h: 'center', v: 'center', wrap: true, border: { l: leftLine(i + 1), b: 'thin' } }));
-    height(r++, 22);
+    sub.forEach((text, i) => put(r, i + 1, text, { sz: sz(teacher ? 8 : 6.5), b: !teacher, i: !teacher, h: 'center', v: 'center', wrap: !teacher, shrink: teacher, border: { l: leftLine(i + 1), b: 'thin', r: teacher && i === 5 ? 'thin' : undefined } }));
+    height(r++, teacher ? 13 : 22);
 
     // --- one row per day ---
-    const cell = (c, extra) => Object.assign({ sz: sz(9), b: true, h: 'center', border: { l: leftLine(c), b: 'dashed' } }, extra);
+    const cell = (c, extra) => Object.assign({ sz: sz(teacher ? 8 : 9), b: !teacher, h: 'center', border: { l: leftLine(c), b: teacher ? 'thin' : 'dashed', r: teacher && c === LAST ? 'thin' : undefined } }, extra);
     // Times, Under Time and TOTAL print bigger than the remarks, as on the printout (config.FORM48_TIME_PT).
     // fillPage() later caps them to the day rows' height; never below the table's normal size.
     const timeCell = (c, extra) => {
-      const style = cell(c, Object.assign({ sz: sz(FORM48_TIME_PT) }, extra));
-      out.timeStyles.push({ style, min: sz(9) });
+      const style = cell(c, Object.assign({ sz: sz(teacher ? 8 : FORM48_TIME_PT) }, extra));
+      out.timeStyles.push({ style, min: sz(teacher ? 7.5 : 9) });
       return style;
     };
     model.rows.forEach((row) => {
-      put(r, 0, row.inMonth ? row.day : '', { sz: sz(9.5), b: true, h: 'right' });
-      const value = (slot) => (row.inMonth ? row.values[slot] || '' : '');
+      const red = DTR.layouts.isSunday(row, l) ? { color: DTR.layouts.SUNDAY_COLOR } : {};
+      put(r, 0, row.inMonth ? row.day : '', Object.assign({ sz: sz(teacher ? 8 : 9.5), b: !teacher, h: teacher ? 'center' : 'right', border: teacher ? {l:'thin',b:'thin'} : undefined }, red));
+      const value = (slot) => (row.inMonth ? DTR.layouts.timeText(row,slot,l) : '');
       if (row.showLabel) {
-        block(r, 1, r, 4, spread(row.label), cell(1));
+        const label = DTR.layouts.dayLabel(row,l);
+        const parts = DTR.layouts.weekendParts(row, l);
+        // Teacher: letters spread inside each of the four boxes ("distributed" spreads the spaced letters).
+        if (parts) parts.forEach((part, i) => put(r, i + 1, [...part].join(' '), cell(i + 1, Object.assign({ h: 'distributed', indent: 1 }, red))));
+        else if(teacher && /^(?:T|L|H|OB)$/i.test(label)) for(let c=1;c<=4;c++)put(r,c,label,cell(c));
+        else block(r, 1, r, 4, spread(label), cell(1));
       } else {
         const [amIn, amOut, pmIn, pmOut] = TIME_SLOTS;
         if (row.amLabel) block(r, 1, r, 2, row.amLabel, cell(1, { sz: sz(7) }));
@@ -6780,22 +6924,33 @@ DTR.excel = (function () {
     });
 
     // --- total, certification, signatures ---
+    if (!l || l.showTotal) {
     put(r, 0, T.TOTAL, { sz: sz(8), b: true, h: 'center', border: { t: 'medium' } });
     block(r, 1, r, 4, '', { border: { t: 'medium', b: 'thin' } });
     put(r, 5, model.header.totalHours, timeCell(5, { border: { t: 'medium', b: 'thin', l: 'double' } }));
     put(r, 6, model.header.totalMinutes, timeCell(6, { border: { t: 'medium', b: 'thin', l: 'thin' } }));
     height(r++, 17);
-    if (l) styledText(l.certification, l.footerStyle);
+    }
+    if (l && l.showLegend && l.legend.trim()) {
+      if (teacher && l.legendStyle.align === 'left') {
+        // Photo: each "[X]-Word" item spread over the width (no-break spaces keep an item together), a line below.
+        const text = l.legend.split('\n').map(line => DTR.layouts.legendItems(line).map(x => x.replace(/ /g, '\u00a0')).join(' ')).join('\n');
+        styledText(text, Object.assign({}, l.legendStyle, { align: 'distributed' }));
+        out.cells.filter(cell => cell.r === r - 1 && cell.c >= c0 && cell.c <= c0 + LAST).forEach(cell => { cell.s.border = { b: 'thin' }; });
+      } else styledText(l.legend, l.legendStyle);
+    }
+    if (l) styledText(teacher ? `${CERT_INDENT}${l.certification}` : l.certification, l.footerStyle);
     else { block(r, 0, r, LAST, `      ${T.CERTIFY}`, { sz: sz(8.5), i: true, wrap: true, v: 'top' }); height(r++, 38); }
-    block(r, 3, r, LAST, '', { border: { b: 'thin' } }); height(r++, 22);
+    block(r, teacher ? 0 : 3, r, LAST, '', { border: teacher ? undefined : { b: 'thin' } }); height(r++, teacher ? 13 : 22);
+    if (l && l.showEmployeeName) { block(r,0,r,LAST,model.name,{sz:sz(teacher ? 8.5 : 9),b:true,h:'center',border:{b:'thin'}});height(r++,14); }
     if (l && l.employeeCaption) styledText(l.employeeCaption, l.footerStyle, 3);
     block(r, 0, r, LAST, '', { border: { b: 'medium' } }); height(r++, 6);
     if (l && l.verification) styledText(l.verification, l.footerStyle);
-    height(r++, 22);
-    block(r, 3, r, LAST, model.inChargeName, { sz: sz(9.5), b: true, h: 'center', border: { b: 'thin' } }); height(r++, 15);
-    if (model.inChargeTitle) block(r, 3, r, LAST, model.inChargeTitle, { sz: sz(9), h: 'center', v: 'top' });
-    else block(r, 3, r, LAST, l && l.signerCaption ? '' : T.IN_CHARGE, { sz: sz(9), b: true, i: true, h: 'right', v: 'top' });
-    height(r++, 14);
+    height(r++, teacher ? 18 : 22);
+    block(r, teacher ? 0 : 3, r, LAST, model.inChargeName, { sz: sz(teacher ? 8.5 : 9.5), b: true, h: 'center', border: { b: 'thin' } }); height(r++, teacher ? 12 : 15);
+    if (model.inChargeTitle) block(r, teacher ? 0 : 3, r, LAST, teacher ? model.inChargeTitle.toUpperCase() : model.inChargeTitle, { sz: sz(teacher ? 8 : 9), b: teacher, h: 'center', v: 'top', wrap: teacher });
+    else block(r, teacher ? 0 : 3, r, LAST, l && (l.signerCaption || teacher) ? '' : T.IN_CHARGE, { sz: sz(9), b: true, i: true, h: 'right', v: 'top' });
+    height(r++, teacher ? 22 : 14);
 
     if (l && l.signerCaption) styledText(l.signerCaption, l.footerStyle, 3);
     if (l && l.footer) styledText(l.footer, l.footerStyle);
@@ -6815,7 +6970,7 @@ DTR.excel = (function () {
     const shrink = Math.min(1, ((paperSize.widthIn - 2 * MARGIN_IN) * 96) / widthPx);
     const pagePt = ((paperSize.heightIn - 2 * MARGIN_IN) * 72 * FILL) / shrink;
     const otherPt = Object.keys(out.rowHeights).reduce((n, r) => n + (out.dayRows.has(Number(r)) ? 0 : out.rowHeights[r]), 0);
-    const dayPt = Math.min(DAY_ROW_PT.MAX, Math.max(DAY_ROW_PT.MIN, (pagePt - otherPt) / out.dayRows.size));
+    const dayPt = Math.min(out.teacherRowMax || DAY_ROW_PT.MAX, Math.max(out.teacherRowMax ? 9 : DAY_ROW_PT.MIN, (pagePt - otherPt) / out.dayRows.size));
     out.dayRows.forEach((r) => { out.rowHeights[r] = Math.floor(dayPt * 10) / 10; });
     // Like css/form48.css: a time never fills its row so far that it touches the dashed line.
     const cap = Math.floor((dayPt - TIME_ROW_ROOM_PT) * 2) / 2;
@@ -6827,12 +6982,18 @@ DTR.excel = (function () {
     const geometry = GEOMETRY[paper] || GEOMETRY.a4;
     const shape = perSheet === 1 ? geometry.one : geometry.two;
     const layout = Object.assign({ cols: copyColumns(shape.copyIn) }, shape);
+    if (model.layout?.design === 'teacher') {
+      // Give the four clock columns room for Departure/AM-PM text; undertime is numeric.
+      const chars = shape.copyIn * 96 / PX_PER_CHAR;
+      layout.cols = [0.30,0.59,0.59,0.59,0.59,0.48,0.48].map(inches => Math.round(chars * inches / 3.62 * 100) / 100);
+    }
     const paperSize = DTR.config.PAPER_SIZES[paper] || DTR.config.PAPER_SIZES.a4;
     const gap = Math.round(((shape.gapIn * 96) / PX_PER_CHAR) * 100) / 100;
     const colWidths = layout.copies === 2 ? layout.cols.concat([gap], layout.cols) : layout.cols;
     const logos = DTR.layouts.logos(model);
     const out = { cells: [], merges: [], rowHeights: {}, dayRows: new Set(), timeStyles: [], images: [],
       logos: { left: logos.left ? logoCache(logos.left.data) : null, right: logos.right ? logoCache(logos.right.data) : null } };
+    if(model.layout?.design === 'teacher') out.teacherRowMax = Math.max(9, (paper === 'long' ? 15.84 : 14.76) - DTR.layouts.extraHeight(model.layout)/31) * layout.k;
     for (let i = 0; i < layout.copies; i++) addCopy(out, model, i * (COPY_COLS + 1), layout);
     fillPage(out, colWidths, paperSize);
     return {
@@ -7112,8 +7273,12 @@ DTR.state = (function () {
     return key && w.layoutTemplates[key] ? DTR.layouts.normalize(w.layoutTemplates[key]) : null;
   }
 
-  /** Save one reusable template, and optionally apply a frozen copy to this month. */
-  function saveLayout(value, ids, makeDefault) {
+  /**
+   * Save one reusable template, and optionally apply a frozen copy to this month.
+   * `opts.forgetSchoolLogo`: the school logo was removed in the editor. The old Settings logo
+   * (the fallback for DTRs without a saved layout) goes too, or it would come back on new months.
+   */
+  function saveLayout(value, ids, makeDefault, opts) {
     const error = DTR.layouts.validate(value);
     if (error) throw new Error(error);
     const snapshot = DTR.layouts.normalize(value);
@@ -7121,6 +7286,7 @@ DTR.state = (function () {
     if (templates.length >= 20) throw new Error('You have 20 layouts. Reuse an existing layout name to replace it.');
     templates.push(snapshot);
     const settings = Object.assign({}, s.settings, { dtrLayouts: templates });
+    if (opts && opts.forgetSchoolLogo) Object.assign(settings, { schoolLogo: '', schoolLogoSource: null });
     if (makeDefault) settings.defaultLayout = snapshot;
     // Persist before changing the live state. Storage errors must not look like success.
     if (!store.saveSettings(settings)) throw new Error('Could not save the layout. Free browser storage and try again.');
@@ -9829,7 +9995,7 @@ window.DTR = window.DTR || {}; DTR.ui = DTR.ui || {};
 DTR.ui.layouts = (function () {
   const L = DTR.layouts, state = DTR.state, dialogs = DTR.ui.dialogs;
   const esc = DTR.util.escapeHtml;
-  const SECTIONS = [['header', 'Header & logos'], ['headings', 'Time headings'], ['footer', 'Footer & signatures']];
+  const SECTIONS = [['header', 'Header & logos'], ['headings', 'Time headings'], ['legend', 'Legend'], ['footer', 'Footer & signatures']];
   function example() {
     return DTR.converter.build({ employee: { id: 'sample', rawName: 'Juan Dela Cruz', days: {} },
       period: { year: 2026, month: 9, start: '2026-09-01', end: '2026-09-30' },
@@ -9841,6 +10007,7 @@ DTR.ui.layouts = (function () {
     let draft = L.normalize(currentLayout);
     if (!currentLayout) draft.logoData = s.settings.schoolLogo || '';
     let section = 'header', scope = s.data ? 'current' : 'template';
+    let schoolLogoRemoved = false;   // Remove was clicked: Save also forgets the Settings logo (state.saveLayout)
     const selected = new Set(s.selectedId ? [s.selectedId] : []);
     const saved = (s.settings.dtrLayouts || []).map(L.normalize);
     const returnFocus = document.activeElement;
@@ -9865,12 +10032,12 @@ DTR.ui.layouts = (function () {
     }
     function typography(key) {
       const st = draft[key];
-      return `<fieldset class="layout-type"><legend>Text style</legend><label>Align${choice(key + '.align', [['left','Left'],['center','Center'],['right','Right']], st.align)}</label><label>Size${choice(key + '.size', [8,8.5,9,10,11].map(n => [n,`${n} pt`]),st.size)}</label>
+      return `<fieldset class="layout-type"><legend>Text style</legend><label>Align${choice(key + '.align', [['left','Left'],['center','Center'],['right','Right']], st.align)}</label><label>Size${choice(key + '.size', [7.5,8,8.5,9,10,11].map(n => [n,`${n} pt`]),st.size)}</label>
         <label class="layout-check"><input type="checkbox" data-layout-key="${key}.bold" ${st.bold ? 'checked' : ''}>Bold</label>
         <label class="layout-check"><input type="checkbox" data-layout-key="${key}.italic" ${st.italic ? 'checked' : ''}>Italic</label></fieldset>`;
     }
     dialogs.open({ title: 'DTR layouts · Pro', className: 'modal--layouts', autoFocus: false,
-      body: `<div class="layout-top"><label>Start from<select id="layout-preset"><option value="draft">Current layout</option><option value="original">Original Form 48</option><option value="verification">Form 48 with verification</option><option value="school">Custom school layout</option>${saved.map((x,i) => `<option value="saved-${i}">${esc(x.name)}</option>`).join('')}</select></label>
+      body: `<div class="layout-top"><label>Start from<select id="layout-preset"><option value="draft">Current layout</option><option value="original">Original Form 48</option><option value="verification">Form 48 with verification</option><option value="school">Custom school layout</option><option value="teacher">Teacher DTR (compact)</option>${saved.map((x,i) => `<option value="saved-${i}">${esc(x.name)}</option>`).join('')}</select></label>
         <label>Layout name<input id="layout-name" maxlength="50" value="${esc(draft.name)}"></label></div>
         ${DTR.ui.getPro.tryBanner('Custom DTR layouts')}
         <div class="layout-editor"><section class="layout-preview-pane" aria-label="Layout preview">
@@ -9893,6 +10060,7 @@ DTR.ui.layouts = (function () {
           el.querySelector('#layout-save-scope').textContent = future
             ? `Saves for ${target} and uses this layout for new months. Older months keep their layouts.`
             : `Saves for ${target}. The default for new months stays unchanged.`;
+          if (schoolLogoRemoved && s.settings.schoolLogo) el.querySelector('#layout-save-scope').textContent += ' The school logo in Settings is removed too, so it does not come back on new uploads.';
         }
         const withDraft = model => Object.assign({}, model, { layout: L.normalize(draft), logo: draft.showLogo ? draft.logoData : '', governmentLogo: draft.showGovernmentLogo ? draft.governmentLogoData : '' });
         const options = () => Object.assign({ paper: state.get().settings.paperSize }, DTR.form48.sizeOf(state.get().settings));
@@ -9904,7 +10072,7 @@ DTR.ui.layouts = (function () {
           const table = form.querySelector('.f48-table');
           table.querySelector('thead').dataset.layoutRegion = 'headings';
           let after = false;
-          Array.from(form.children).forEach(x => { if (x === table) after = true; else if (!x.classList.contains('f48-demo-mark') && !x.classList.contains('f48-formno')) x.dataset.layoutRegion = after ? 'footer' : 'header'; });
+          Array.from(form.children).forEach(x => { if (x === table) after = true; else if (!x.classList.contains('f48-demo-mark') && !x.classList.contains('f48-formno')) x.dataset.layoutRegion = x.classList.contains('f48-legend') ? 'legend' : after ? 'footer' : 'header'; });
           box.querySelectorAll('[data-layout-region]').forEach(x => x.classList.toggle('layout-active-region', x.dataset.layoutRegion === section));
           error(L.validate(draft) || DTR.form48.checkFit(withDraft(source), options()));
         }
@@ -9915,13 +10083,14 @@ DTR.ui.layouts = (function () {
             ${logoFields(true)}${logoFields(false)}
             ${field('header','School / office header (up to four lines)',4)}${typography('headerStyle')}`;
           if (section === 'headings') pane.innerHTML = `<div class="layout-two">${field('am','Morning heading')}${field('pm','Afternoon heading')}${field('amIn','Morning arrival')}${field('amOut','Morning departure')}${field('pmIn','Afternoon arrival')}${field('pmOut','Afternoon departure')}</div><p class="field-hint">Labels change here. Tap placement and calculations stay the same.</p>`;
-          if (section === 'footer') pane.innerHTML = `${field('certification','Employee certification',4)}${field('employeeCaption','Employee signature caption')}${field('verification','Verification statement',2)}${field('signerCaption','Approving officer caption')}${field('footer','Footer note',2)}${typography('footerStyle')}<p class="field-hint">Signer names and titles come from each employee’s “Signed by” choice.</p>`;
+          if (section === 'footer') pane.innerHTML = `${field('certification','Employee certification',4)}<label class="layout-check"><input type="checkbox" data-layout-key="showEmployeeName" ${draft.showEmployeeName ? 'checked' : ''}>Print employee name below certification</label>${field('employeeCaption','Employee signature caption')}${field('verification','Verification statement',2)}${field('signerCaption','Approving officer caption')}${field('footer','Footer note',2)}${typography('footerStyle')}<p class="field-hint">Signer names and titles come from each employee’s “Signed by” choice.</p>`;
+          if (section === 'legend') pane.innerHTML = `<label class="layout-check"><input type="checkbox" data-layout-key="showLegend" ${draft.showLegend ? 'checked' : ''}>Show legend below the attendance table</label>${field('legend','Legend text (up to two lines)',2)}${typography('legendStyle')}<label class="layout-check"><input type="checkbox" data-layout-key="showTotal" ${draft.showTotal ? 'checked' : ''}>Show TOTAL row</label>`;
           el.querySelectorAll('[data-layout-tab]').forEach(x => x.setAttribute('aria-selected', String(x.dataset.layoutTab === section)));
           preview();
         }
         function choose(key, scroll) {
           section = key; fields();
-          if (scroll) { const pane = el.querySelector('.layout-preview-pane'); if (key === 'footer') pane.scrollTop = pane.scrollHeight; else el.querySelector(`[data-layout-region="${key}"]`)?.scrollIntoView({ block: 'nearest' }); }
+          if (scroll) { const pane = el.querySelector('.layout-preview-pane'); if (key === 'footer') pane.scrollTop = pane.scrollHeight; else (el.querySelector(`[data-layout-region="${key}"]`) || (key === 'legend' && el.querySelector('#layout-preview .f48-cert')))?.scrollIntoView({ block: 'nearest' }); }
         }
         el.querySelectorAll('[data-layout-tab]').forEach(b => b.onclick = () => choose(b.dataset.layoutTab, true));
         el.querySelector('#layout-preview').onclick = e => { const hit = e.target.closest('[data-layout-region]'); if (hit) choose(hit.dataset.layoutRegion); };
@@ -9934,9 +10103,10 @@ DTR.ui.layouts = (function () {
           else draft[a] = ['logoSize','governmentLogoSize'].includes(a) ? Number(value) : value;
           if (a === 'showGovernmentLogo') { if (value && draft.governmentLogoData) draft.logoPosition = 'right'; fields(); el.querySelector('[data-layout-key="showGovernmentLogo"]').focus({preventScroll:true}); return; }
           preview();
+          if (a === 'showLegend' && value) el.querySelector('[data-layout-region="legend"]')?.scrollIntoView({ block: 'nearest' });
         });
         el.querySelector('#layout-fields').addEventListener('click', e => {
-          if (e.target.id === 'layout-logo-remove') { draft.logoData = ''; draft.showLogo = false; fields(); }
+          if (e.target.id === 'layout-logo-remove') { draft.logoData = ''; draft.showLogo = false; schoolLogoRemoved = true; fields(); scopeLabel(); }
           if (e.target.id === 'layout-government-logo-remove') { draft.governmentLogoData = ''; draft.showGovernmentLogo = false; fields(); }
         });
         el.querySelector('#layout-fields').addEventListener('change', async e => {
@@ -9953,7 +10123,7 @@ DTR.ui.layouts = (function () {
               const ctx = canvas.getContext('2d'), scale = 240 / Math.max(img.width,img.height);
               ctx.drawImage(img,(240-img.width*scale)/2,(240-img.height*scale)/2,img.width*scale,img.height*scale);
               if (government) { draft.governmentLogoData = canvas.toDataURL('image/png'); draft.showGovernmentLogo = true; draft.logoPosition = 'right'; }
-              else { draft.logoData = canvas.toDataURL('image/png'); draft.showLogo = true; }
+              else { draft.logoData = canvas.toDataURL('image/png'); draft.showLogo = true; schoolLogoRemoved = false; scopeLabel(); }
             } finally { URL.revokeObjectURL(url); }
             fields();
           } catch (err) { error(err.message); }
@@ -9977,7 +10147,7 @@ DTR.ui.layouts = (function () {
             if (scope === 'selected' && !ids.length) throw new Error('Select at least one employee.');
             for (const m of ids.length ? ids.map(id => state.model(id)) : [source]) { const issue = DTR.form48.checkFit(withDraft(m), options()); if (issue) throw new Error(issue); }
             const makeDefault = el.querySelector('#layout-default').checked;
-            state.saveLayout(draft, ids, makeDefault);
+            state.saveLayout(draft, ids, makeDefault, { forgetSchoolLogo: schoolLogoRemoved && !draft.logoData });
             const target = scope === 'current' ? 'this employee' : ids.length ? `${ids.length} employees` : 'the saved template';
             close(); dialogs.toast(`Saved for ${target}${makeDefault ? ' and new months' : ''}.`, 'success');
           } catch (err) { error(err.message); }
