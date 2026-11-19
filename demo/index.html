@@ -1040,6 +1040,20 @@ button.home-review-item:hover { box-shadow: inset 0 0 0 1px var(--line-2); }
 .dir-number-settings label { font-weight: 600; }
 .dir-number-settings select { padding: 8px; border: 1px solid var(--line-2); border-radius: 7px; background: white; color: var(--ink); font: inherit; }
 .dir-col-number { width: 112px; }
+/* Manual employee creation uses the app's existing blue buttons and form fields. */
+.blue-manual-start { margin-top: 14px; }
+.manual-form { display: grid; gap: 16px; }
+.manual-form input,.manual-form select { width: 100%; box-sizing: border-box; min-height: 40px; padding: 9px 12px; border: 1px solid #c7d9f3; border-radius: 8px; background: #fff; color: #123778; font: inherit; }
+.blue-employee-controls { flex-wrap: wrap; }
+.blue-employee-controls label { min-width: 180px; }
+.manual-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.manual-grid[hidden] { display: none; }
+.manual-summary { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 14px; }
+.manual-summary svg { width: 20px; height: 20px; flex-shrink: 0; }
+.manual-biometric { grid-column: 1 / -1; font-size: 14px; }
+.manual-biometric .field { margin-top: 12px; }
+#manual-error { color: #a32424; }
+@media (max-width: 600px) { .manual-grid { grid-template-columns: 1fr; } }
 
 </style>
   <style>
@@ -1751,7 +1765,9 @@ window.DTR = window.DTR || {};
 DTR.config = Object.freeze({
   APP_NAME: 'DTR Converter',
   APP_SUBTITLE: 'Biometric Timecard → CSC Form No. 48',
-    APP_VERSION: '1.34.0',
+    APP_VERSION: '1.35.0',
+  MANUAL_EMPLOYEE_PREFIX: 'manual-',
+  MANUAL_MONTH_LABEL: 'Manual DTRs',
 
   /* Where clients ask for help and keys (same as desktop/licensing.py CONTACT_*). */
   // The "Contact us to buy" box (ui/getpro.js contactHtml): Facebook page, call/text, email.
@@ -1963,7 +1979,7 @@ DTR.config = Object.freeze({
 
   /* File layouts the app can read (js/readers/*). */
   FILE_FORMATS: Object.freeze({
-    TIMECARD: 'timecard',
+    MANUAL: 'manual', TIMECARD: 'timecard',
     CLOCK_TABLE: 'clock-table',
     STANDARD_REPORT: 'standard-report',
     PUNCH_REPORT: 'punch-report',
@@ -1974,7 +1990,7 @@ DTR.config = Object.freeze({
     CARD_REPORT: 'card-report', RECORD_REPORT: 'record-report', PUNCH_LOG: 'punch-log'
   }),
   FILE_FORMAT_LABELS: Object.freeze({
-    timecard: 'Timecard Report',
+    manual: 'Manually created DTRs', timecard: 'Timecard Report',
     'clock-table': 'Attendance Clock Table',
     'standard-report': 'Attendance Record Report (StandardReport)',
     'punch-report': 'Monthly Punch Report',
@@ -4815,6 +4831,7 @@ DTR.monthmerge = (function () {
       id: oldE.id,
       rawName: newE.rawName || oldE.rawName || '',
       ...nameFlags(oldE, newE),
+      ...(oldE.manual || newE.manual ? { manual: true } : {}),
       days: Object.assign({}, oldE.days),
       kinds: Object.assign({}, oldE.kinds || {}),
       notes: Object.assign({}, oldE.notes || {})
@@ -4854,6 +4871,7 @@ DTR.monthmerge = (function () {
       id: oldE.id,
       rawName: newE.rawName || oldE.rawName || '',
       ...nameFlags(oldE, newE),
+      ...(oldE.manual || newE.manual ? { manual: true } : {}),
       days: replaceDays(oldE.days, newE.days, period),
       kinds: replaceDays(oldE.kinds, newE.kinds, period),
       notes: replaceDays(oldE.notes, newE.notes, period)
@@ -4973,6 +4991,39 @@ DTR.store = (function () {
 
   const getMonth = (key) => read(KEYS.monthData(key), null);
 
+  /** Save a manually added employee and their month together. Roll back a failed write
+   * so a full disk cannot leave a name saved without its DTR (or lose prior edits). */
+  function saveManualMonth(data, fileName, work, directory, oldKeys) {
+    const key = monthKey(data.period);
+    const affected = [KEYS.MONTHS, KEYS.DIRECTORY, ...[...new Set(oldKeys.concat(key))]
+      .flatMap(k => [KEYS.monthData(k), KEYS.monthWork(k)])];
+    const before = new Map();
+    try {
+      affected.forEach(k => before.set(k, localStorage.getItem(STORAGE_PREFIX + k)));
+      if (!saveMonth(data, fileName) || !saveWork(key, work) || !saveDirectory(directory)) {
+        throw lastError || new Error('Could not save the DTR.');
+      }
+      const obsolete = oldKeys.filter(k => k !== key);
+      if (obsolete.length) {
+        if (!write(KEYS.MONTHS, listMonths().filter(m => !obsolete.includes(m.key)))) throw lastError;
+        obsolete.forEach(k => {
+          localStorage.removeItem(STORAGE_PREFIX + KEYS.monthData(k));
+          localStorage.removeItem(STORAGE_PREFIX + KEYS.monthWork(k));
+        });
+      }
+      return key;
+    } catch (error) {
+      before.forEach((value, k) => {
+        try {
+          if (value === null) localStorage.removeItem(STORAGE_PREFIX + k);
+          else localStorage.setItem(STORAGE_PREFIX + k, value);
+        } catch (_) { /* Retain the original storage failure for the caller. */ }
+      });
+      lastError = error;
+      return null;
+    }
+  }
+
   function deleteMonth(key) {
     write(KEYS.MONTHS, read(KEYS.MONTHS, []).filter((m) => m.key !== key));
     remove(KEYS.monthData(key));
@@ -5029,7 +5080,7 @@ DTR.store = (function () {
 
   return {
     getSettings, saveSettings, getDirectory, saveDirectory,
-    monthKey, listMonths, saveMonth, getMonth, deleteMonth, getWork, saveWork,
+    monthKey, listMonths, saveMonth, saveManualMonth, getMonth, deleteMonth, getWork, saveWork,
     getFreeFixes, saveFreeFixes, backup, restore, lastError: () => lastError
   };
 })();
@@ -5826,6 +5877,7 @@ DTR.review = (function () {
 
   /* Why an employee needs attention. `text` is shown as a badge. */
   const REASONS = Object.freeze({
+    MANUAL_DTR: 'manual-dtr',
     NO_NAME: 'no-name',
     CHECK_NAME: 'check-name',
     EXTRA_TAPS: 'extra-taps',
@@ -5846,6 +5898,7 @@ DTR.review = (function () {
   function classify({ person, stats, checked }) {
     const hasTaps = stats.daysWithTaps > 0;
     const reasons = [];
+    if (stats.manualDtr) reasons.push({ id: REASONS.MANUAL_DTR, text: 'Manually added' });
 
     if (person.inactive && hasTaps) reasons.push({ id: REASONS.INACTIVE_WITH_TAPS, text: 'Inactive but has taps' });
     if (!person.last && !person.first) reasons.push({ id: REASONS.NO_NAME, text: 'No name yet' });
@@ -5862,7 +5915,7 @@ DTR.review = (function () {
     if (stats.unclearDays) reasons.push({ id: REASONS.UNCLEAR_TAPS, text: `${stats.unclearDays} tap sequence${stats.unclearDays === 1 ? '' : 's'} to check` });
 
     // Nobody to print: no taps at all, or no longer working here (and no taps to say otherwise).
-    if (!hasTaps) return { group: G.SET_ASIDE, reasons: person.inactive ? [{ id: 'inactive', text: 'Inactive' }] : [] };
+    if (!hasTaps && (!stats.manualDtr || person.inactive)) return { group: G.SET_ASIDE, reasons: person.inactive ? [{ id: 'inactive', text: 'Inactive' }] : [] };
     if (checked) return { group: G.CHECKED, reasons };
     return { group: reasons.length ? G.ATTENTION : G.READY, reasons };
   }
@@ -7205,6 +7258,69 @@ DTR.state = (function () {
     emit('month');
   }
 
+  /** Add a blank employee record, never synthetic machine taps. A known biometric ID
+   * lets a later upload join naturally; otherwise a private internal ID is hidden. */
+  function addManualDtr({ year, month, existingId, parts, biometricId = '', employeeNumber = '' }) {
+    if (!DTR.plan.allows(DTR.config.STANDARD_FEATURES.EMPLOYEE_LIST)) throw new Error('Adding employees requires Standard or Pro.');
+    year = Number(year); month = Number(month);
+    if (!Number.isInteger(year) || year < 1900 || year > 2199 || !Number.isInteger(month) || month < 1 || month > 12) {
+      throw new Error('Choose the month and year for this DTR.');
+    }
+    const endDay = new Date(year, month, 0).getDate();
+    const base = `${year}-${String(month).padStart(2,'0')}`;
+    const period = { year, month, start: `${base}-01`, end: `${base}-${endDay}` };
+    const saved = savedPartsOf(period), oldKeys = saved.map(m => m.key);
+    const older = saved.map(m => store.getMonth(m.key)).filter(Boolean)
+      .reduce((a,b) => a ? DTR.monthmerge.combine(a,b) : b, null);
+    let id, entry;
+    if (existingId) {
+      id = String(existingId);
+      if (!Object.prototype.hasOwnProperty.call(s.directory,id)) throw new Error('Choose an existing employee from the list.');
+      entry = Object.assign({}, s.directory[id]);
+      if (entry.inactive) throw new Error('This employee is inactive. Make them active in Employee List first.');
+    } else {
+      biometricId = String(biometricId).trim();
+      if (biometricId && (!/^[A-Za-z0-9._-]{1,80}$/.test(biometricId) || ['__proto__','prototype','constructor'].includes(biometricId) || biometricId.startsWith(DTR.config.MANUAL_EMPLOYEE_PREFIX))) {
+        throw new Error('Use the exact biometric ID: up to 80 letters, numbers, dots, dashes or underscores.');
+      }
+      if (biometricId && Object.prototype.hasOwnProperty.call(s.directory,biometricId)) throw new Error('This biometric ID already exists. Choose that person under Existing employee.');
+      entry = {};
+      for (const [field,max] of [['last',80],['first',80],['middleInitial',3],['extension',4]]) {
+        entry[field] = String(parts?.[field] || '').replace(/[\x00-\x1f]/g,'').trim();
+        if (entry[field].length > max) throw new Error(`${field}: use ${max} characters or fewer.`);
+      }
+      if (!entry.last) throw new Error('Enter the employee’s surname.');
+      const name = DTR.names.format(entry);
+      if (!biometricId && Object.values(s.directory).some(p => DTR.names.format(p) === name)) throw new Error('This name already exists. Choose Existing employee, or enter a different biometric ID if they are different people.');
+      id = biometricId || DTR.config.MANUAL_EMPLOYEE_PREFIX + crypto.randomUUID();
+      Object.assign(entry, { confirmed: true, rawName: name, manualEntry: !biometricId,
+        employeeNumber: String(employeeNumber).trim().slice(0,DTR.config.EMPLOYEE_NUMBER_MAX_LENGTH) });
+    }
+    if (older?.employees.some(e => e.id === id)) throw new Error('This employee already has a DTR in this month. Open their existing DTR.');
+    if (DTR.config.DEMO_MODE && (older?.employees.length || 0) >= DTR.config.DEMO_EMPLOYEE_LIMIT) throw new Error('The demo shows up to five employees. Download the app to add more.');
+    const employee = { id, rawName: DTR.names.format(entry), days: {}, manual: true };
+    const data = Object.assign({}, older || { format: DTR.config.FILE_FORMATS.MANUAL, source: '', mergeable: true, warnings: [] },
+      { period, employees: (older?.employees || []).concat(employee) });
+    const work = joinWork(oldKeys, [id]);
+    // New employees use the common current-month layout, or the saved default.
+    const layoutKeys = [...new Set(Object.values(work.layouts))];
+    const commonLayout = older?.employees.length && older.employees.every(e => work.layouts[e.id] === layoutKeys[0]);
+    if (layoutKeys.length === 1 && commonLayout && work.layoutTemplates[layoutKeys[0]]) work.layouts[id] = layoutKeys[0];
+    else if (s.settings.defaultLayout) {
+      const key = `manual-layout-${crypto.randomUUID()}`;
+      work.layoutTemplates[key] = DTR.layouts.normalize(s.settings.defaultLayout); work.layouts[id] = key;
+    }
+    const directory = Object.assign({}, s.directory, { [id]: entry });
+    const fileName = [...new Set(saved.map(m => m.fileName).filter(Boolean))].join(' + ') || DTR.config.MANUAL_MONTH_LABEL;
+    const key = store.saveManualMonth(data,fileName,work,directory,oldKeys);
+    if (!key) { noteSave(false); throw new Error('Could not save the employee and DTR. Free browser storage and try again.'); }
+    s.directory = directory; s.monthKey = key; s.data = data; s.work = work;
+    s.selectedId = id; s.selectedDay = null; noteSave(true); emit('month');
+    return id;
+  }
+
+  const identity = id => person(id).manualEntry ? 'Manually added' : `ID ${id}`;
+
   /* ---------- reading ---------- */
 
   function person(id) {
@@ -7257,6 +7373,7 @@ DTR.state = (function () {
     if (!e) return null;
     const plain = Boolean(opts && opts.plain);
     const result = build({ employee: e, period: s.data.period, person: person(id), settings: settings(), edit: s.work.edits[id], timeRules: timeRulesFor(id, plain), logo: logoFor(plain) });
+    result.stats.manualDtr = e.manual === true;
     const layout = !withoutPro(plain) && layoutFor(id);
     if (layout) {
       if (DTR.layouts.isCustom(layout)) result.layout = layout;
@@ -7389,7 +7506,9 @@ DTR.state = (function () {
     if (value !== row.values[slot] && !mayFix(id, day, slot)) return false;
     const edit = editableFor(id);
     const key = cellKey(day, slot);
-    if (value === row.machine[slot]) delete edit.cells[key];
+    // An explicit blank in a manual DTR is an admin decision, even if a later
+    // biometric upload supplies a tap. Restore day remains the way to undo it.
+    if (value === row.machine[slot] && !employee(id).manual) delete edit.cells[key];
     else edit.cells[key] = value;
     saveWork();
     return true;
@@ -7524,7 +7643,7 @@ DTR.state = (function () {
     get: () => s,
     settings,
     subscribe: (fn) => listeners.add(fn),
-    openMonth, importMonth, closeMonth, reloadFromStore, importNames, unnamedCount, shortDayShare,
+    openMonth, importMonth, addManualDtr, identity, closeMonth, reloadFromStore, importNames, unnamedCount, shortDayShare,
     person, orderedEmployees, employee, editFor, model, layoutFor, saveLayout, proFeaturesInUse, reviewOf, printableEmployees, scheduleFor, timeRulesFor,
     setCell, setLabel, skipDayMark, setHeader, setHeaderForAll, restoreDay, resetEmployee, setChecked, setCheckedMany,
     setInactive, setCovered, setSchedule, setSigner, savePerson, saveDirectory, saveSettings, removeSchoolLogo, select
@@ -8436,7 +8555,7 @@ DTR.ui.workspace = (function () {
           <span class="emp-check" aria-label="${checked ? 'Checked' : 'Not yet checked'}"><svg><use href="#i-check"/></svg></span>
           <span class="emp-main">
             <span class="emp-name ${m.name ? '' : 'is-unnamed'}">${esc(m.name || e.rawName || 'No name yet')}</span>
-            <span class="emp-sub">ID ${esc(e.id)} · ${m.stats.daysWithTaps} day${m.stats.daysWithTaps === 1 ? '' : 's'} with taps</span>
+            <span class="emp-sub">${esc(state.identity(e.id))} · ${m.stats.daysWithTaps} day${m.stats.daysWithTaps === 1 ? '' : 's'} with taps</span>
             <span class="emp-badges">${employeeBadges(review, m)}</span>
           </span>
         </button>
@@ -8572,8 +8691,8 @@ DTR.ui.workspace = (function () {
     const attention = nextToCheck(state.get().selectedId, true);
     els.toolbar.innerHTML = `
       <div class="blue-employee-controls"><label>Employee<select id="employee-select" aria-label="Employee">
-          ${state.orderedEmployees().map(e => `<option value="${esc(e.id)}" ${e.id === state.get().selectedId ? 'selected' : ''}>${esc(DTR.names.format(state.person(e.id)) || e.rawName || 'No name')} · ${esc(e.id)}</option>`).join('')}
-        </select></label><button class="btn btn-secondary" id="employee-list-toggle" aria-expanded="false">Review list</button></div>
+          ${state.orderedEmployees().map(e => `<option value="${esc(e.id)}" ${e.id === state.get().selectedId ? 'selected' : ''}>${esc(DTR.names.format(state.person(e.id)) || e.rawName || 'No name')} · ${esc(state.identity(e.id))}</option>`).join('')}
+        </select></label><button class="btn btn-secondary" id="employee-list-toggle" aria-expanded="false">Review list</button><button class="btn btn-secondary" id="add-manual-employee"><svg aria-hidden="true"><use href="#i-plus"/></svg>Add employee ${DTR.ui.getPro.lockChip(STANDARD_FEATURES.EMPLOYEE_LIST)}</button></div>
       <div class="tb-group">
         <button class="icon-btn" id="emp-prev" ${prev ? '' : 'disabled'} title="Previous employee (Page Up)"><svg><use href="#i-chevron-left"/></svg></button>
         <span class="tb-count">${i + 1} / ${list.length}</span>
@@ -8597,6 +8716,7 @@ DTR.ui.workspace = (function () {
         <button class="icon-btn" id="zoom-in" title="Zoom in"><svg><use href="#i-plus"/></svg></button>
       </div>`;
     els.toolbar.querySelector('#edit-layout').onclick = () => DTR.ui.layouts.open();
+    els.toolbar.querySelector('#add-manual-employee').onclick = () => DTR.ui.manual.open();
     els.toolbar.querySelector('#employee-select').onchange = e => state.select(e.target.value);
     els.toolbar.querySelector('#employee-list-toggle').onclick = () => { const open = els.root.classList.toggle('show-employee-list'); els.toolbar.querySelector('#employee-list-toggle').setAttribute('aria-expanded', String(open)); };
     els.toolbar.querySelector('#emp-prev').addEventListener('click', () => prev && state.select(prev.id));
@@ -8751,7 +8871,7 @@ DTR.ui.workspace = (function () {
     return `
       <section class="panel">
         <div class="panel-head"><h3>Employee</h3>${p.confirmed ? '<span class="badge badge--ok">Name confirmed</span>' : '<span class="badge badge--warn">Check name</span>'}</div>
-        <div class="machine-line">Machine: <strong>${e.rawName ? esc(e.rawName) : 'no name in the file'}</strong> · ID ${esc(e.id)}</div>
+        <div class="machine-line">${e.manual ? '<strong>Manually added</strong> · ' : `Machine: <strong>${e.rawName ? esc(e.rawName) : 'no name in the file'}</strong> · `}${esc(state.identity(e.id))}</div>
         <form class="name-form" id="name-form" autocomplete="off">
           <label class="f-wide">Last name<input id="name-last" value="${esc(p.last)}"></label>
           <label class="f-wide">First name<input id="name-first" value="${esc(p.first)}"></label>
@@ -8760,7 +8880,7 @@ DTR.ui.workspace = (function () {
           <div class="name-preview" id="name-preview">${esc(DTR.names.format(p))}</div>
           <button class="btn btn-secondary btn-block" type="submit">${p.confirmed ? 'Save name' : 'Confirm name'}</button>
         </form>
-        <p class="panel-note">Saved by machine ID — next month this name fills in automatically.</p>
+        <p class="panel-note">${p.manualEntry ? 'Saved in Employee List. Choose this employee when creating another month’s DTR.' : 'Saved by machine ID — next month this name fills in automatically.'}</p>
         ${signerHtml(e)}
         ${p.inactive
           ? `<div class="inactive-note"><span><strong>Inactive</strong> — set aside every month (not printed).</span>
@@ -8775,7 +8895,7 @@ DTR.ui.workspace = (function () {
       <section class="panel panel--check">
         <button class="check-toggle ${checked ? 'is-on' : ''}" id="check-toggle">
           <span class="check-box"><svg><use href="#i-check"/></svg></span>
-          <span><strong>${checked ? 'Checked' : 'Mark as checked'}</strong><small>${checked ? 'This DTR is ready to print' : 'When everything matches the machine'}</small></span>
+          <span><strong>${checked ? 'Checked' : 'Mark as checked'}</strong><small>${checked ? 'This DTR is ready to print' : state.employee(id).manual ? 'When the manual entries are verified' : 'When everything matches the machine'}</small></span>
         </button>
       </section>`;
   }
@@ -8872,7 +8992,7 @@ DTR.ui.workspace = (function () {
       return `
         <section class="panel panel--muted">
           <div class="panel-head"><h3>Day details</h3></div>
-          <p class="panel-note">Click a <strong>day number</strong> on the form to see exactly what the machine recorded for that day.</p>
+          <p class="panel-note">${m.stats.manualDtr ? 'Manually added DTR. Click a <strong>day number</strong> to review the entered times.' : 'Click a <strong>day number</strong> on the form to see exactly what the machine recorded for that day.'}</p>
         </section>`;
     }
     const row = m.rows[day - 1];
@@ -8885,7 +9005,7 @@ DTR.ui.workspace = (function () {
           const repeated = row.duplicateTapIndexes.includes(i);
           return `<li class="${slot ? '' : 'is-extra'}"><span class="tap-n">${i + 1}</span><span class="tap-time">${esc(t)}</span>${kind}<span class="tap-to">${slot ? `→ ${SLOT_NAMES[slot]}` : repeated ? 'Duplicate — not printed' : 'Not printed'}</span></li>`;
         }).join('')}</ol>`
-      : '<p class="panel-note">The machine recorded no taps on this day.</p>';
+      : `<p class="panel-note">${m.stats.manualDtr ? 'No biometric taps for this day. Any entered times here are manual entries.' : 'The machine recorded no taps on this day.'}</p>`;
     const notes = row.notes.length
       ? `<div class="sub-label">Note in the file</div><ul class="file-notes">${row.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>`
       : '';
@@ -10508,10 +10628,10 @@ DTR.ui.settings = (function () {
     const signers = DTR.signers.all(settings);
     const withSigners = signers.length > 1;   // only when an office has more than one signer
     const unused = ids.filter((id) => !months[id]).length;
-    const importButton = '<button class="btn btn-secondary btn-sm" id="dir-import"><svg><use href="#i-upload"/></svg>Import names…</button>';
+    const importButton = '<button class="btn btn-secondary btn-sm" id="dir-add-manual"><svg><use href="#i-plus"/></svg>Add employee / blank DTR</button><button class="btn btn-secondary btn-sm" id="dir-import"><svg><use href="#i-upload"/></svg>Import names…</button>';
     if (!ids.length) {
       return `<div class="empty-state"><svg><use href="#i-users"/></svg><b>No employees yet</b>
-        <span>They are added automatically when you upload a file from the machine.</span>${importButton}</div>`;
+        <span>Upload a biometric file or create a blank DTR.</span>${importButton}</div>`;
     }
     const pill = (value, label, count) => `<button class="dir-filter" data-filter="${value}">${esc(label)} <b>${count}</b></button>`;
     return `
@@ -10549,7 +10669,7 @@ DTR.ui.settings = (function () {
             return `<tr data-id="${esc(id)}" data-used="${inMonths.length ? 1 : 0}" data-search="${esc(searchText)}" class="${p.confirmed ? '' : 'is-unconfirmed'}">
               <td><div class="dir-emp">
                 <span class="dir-raw" title="${esc(p.rawName || '')}">${esc(p.rawName || '(no name in the file)')}</span>
-                <span class="dir-meta">ID ${esc(id)} · ${inMonths.length ? esc(inMonths.join(', ')) : 'not in any saved month'}</span>
+                <span class="dir-meta">${esc(state.identity(id))} · ${inMonths.length ? esc(inMonths.join(', ')) : 'not in any saved month'}</span>
                 <span class="dir-preview">${esc(DTR.names.format(p))}</span>
               </div></td>
               <td><input data-k="employeeNumber" value="${esc(DTR.names.employeeNumber(p, id))}" maxlength="${DTR.config.EMPLOYEE_NUMBER_MAX_LENGTH}" aria-label="Employee number" autocomplete="off"></td>
@@ -10647,6 +10767,7 @@ DTR.ui.settings = (function () {
             pane.innerHTML = employeesHtml(state.get().directory);
             wireEmployees(pane, () => show('employees'));
             pane.querySelector('#dir-import').addEventListener('click', () => { close(); DTR.ui.names.open(); });
+            pane.querySelector('#dir-add-manual').addEventListener('click', () => { close(); DTR.ui.manual.open(); });
           }
           if (id === 'holidays') { pane.innerHTML = DTR.ui.holidays.html(state.get().settings); DTR.ui.holidays.wire(pane, () => show('holidays')); }
           if (id === 'data') { pane.innerHTML = dataHtml(); wireData(pane, close, () => show('data')); }
@@ -10840,6 +10961,64 @@ DTR.ui.settings = (function () {
 
 </script>
   <script>
+/* Create an explicit blank DTR without editing the protected biometric export. */
+window.DTR = window.DTR || {};
+DTR.ui = DTR.ui || {};
+DTR.ui.manual = (function () {
+  const { escapeHtml: esc } = DTR.util;
+  function open() {
+    if (!DTR.ui.getPro.needStandard(DTR.config.STANDARD_FEATURES.EMPLOYEE_LIST)) return;
+    const state = DTR.state, current = state.get(), period = current.data?.period;
+    const people = Object.entries(current.directory).filter(([,p]) => !p.inactive)
+      .sort(([,a],[,b]) => DTR.names.sortKey(a).localeCompare(DTR.names.sortKey(b)));
+    const value = period ? `${period.year}-${String(period.month).padStart(2,'0')}` : '';
+    const field = DTR.ui.dialogs.field;
+    DTR.ui.dialogs.open({
+      title: period ? 'Add employee / blank DTR' : 'Create a blank DTR',
+      body: `<form id="manual-form" class="manual-form" autocomplete="off">
+        ${field('DTR month',`<input id="manual-month" type="month" min="1900-01" max="2199-12" value="${value}" required>`)}
+        ${people.length ? field('Employee',`<select id="manual-existing"><option value="">New employee</option>${people.map(([id,p]) => `<option value="${esc(id)}">${esc(DTR.names.format(p) || p.rawName || state.identity(id))} · ${esc(state.identity(id))}</option>`).join('')}</select>`) : ''}
+        <div id="manual-new" class="manual-grid">
+          ${field('Surname', '<input id="manual-last" maxlength="80" required>')}
+          ${field('First name', '<input id="manual-first" maxlength="80">')}
+          ${field('Middle initial', '<input id="manual-mi" maxlength="3">')}
+          ${field('Suffix', '<input id="manual-ext" maxlength="4" placeholder="Jr.">')}
+          ${field('Employee number (optional)',`<input id="manual-number" maxlength="${DTR.config.EMPLOYEE_NUMBER_MAX_LENGTH}">`)}
+          <details class="manual-biometric"><summary>Already has a biometric ID?</summary>
+            ${field('Biometric ID (optional)', '<input id="manual-biometric" maxlength="80">', 'Leave blank if not registered. An exact ID lets future uploads match this employee.')}
+          </details>
+        </div>
+        <p class="manual-summary"><svg aria-hidden="true"><use href="#i-checklist"/></svg>Times start blank. Enter verified times directly on the DTR.</p>
+        <p id="manual-error" role="alert" class="field-hint" hidden></p>
+      </form>`,
+      footer: '<button class="btn btn-ghost" data-close>Cancel</button><button class="btn btn-primary" type="submit" form="manual-form" id="manual-create">Create blank DTR</button>',
+      onMount: (el, close) => {
+        const form = el.querySelector('#manual-form'), existing = el.querySelector('#manual-existing');
+        if (existing) existing.onchange = () => {
+          el.querySelector('#manual-new').hidden = !!existing.value;
+          el.querySelector('#manual-last').required = !existing.value;
+        };
+        form.onsubmit = event => {
+          event.preventDefault();
+          const read = id => el.querySelector('#manual-'+id).value;
+          const [year,month] = read('month').split('-');
+          try {
+            state.addManualDtr({ year,month,existingId:existing?.value,
+              parts:{last:read('last'),first:read('first'),middleInitial:read('mi'),extension:read('ext')},
+              employeeNumber:read('number'),biometricId:read('biometric') });
+            close(); DTR.ui.dialogs.toast('Blank DTR created. Click a time box to enter attendance.','success');
+          } catch(error) {
+            const message = el.querySelector('#manual-error'); message.hidden = false; message.textContent = error.message;
+          }
+        };
+      }
+    });
+  }
+  return { open };
+})();
+
+</script>
+  <script>
 /*
  * ui/names.js — "Import names": for machines whose file has only employee
  * numbers. Shows how the list should look, offers a ready template with this
@@ -10996,6 +11175,13 @@ DTR.ui.help = (function () {
 
   /* id: used by open(id) from other screens. pro: shown with a PRO mark. */
   const TOPICS = Object.freeze([
+    { id: 'manual', title: 'Add an employee / blank DTR', sub: 'For staff missing from the biometric file',
+      body: () => `${steps([
+        'Click <b>Add employee</b> beside the employee selector, or <b>Create a blank DTR</b> on Upload when starting without a file. This is included in Standard and Pro.',
+        'Choose the month, then enter the name or select someone from <b>Existing employee</b>. The employee number is optional. If already registered, enter the exact biometric ID under <b>Already has a biometric ID?</b> to match later uploads.',
+        'Click <b>Create blank DTR</b>. Times start blank. Click the DTR boxes to enter verified times or remarks; the original machine taps remain separate in Day details.',
+        'Review, mark as checked and print or save normally. A manually added DTR is included even without machine taps, and reuploading retains it and its manual entries.'
+      ])}` },
     { id: 'layouts', title: 'Customize your DTR layout', sub: 'School header, two logos and signature wording', pro: true,
       body: () => `${steps([
         'On a DTR, click <b>DTR layout</b>, or go to <b>Settings → Form &amp; taps → Customize DTR layout</b>.',
@@ -11470,6 +11656,7 @@ DTR.ui.home = (function () {
       </div>
       <div class="blue-formats" aria-hidden="true">${['CSV','XLS','XLSX','TXT','DAT'].map(x => `<span class="blue-format"><i class="file-${x.toLowerCase()}">${x}</i>${x}</span>`).join('')}</div>
       ${DTR.demo.sampleButtonHtml()}
+      <div class="blue-manual-start"><button class="btn btn-secondary" id="create-blank-dtr"><svg aria-hidden="true"><use href="#i-plus"/></svg>Create a blank DTR ${DTR.ui.getPro.lockChip(DTR.config.STANDARD_FEATURES.EMPLOYEE_LIST)}</button></div>
       <div class="blue-setup">${icon('lock')} Works offline · Changes save automatically${DTR.licenseGate.isFree() ? ' · <button class="link" id="have-key">Have a key?</button>' : ''}</div>
       ${month ? `<button class="link blue-resume" data-open="${esc(recent)}">Continue ${esc(title(month.period))} DTRs ${icon('arrow-right')}</button>` : ''}
     </section>`;
@@ -11478,7 +11665,7 @@ DTR.ui.home = (function () {
     const months = DTR.store.listMonths().filter(m => `${m.fileName} ${title(m.period)}`.toLowerCase().includes(search.toLowerCase()));
     return months.map(m => {
       const data = DTR.store.getMonth(m.key), work = DTR.store.getWork(m.key);
-      const printable = (data ? data.employees : []).filter(e => Object.values(e.days).some(t => t.length));
+      const printable = (data ? data.employees : []).filter(e => e.manual || Object.values(e.days).some(t => t.length));
       const checked = printable.filter(e => work.checked[e.id]).length;
       return `<tr><td><span class="history-file">${icon('folder')}<span><b>${esc(m.fileName || 'Attendance upload')}</b><small>${esc(title(m.period))}</small></span></span></td>
         <td>${esc(new Date(m.importedAt).toLocaleDateString())}</td><td>${m.employeeCount}</td>
@@ -11500,6 +11687,8 @@ DTR.ui.home = (function () {
     const drop = root.querySelector('#dropzone');
     if (drop) DTR.ui.upload.attachDropzone(drop);
     const haveKey = root.querySelector('#have-key');                 // Free: activate a bought key
+    const create = root.querySelector('#create-blank-dtr');
+    if (create) create.onclick = () => DTR.ui.manual.open();
     if (haveKey) haveKey.onclick = () => DTR.ui.getPro.chooseKeyFile();
     const input = root.querySelector('#history-search');
     if (input) input.oninput = () => { search = input.value; root.querySelector('#history-rows').innerHTML = rowsHtml(); bindOpen(); };

@@ -1,21 +1,22 @@
 {
-  "latest": "1.34.0",
+  "latest": "1.35.0",
   "released": "2026-11-19",
   "download_url": "https://homearvin.github.io/DTR.CONVERTER/#get",
   "changes": [
+    "New: Add employee / Create a blank DTR for someone missing from the biometric file (Standard and Pro). Times start blank; type the verified times on the DTR.",
     "Pro: new \"Teacher DTR (compact)\" layout: AM/PM times, weekend names spread across the boxes, Sundays in red, legend and printed employee name.",
     "Pro: optional legend under the table ([T]-Travel [L]-Leave [H]-Holiday [OB]-Official Business), in DTR layout > Legend.",
     "Fixed: a school logo removed in DTR layout no longer comes back on new uploads."
   ],
   "package": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.34.0/DTR-Converter-1.34.0-portable.zip",
-    "sha256": "421507507d155beee0e9f74cb082a450647a96dcbd657926d967b5e66a265ec3",
-    "size": 12220423,
-    "signature": "Zhv3IJypcDO1MvzPiiNWjPdOrsAMPQCbvNKv7TBQjkYOqHSwny2oB4cCENOV4zPO6iCsFxctZ7ePgXCaMUsUDQ=="
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.35.0/DTR-Converter-1.35.0-portable.zip",
+    "sha256": "90db92a33689dffa8b6f6fb33b92b5d22c59f39db8b18de485f116641fe129db",
+    "size": 13262573,
+    "signature": "uEZxEwoJMXogrqzW59mndrW6PmjN9+TrzNabTXOvYmqwS7kGtOee/K1N057wlGsBXXdD4dp5Gzf3y7heJISvCw=="
   },
   "installer": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.34.0/DTR-Converter-1.34.0-setup.exe",
-    "sha256": "756c0e6bbcb5b6186c77619e89fdcabbb1b1c64ce97b459631a63ba8b8349f6a",
-    "size": 14164232
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.35.0/DTR-Converter-1.35.0-setup.exe",
+    "sha256": "17007c035f813b54c77efae0d60ae36e62e7a208df4674b8dabae5174a3cba57",
+    "size": 15196430
   }
 }
