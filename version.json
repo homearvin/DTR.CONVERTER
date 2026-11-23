@@ -1,22 +1,22 @@
 {
-  "latest": "1.36.1",
-  "released": "2026-11-19",
+  "latest": "1.37.0",
+  "released": "2026-11-23",
   "download_url": "https://homearvin.github.io/DTR.CONVERTER/#get",
   "changes": [
-    "Improved UID daily reports: optional lunch and far-right departure columns, with unreadable source rows reviewed before import. No guessed dates, employee IDs or times.",
-    "New Four taps — keep recorded order option preserves four source taps, including equal lunch times. Existing office rules stay unchanged.",
-    "Day details can override the office tap rule for one employee/date. Missing boxes stay blank; original taps, manual edits, reuploads and backups are preserved.",
-    "Includes Pro blank DTR creation with layout choices, Teacher DTR (compact), optional legends and editable logos from 1.36.0."
+    "Pro: \"Set as my DTR design\" in DTR layout. Your chosen design is used for this month, every new month and newly added employees. Older months keep their look.",
+    "New employees in a later file for the same month now get that month's usual layout.",
+    "Pro: Add employee / Create a blank DTR for someone missing from the biometric file, with any DTR layout or your saved layouts.",
+    "Pro: \"Teacher DTR (compact)\" layout and optional legend under the table."
   ],
   "package": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.36.1/DTR-Converter-1.36.1-portable.zip",
-    "sha256": "80c970721728e6a6f133a067429ebe2c0f1ad38a2c69e0c19f8dca13583c2af9",
-    "size": 13263873,
-    "signature": "myq4+yMTiLO/0gcnEbjc3e8mWWOmNZ1HL949p8mWtqH+GqEoRR8QAdRYMOGnxLMsQ0+ofc5R7qYAPXRuE1hxBA=="
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.37.0/DTR-Converter-1.37.0-portable.zip",
+    "sha256": "758b89866e3da89c5da27ecae2acaef463261252e550bc77d458383caa67354b",
+    "size": 12228958,
+    "signature": "wvnwiUtp7/lQcRxCTCMcEL5KN8ZflZt/zO+KPQ04IWAeuckprSKnx9CGXkUTASMtwsulPW3vE/c3HkxnuTleDQ=="
   },
   "installer": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.36.1/DTR-Converter-1.36.1-setup.exe",
-    "sha256": "570598772d708969aaab29900fa305c12e5fa64a433df89c5cf56196439038e5",
-    "size": 15197972
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.37.0/DTR-Converter-1.37.0-setup.exe",
+    "sha256": "b7c575317543fa640429d0287c799132540f0f63b5c54b352e9aa77c947cbac3",
+    "size": 14172024
   }
 }

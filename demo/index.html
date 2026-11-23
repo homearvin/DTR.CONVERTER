@@ -1432,6 +1432,7 @@ button.home-review-item:hover { box-shadow: inset 0 0 0 1px var(--line-2); }
 .layout-type legend,.layout-logo legend { padding: 0 5px; color: #345c8c; font-size: 12px; }
 .layout-controls .layout-check { flex-direction: row; align-items: center; gap: 8px; font-weight: 400; }
 .layout-check input { accent-color: #1767ca; }
+.layout-my-design { margin: 0; padding: 8px 18px; font-size: 12.5px; color: #12396b; background: #f5f9ff; border-bottom: 1px solid #d2dfef; }
 .layout-apply { padding: 12px 18px; border-bottom: 1px solid #d2dfef; display: grid; gap: 8px; flex-shrink: 0; max-height: 210px; overflow: auto; background: #edf4ff; }
 #layout-employees { max-height: 130px; overflow: auto; display: grid; gap: 8px; }
 #layout-employees[hidden] { display: none; }
@@ -1769,7 +1770,7 @@ window.DTR = window.DTR || {};
 DTR.config = Object.freeze({
   APP_NAME: 'DTR Converter',
   APP_SUBTITLE: 'Biometric Timecard → CSC Form No. 48',
-    APP_VERSION: '1.36.1',
+    APP_VERSION: '1.37.0',
   MANUAL_EMPLOYEE_PREFIX: 'manual-',
   MANUAL_MONTH_LABEL: 'Manual DTRs',
 
@@ -1860,8 +1861,8 @@ DTR.config = Object.freeze({
    * Pro ONLY (owner, Nov-19): unlike PRO_FEATURES these cannot be tried in Standard — the
    * button shows a PRO chip and a click opens the versions. DTRs already made stay printable.
    */
-  PRO_ONLY_FEATURES: Object.freeze({ MANUAL_DTR: 'manual-dtr' }),
-  PRO_ONLY_LABELS: Object.freeze({ 'manual-dtr': 'Add employee / Create a blank DTR' }),
+  PRO_ONLY_FEATURES: Object.freeze({ MANUAL_DTR: 'manual-dtr', MY_DESIGN: 'my-design' }),
+  PRO_ONLY_LABELS: Object.freeze({ 'manual-dtr': 'Add employee / Create a blank DTR', 'my-design': 'Set as my DTR design' }),
 
   /*
    * License check in the page itself. false while developing (index.html); build.ps1
@@ -7313,6 +7314,14 @@ DTR.state = (function () {
       const snapshot = DTR.layouts.normalize(s.settings.defaultLayout);
       work.layoutTemplates.default = snapshot;
       merged.employees.forEach(e => { work.layouts[e.id] = 'default'; });
+    } else if (oldKeys.length) {
+      // People new to a saved month (e.g. the next weekly file) get the month's usual layout,
+      // so the whole month keeps one look. Everyone already there keeps theirs.
+      const before = new Set(parts.flatMap(p => (store.getMonth(p.key)?.employees || []).map(e => e.id)));
+      const main = mainLayoutKey(work, [...before]);
+      if (main && work.layoutTemplates[main]) {
+        merged.employees.forEach(e => { if (!before.has(e.id) && !work.layouts[e.id]) work.layouts[e.id] = main; });
+      }
     }
     const fileNames = [...new Set(parts.map((p) => p.fileName).filter(Boolean).concat([fileName]))].join(' + ');
     const key = store.saveMonth(merged, fileNames);
@@ -7525,6 +7534,33 @@ DTR.state = (function () {
     }
     noteSave(true); emit('layout');
   }
+
+  /** The layout key most of these employees use ('' = none, i.e. the Original Form 48). */
+  function mainLayoutKey(work, ids) {
+    const counts = new Map();
+    ids.forEach(id => { const key = (work.layouts && work.layouts[id]) || ''; counts.set(key, (counts.get(key) || 0) + 1); });
+    let main = '', most = 0;
+    counts.forEach((n, key) => { if (n > most) { main = key; most = n; } });
+    return main;
+  }
+
+  /**
+   * "Set as my DTR design" (Pro only, owner Nov-23): this layout becomes the design for new
+   * months (settings.defaultLayout) and for this month's employees on the month's usual layout.
+   * Employees given their own different layout keep it; older months keep theirs.
+   * Returns { switched, kept } employee counts for the message.
+   */
+  function setMyDesign(value, opts) {
+    if (!DTR.licenseGate.isPro()) throw new Error(`${DTR.config.PRO_ONLY_LABELS[DTR.config.PRO_ONLY_FEATURES.MY_DESIGN]} comes with Pro.`);
+    const all = s.data ? s.data.employees.map(e => e.id) : [];
+    const main = s.work ? mainLayoutKey(s.work, all) : '';
+    const ids = all.filter(id => ((s.work.layouts || {})[id] || '') === main);
+    saveLayout(value, ids, true, opts);
+    return { switched: ids.length, kept: all.length - ids.length };
+  }
+
+  /** The DTR design new months use (settings.defaultLayout), or null = Original Form 48. */
+  const myDesign = () => (s.settings.defaultLayout ? DTR.layouts.normalize(s.settings.defaultLayout) : null);
 
   /** The school logo for the form ('' when none, or a plain Standard printout). */
   const logoFor = (plain) => (withoutPro(plain) ? '' : s.settings.schoolLogo || '');
@@ -7759,7 +7795,7 @@ DTR.state = (function () {
     settings,
     subscribe: (fn) => listeners.add(fn),
     openMonth, importMonth, addManualDtr, manualLayoutChoices, identity, closeMonth, reloadFromStore, importNames, unnamedCount, shortDayShare,
-    person, orderedEmployees, employee, editFor, model, layoutFor, saveLayout, proFeaturesInUse, reviewOf, printableEmployees, scheduleFor, timeRulesFor,
+    person, orderedEmployees, employee, editFor, model, layoutFor, saveLayout, setMyDesign, myDesign, proFeaturesInUse, reviewOf, printableEmployees, scheduleFor, timeRulesFor,
     setCell, setLabel, setDayTapPlacement, skipDayMark, setHeader, setHeaderForAll, restoreDay, resetEmployee, setChecked, setCheckedMany,
     setInactive, setCovered, setSchedule, setSigner, savePerson, saveDirectory, saveSettings, removeSchoolLogo, select
   };
@@ -10266,6 +10302,13 @@ DTR.ui.layouts = (function () {
     const selected = new Set(s.selectedId ? [s.selectedId] : []);
     const saved = (s.settings.dtrLayouts || []).map(L.normalize);
     const returnFocus = document.activeElement;
+    /** One line naming the client's DTR design (state.myDesign), shown above the save options. */
+    function myDesignNote() {
+      const mine = state.myDesign();
+      return mine
+        ? `<b>Your DTR design:</b> ${esc(mine.name || 'Original Form 48')} — used for new months and new employees.`
+        : '<b>Your DTR design:</b> not set — new months use the Original Form 48.';
+    }
     const field = (key, label, rows) => `<label class="layout-field"><span>${label}</span>${rows
       ? `<textarea data-layout-key="${key}" rows="${rows}" maxlength="${L.LIMITS[key]}">${esc(draft[key])}</textarea>`
       : `<input data-layout-key="${key}" maxlength="${L.LIMITS[key]}" value="${esc(draft[key])}">`}</label>`;
@@ -10298,12 +10341,13 @@ DTR.ui.layouts = (function () {
         <div class="layout-editor"><section class="layout-preview-pane" aria-label="Layout preview">
           <div class="layout-preview-heading"><strong>Live DTR preview</strong><span>Click a section to edit</span></div><div id="layout-preview"></div></section>
           <section class="layout-controls"><div class="layout-tabs" role="tablist" aria-label="Layout section">${SECTIONS.map(([key,label],i) => `<button role="tab" id="layout-tab-${key}" aria-controls="layout-fields" aria-selected="${i === 0}" data-layout-tab="${key}">${label}</button>`).join('')}</div>
+          <p class="layout-my-design" id="layout-my-design-note">${myDesignNote()}</p>
           <div class="layout-apply"><label>Save changes for<select id="layout-scope">${s.data ? '<option value="current">This employee, this month</option><option value="all">All employees, this month</option><option value="selected">Selected employees, this month</option>' : ''}<option value="template">Save template only</option></select></label>
           <div id="layout-employees" hidden>${s.data ? state.orderedEmployees().map(e => `<label class="layout-check"><input type="checkbox" data-layout-employee="${esc(e.id)}" ${selected.has(e.id) ? 'checked' : ''}>${esc(DTR.names.format(state.person(e.id)) || e.rawName || e.id)}</label>`).join('') : ''}</div>
           <label class="layout-check"><input type="checkbox" id="layout-default" ${!s.data ? 'checked' : ''}>Use as default for new months</label>
           <p class="field-hint" id="layout-save-scope" role="status"></p></div>
           <div id="layout-fields" role="tabpanel" aria-labelledby="layout-tab-header"></div></section></div>`,
-      footer: '<button class="btn btn-ghost" id="layout-reset">Restore original</button><span id="layout-error" role="status"></span><button class="btn btn-ghost" data-close>Cancel</button><button class="btn btn-primary" id="layout-save">Save layout</button>',
+      footer: `<button class="btn btn-ghost" id="layout-reset">Restore original</button><span id="layout-error" role="status"></span><button class="btn btn-ghost" data-close>Cancel</button><button class="btn btn-secondary" id="layout-my-design" title="Use this design for this month and every new month">Set as my DTR design ${DTR.ui.getPro.proOnlyChip()}</button><button class="btn btn-primary" id="layout-save">Save layout</button>`,
       onClose: () => { if (returnFocus?.isConnected) returnFocus.focus(); },
       onMount: (el, close) => {
         const error = text => { el.querySelector('#layout-error').textContent = text; };
@@ -10405,6 +10449,17 @@ DTR.ui.layouts = (function () {
             state.saveLayout(draft, ids, makeDefault, { forgetSchoolLogo: schoolLogoRemoved && !draft.logoData });
             const target = scope === 'current' ? 'this employee' : ids.length ? `${ids.length} employees` : 'the saved template';
             close(); dialogs.toast(`Saved for ${target}${makeDefault ? ' and new months' : ''}.`, 'success');
+          } catch (err) { error(err.message); }
+        };
+        el.querySelector('#layout-my-design').onclick = () => {
+          if (!DTR.ui.getPro.needPro(DTR.config.PRO_ONLY_FEATURES.MY_DESIGN)) return;
+          try {
+            const invalid = L.validate(draft); if (invalid) throw new Error(invalid);
+            const models = s.data ? s.data.employees.map(e => state.model(e.id)) : [source];
+            for (const m of models) { const issue = DTR.form48.checkFit(withDraft(m), options()); if (issue) throw new Error(issue); }
+            const { switched, kept } = state.setMyDesign(draft, { forgetSchoolLogo: schoolLogoRemoved && !draft.logoData });
+            const month = s.data ? ` Applied to ${switched} employee${switched === 1 ? '' : 's'} this month${kept ? `; ${kept} with their own layout kept it` : ''}.` : '';
+            close(); dialogs.toast(`“${draft.name}” is now your DTR design for every new month.${month}`, 'success');
           } catch (err) { error(err.message); }
         };
         // Keep keyboard focus inside this editor, including when opened above Settings.
@@ -11332,6 +11387,7 @@ DTR.ui.help = (function () {
         'Under <b>Header &amp; logos</b>, upload your own <b>DepEd / government logo on the left</b> and <b>school / office logo on the right</b> (PNG or JPG). Either picture is optional. The <b>Civil Service Form No. 48</b> label stays fixed above the header and both pictures.',
         'Choose this employee, selected employees or everyone in this month. Tick <b>Use as default for new months</b> if you want to reuse it. Other saved months keep their own layout.',
         'Give it a name and click <b>Save layout</b>. Saved names appear under Start from. Saving with the same name replaces that template, without changing past months.',
+        'To always use one design, click <b>Set as my DTR design</b> (Pro). Everyone in this month switches to it (anyone given their own layout keeps it), and every new month and newly added employee gets it. Older months keep the look they were printed with. The window shows <b>Your DTR design</b> at the top.',
         'Use <b>Restore original</b> to return to the usual form, then Save. If added text will not fit the chosen print size, shorten it or use Full page.'
       ])}${tip('Custom layouts print and export with Pro. Standard can try them on screen, then print without Pro features. Attendance, calculations and each employee’s signer are unchanged.')}` },
     {
