@@ -1,22 +1,24 @@
 {
-  "latest": "1.37.0",
-  "released": "2026-11-23",
+  "latest": "1.38.0",
+  "released": "2026-11-26",
   "download_url": "https://homearvin.github.io/DTR.CONVERTER/#get",
   "changes": [
+    "Pro: Leave forms & credits. Fill the official CS Form No. 6 (Application for Leave) in a few clicks, keep each employee's VL/SL or VSC credits, and approved leave shows on the DTR by itself.",
+    "Pro: Teacher DTR (compact) now has the TOTAL row (total hours and minutes), like the other layouts. Turn it on or off in DTR layout > Time headings > \"Show TOTAL row\".",
     "Pro: \"Set as my DTR design\" in DTR layout. Your chosen design is used for this month, every new month and newly added employees. Older months keep their look.",
     "New employees in a later file for the same month now get that month's usual layout.",
     "Pro: Add employee / Create a blank DTR for someone missing from the biometric file, with any DTR layout or your saved layouts.",
     "Pro: \"Teacher DTR (compact)\" layout and optional legend under the table."
   ],
   "package": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.37.0/DTR-Converter-1.37.0-portable.zip",
-    "sha256": "758b89866e3da89c5da27ecae2acaef463261252e550bc77d458383caa67354b",
-    "size": 12228958,
-    "signature": "wvnwiUtp7/lQcRxCTCMcEL5KN8ZflZt/zO+KPQ04IWAeuckprSKnx9CGXkUTASMtwsulPW3vE/c3HkxnuTleDQ=="
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.38.0/DTR-Converter-1.38.0-portable.zip",
+    "sha256": "db03b27fac4ab307893e655905f062ab5e419ebbf6ab67adbfc459ac9876a885",
+    "size": 12356964,
+    "signature": "S7WCSTUc3XWmYYwxtTJNijZkU7oXfhEpoxYRheObUa4cZ8/t5dA6OukEPTmRucMPaDG/yBLsyeUuAziSPvz1CQ=="
   },
   "installer": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.37.0/DTR-Converter-1.37.0-setup.exe",
-    "sha256": "b7c575317543fa640429d0287c799132540f0f63b5c54b352e9aa77c947cbac3",
-    "size": 14172024
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.38.0/DTR-Converter-1.38.0-setup.exe",
+    "sha256": "1656deea76572d6e2cef1d1ea263a39763c55b1f0d1b5ecb1fb2baf76e46f4a9",
+    "size": 14301680
   }
 }
