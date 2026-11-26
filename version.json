@@ -1,22 +1,20 @@
 {
-  "latest": "1.37.0",
-  "released": "2026-11-23",
+  "latest": "1.38.2",
+  "released": "2026-11-26",
   "download_url": "https://homearvin.github.io/DTR.CONVERTER/#get",
   "changes": [
-    "Pro: \"Set as my DTR design\" in DTR layout. Your chosen design is used for this month, every new month and newly added employees. Older months keep their look.",
-    "New employees in a later file for the same month now get that month's usual layout.",
-    "Pro: Add employee / Create a blank DTR for someone missing from the biometric file, with any DTR layout or your saved layouts.",
-    "Pro: \"Teacher DTR (compact)\" layout and optional legend under the table."
+    "Pro: Teacher DTR (compact) now has the TOTAL row (total hours and minutes), like the other layouts. Turn it on or off in DTR layout > Time headings > \"Show TOTAL row\".",
+    "Pro: \"Set as my DTR design\" in DTR layout. Your chosen design is used for this month, every new month and newly added employees."
   ],
   "package": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.37.0/DTR-Converter-1.37.0-portable.zip",
-    "sha256": "758b89866e3da89c5da27ecae2acaef463261252e550bc77d458383caa67354b",
-    "size": 12228958,
-    "signature": "wvnwiUtp7/lQcRxCTCMcEL5KN8ZflZt/zO+KPQ04IWAeuckprSKnx9CGXkUTASMtwsulPW3vE/c3HkxnuTleDQ=="
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.38.2/DTR-Converter-1.38.2-portable.zip",
+    "sha256": "8f0fe3aa2eb5a2984a5f6dc4b10cd6dc90b73df6781fa5e63188b9a50c406c51",
+    "size": 12227939,
+    "signature": "ZTAP87N12bmk/ri6VGbM2Vs3GEjCr1OuxAdO1gxIpbruZUckQmq7D+4kCJnADMCMADa0R6Bj4XlIElq82R1nCw=="
   },
   "installer": {
-    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.37.0/DTR-Converter-1.37.0-setup.exe",
-    "sha256": "b7c575317543fa640429d0287c799132540f0f63b5c54b352e9aa77c947cbac3",
-    "size": 14172024
+    "url": "https://github.com/homearvin/DTR.CONVERTER/releases/download/v1.38.2/DTR-Converter-1.38.2-setup.exe",
+    "sha256": "522de5166491aa731600091ce9fd9cf77752beae3bd834ba4cf8f025e7d973a0",
+    "size": 14171137
   }
 }

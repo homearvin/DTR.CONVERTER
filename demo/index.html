@@ -1770,7 +1770,7 @@ window.DTR = window.DTR || {};
 DTR.config = Object.freeze({
   APP_NAME: 'DTR Converter',
   APP_SUBTITLE: 'Biometric Timecard → CSC Form No. 48',
-    APP_VERSION: '1.37.0',
+    APP_VERSION: '1.38.2',
   MANUAL_EMPLOYEE_PREFIX: 'manual-',
   MANUAL_MONTH_LABEL: 'Manual DTRs',
 
@@ -6075,7 +6075,8 @@ DTR.layouts = (function () {
     if (key === 'teacher') {
       v.name = 'Teacher DTR (compact)'; v.design = 'teacher';
       v.am = 'AM'; v.pm = 'PM'; v.amIn = v.pmIn = 'Arrival'; v.amOut = v.pmOut = 'Departure';
-      v.showLegend = true; v.showTotal = false; v.showEmployeeName = true;
+      // TOTAL on like the other layouts (owner Nov-26); "Show TOTAL row" in Time headings turns it off.
+      v.showLegend = true; v.showTotal = true; v.showEmployeeName = true;
       v.showLogo = false; v.showGovernmentLogo = false;
       v.verification = 'Verified as to the prescribed office hours.';
       v.legendStyle = { align: 'left', size: 7.5, bold: false, italic: false };
@@ -7053,11 +7054,14 @@ DTR.excel = (function () {
 
     // --- total, certification, signatures ---
     if (!l || l.showTotal) {
-    put(r, 0, T.TOTAL, { sz: sz(8), b: true, h: 'center', border: { t: 'medium' } });
-    block(r, 1, r, 4, '', { border: { t: 'medium', b: 'thin' } });
-    put(r, 5, model.header.totalHours, timeCell(5, { border: { t: 'medium', b: 'thin', l: 'double' } }));
-    put(r, 6, model.header.totalMinutes, timeCell(6, { border: { t: 'medium', b: 'thin', l: 'thin' } }));
-    height(r++, 17);
+    // Teacher: the same thin, solid grid as its day rows (the original form uses a heavy top line).
+    const top = teacher ? 'thin' : 'medium';
+    // Teacher's day column is narrow: Excel shrinks the word to fit instead of cutting it ("TOTAI").
+    put(r, 0, T.TOTAL, { sz: sz(8), b: true, h: 'center', shrink: teacher, border: teacher ? { t: top, b: 'thin', l: 'thin' } : { t: top } });
+    block(r, 1, r, 4, '', { border: { t: top, b: 'thin', l: teacher ? 'thin' : undefined } });
+    put(r, 5, model.header.totalHours, timeCell(5, { border: { t: top, b: 'thin', l: teacher ? 'thin' : 'double' } }));
+    put(r, 6, model.header.totalMinutes, timeCell(6, { border: { t: top, b: 'thin', l: 'thin', r: teacher ? 'thin' : undefined } }));
+    height(r++, teacher ? 13 : 17);
     }
     if (l && l.showLegend && l.legend.trim()) {
       if (teacher && l.legendStyle.align === 'left') {
@@ -10381,9 +10385,9 @@ DTR.ui.layouts = (function () {
           if (section === 'header') pane.innerHTML = `<div class="layout-fixed-label">${esc(DTR.config.FORM_TEXT.FORM_NO)} <span>Fixed at the top</span></div>
             ${logoFields(true)}${logoFields(false)}
             ${field('header','School / office header (up to four lines)',4)}${typography('headerStyle')}`;
-          if (section === 'headings') pane.innerHTML = `<div class="layout-two">${field('am','Morning heading')}${field('pm','Afternoon heading')}${field('amIn','Morning arrival')}${field('amOut','Morning departure')}${field('pmIn','Afternoon arrival')}${field('pmOut','Afternoon departure')}</div><p class="field-hint">Labels change here. Tap placement and calculations stay the same.</p>`;
+          if (section === 'headings') pane.innerHTML = `<div class="layout-two">${field('am','Morning heading')}${field('pm','Afternoon heading')}${field('amIn','Morning arrival')}${field('amOut','Morning departure')}${field('pmIn','Afternoon arrival')}${field('pmOut','Afternoon departure')}</div><p class="field-hint">Labels change here. Tap placement and calculations stay the same.</p><label class="layout-check"><input type="checkbox" data-layout-key="showTotal" ${draft.showTotal ? 'checked' : ''}>Show TOTAL row (total hours and minutes under day 31)</label>`;
           if (section === 'footer') pane.innerHTML = `${field('certification','Employee certification',4)}<label class="layout-check"><input type="checkbox" data-layout-key="showEmployeeName" ${draft.showEmployeeName ? 'checked' : ''}>Print employee name below certification</label>${field('employeeCaption','Employee signature caption')}${field('verification','Verification statement',2)}${field('signerCaption','Approving officer caption')}${field('footer','Footer note',2)}${typography('footerStyle')}<p class="field-hint">Signer names and titles come from each employee’s “Signed by” choice.</p>`;
-          if (section === 'legend') pane.innerHTML = `<label class="layout-check"><input type="checkbox" data-layout-key="showLegend" ${draft.showLegend ? 'checked' : ''}>Show legend below the attendance table</label>${field('legend','Legend text (up to two lines)',2)}${typography('legendStyle')}<label class="layout-check"><input type="checkbox" data-layout-key="showTotal" ${draft.showTotal ? 'checked' : ''}>Show TOTAL row</label>`;
+          if (section === 'legend') pane.innerHTML = `<label class="layout-check"><input type="checkbox" data-layout-key="showLegend" ${draft.showLegend ? 'checked' : ''}>Show legend below the attendance table</label>${field('legend','Legend text (up to two lines)',2)}${typography('legendStyle')}`;
           el.querySelectorAll('[data-layout-tab]').forEach(x => x.setAttribute('aria-selected', String(x.dataset.layoutTab === section)));
           preview();
         }
